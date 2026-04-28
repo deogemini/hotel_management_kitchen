@@ -23,7 +23,9 @@
                     <div class="absolute inset-0 bg-gradient-to-r from-slate-950/70 via-slate-950/30 to-transparent"></div>
                     <div class="absolute inset-x-0 bottom-0 p-12 text-white">
                         <div class="max-w-xl">
-                            <p class="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-200">Front Desk Operations</p>
+<p class="inline-block bg-yellow-400 px-4 py-2 text-4xl font-black uppercase text-black">
+  Hard Rock Executive Lodge
+</p>
                             <h1 class="mt-4 text-5xl font-bold leading-tight">Hotel service, rooms, guests, and payments in one calm workspace.</h1>
                             <div class="mt-8 grid grid-cols-3 gap-3 text-sm">
                                 <div class="rounded-lg bg-white/15 p-4 backdrop-blur">

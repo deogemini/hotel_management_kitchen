@@ -13,7 +13,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M4 21V9l8-6 8 6v12M9 21v-6h6v6M8 10h.01M12 10h.01M16 10h.01" />
                     </svg>
                 </div>
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-700">Hotel Management System</p>
+                <p class="text-xs font-bold uppercase tracking-[0.22em] text-yellow-700">Hard Rock Executive Lodge</p>
                 <h1 class="mt-2 text-3xl font-bold text-slate-950">Welcome back</h1>
                 <p class="mt-2 text-sm text-slate-600">Sign in to manage guests, rooms, bookings, restaurant orders, and payments.</p>
             </div>

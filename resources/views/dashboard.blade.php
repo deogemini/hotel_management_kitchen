@@ -5,7 +5,7 @@
     <div class="row g-0 align-items-stretch">
         <div class="col-lg-7">
             <div class="card-body p-4 p-xl-5">
-                <p class="text-uppercase text-primary fw-semibold mb-2">Hotel Management System</p>
+                <p class="text-uppercase text-primary fw-semibold mb-2">Hard Rock Executive Lodge</p>
                 <h1 class="h2 mb-2">Operations Dashboard</h1>
                 <p class="text-muted mb-4">Track room availability, active guests, kitchen orders, payments, and today’s hotel activity from one workspace.</p>
                 <div class="d-flex flex-wrap gap-2">
