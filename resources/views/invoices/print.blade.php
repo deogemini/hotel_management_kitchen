@@ -1,0 +1,10 @@
+@extends('layouts.admin')
+@section('content')
+<h1 class="h3 mb-3">Invoice {{ $invoice->invoice_number }}</h1>
+<div class="card"><div class="card-body">
+<p>Guest: {{ $invoice->guest->full_name }}</p><p>Booking: {{ $invoice->booking?->booking_number }}</p>
+<table class="table"><thead><tr><th>Description</th><th>Qty</th><th>Unit</th><th>Total</th></tr></thead><tbody>@foreach($invoice->items as $item)<tr><td>{{ $item->description }}</td><td>{{ $item->quantity }}</td><td>{{ number_format($item->unit_price, 2) }}</td><td>{{ number_format($item->total_price, 2) }}</td></tr>@endforeach</tbody></table>
+<h5>Subtotal: {{ number_format($invoice->subtotal, 2) }}</h5><h5>Paid: {{ number_format($invoice->paid_amount, 2) }}</h5><h5>Balance: {{ number_format($invoice->balance_amount, 2) }}</h5>
+<a href="{{ route('payments.create', ['target_type' => 'invoice', 'target_id' => $invoice->id]) }}" class="btn btn-primary">Receive Payment</a> <button onclick="window.print()" class="btn btn-secondary">Print</button>
+</div></div>
+@endsection
