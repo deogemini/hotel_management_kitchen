@@ -57,4 +57,38 @@ class Payment extends Model
     {
         return $this->belongsTo(Invoice::class);
     }
+
+    public function customerName(): string
+    {
+        if ($this->restaurantOrder) {
+            return $this->restaurantOrder->guest?->full_name
+                ?? $this->restaurantOrder->walk_in_customer_name
+                ?? 'Walk-in customer';
+        }
+
+        return $this->guest?->full_name ?? '-';
+    }
+
+    public function purposeLabel(): string
+    {
+        if ($this->restaurantOrder) {
+            $details = $this->restaurantOrder->customer_type;
+
+            if ($this->restaurantOrder->room?->room_number) {
+                $details .= ' - Room '.$this->restaurantOrder->room->room_number;
+            }
+
+            return 'Food - '.$details;
+        }
+
+        if ($this->booking) {
+            return 'Room booking';
+        }
+
+        if ($this->invoice) {
+            return 'Invoice';
+        }
+
+        return '-';
+    }
 }

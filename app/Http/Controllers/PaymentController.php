@@ -12,7 +12,7 @@ class PaymentController extends Controller
 {
     public function index()
     {
-        $payments = Payment::with('guest', 'booking', 'restaurantOrder', 'invoice')->latest('paid_at')->get();
+        $payments = Payment::with('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice')->latest('paid_at')->get();
 
         return view('payments.index', compact('payments'));
     }
@@ -70,7 +70,7 @@ class PaymentController extends Controller
 
     public function receipt(Payment $payment)
     {
-        $payment->load('guest', 'booking.room', 'restaurantOrder', 'invoice');
+        $payment->load('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice');
 
         return view('payments.receipt', compact('payment'));
     }
