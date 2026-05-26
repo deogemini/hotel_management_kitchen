@@ -10,6 +10,7 @@ use App\Models\RestaurantOrder;
 use App\Models\RestaurantOrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class RestaurantOrderController extends Controller
 {
@@ -83,6 +84,13 @@ class RestaurantOrderController extends Controller
             }
 
             $paid = $data['payment_method'] === 'Room charge' ? 0 : (float) ($data['paid_amount'] ?? 0);
+
+            if ($paid > $subtotal) {
+                throw ValidationException::withMessages([
+                    'paid_amount' => 'Paid amount cannot exceed the order total of '.number_format($subtotal, 2).'.',
+                ]);
+            }
+
             $order->update([
                 'subtotal' => $subtotal,
                 'paid_amount' => $paid,
