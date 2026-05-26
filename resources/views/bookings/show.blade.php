@@ -6,7 +6,7 @@
 <div class="d-flex gap-2">
     @if(in_array($booking->status, ['Pending', 'Confirmed'], true) && ! $booking->check_in_date?->isFuture())<form method="POST" action="{{ route('bookings.check-in', $booking) }}">@csrf<button class="btn btn-success">Check In</button></form>@endif
     @if($booking->status === 'Checked In')<form method="POST" action="{{ route('bookings.check-out', $booking) }}">@csrf<button class="btn btn-warning">Check Out</button></form>@endif
-    <a href="{{ route('payments.create', ['target_type' => 'booking', 'target_id' => $booking->id]) }}" class="btn btn-primary">Receive Payment</a>
+    @if($booking->balance_amount > 0)<a href="{{ route('payments.create', ['target_type' => 'booking', 'target_id' => $booking->id]) }}" class="btn btn-primary">Receive Payment</a>@endif
     <a href="{{ route('bookings.receipt', $booking) }}" class="btn btn-secondary">Print Receipt</a>
 </div>
 </div></div>
