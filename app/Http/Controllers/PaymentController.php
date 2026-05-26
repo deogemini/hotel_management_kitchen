@@ -30,7 +30,7 @@ class PaymentController extends Controller
 
         return view('payments.create', [
             'bookings' => Booking::with('guest', 'room')->whereIn('status', ['Pending', 'Confirmed', 'Checked In', 'Checked Out'])->where('balance_amount', '>', 0)->get(),
-            'restaurantOrders' => RestaurantOrder::with('guest')->whereIn('payment_status', ['Unpaid', 'Partial'])->get(),
+            'restaurantOrders' => RestaurantOrder::with('guest', 'room')->whereIn('payment_status', ['Unpaid', 'Partial'])->where('balance_amount', '>', 0)->get(),
             'invoices' => Invoice::with('guest')->whereIn('status', ['Unpaid', 'Partial'])->get(),
             'targetType' => $targetType,
             'targetId' => $targetId,

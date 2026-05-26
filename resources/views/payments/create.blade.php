@@ -27,20 +27,25 @@
                     @else
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Target Type</label>
-                            <select name="target_type" class="form-select">
-                                <option value="booking" @selected($targetType==='booking')>Booking</option>
+                            <select name="target_type" id="target_type" class="form-select">
+                                <option value="booking" @selected(($targetType ?? 'booking')==='booking')>Booking</option>
                                 <option value="restaurant_order" @selected($targetType==='restaurant_order')>Restaurant Order</option>
                                 <option value="invoice" @selected($targetType==='invoice')>Invoice</option>
                             </select>
                         </div>
                         <div class="col-md-8 mb-3">
-                            <label class="form-label">Target ID</label>
-                            <input name="target_id" class="form-control" value="{{ $targetId }}" required>
-                            <small class="text-muted">Use the ID from the booking, restaurant order, or invoice link.</small>
+                            <label class="form-label">Pending Payment</label>
+                            <select name="target_id" id="target_id" class="form-select" required>
+                                <option value="">Select pending payment</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Remaining Balance</label>
+                            <input id="remaining_balance" class="form-control" value="0.00" readonly>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Amount</label>
-                            <input type="number" step="0.01" min="0.01" name="amount" class="form-control" value="{{ old('amount') }}" required>
+                            <input type="number" step="0.01" min="0.01" name="amount" id="amount" class="form-control" value="{{ old('amount') }}" readonly required>
                         </div>
                     @endif
                     <div class="col-md-4 mb-3">
@@ -66,4 +71,85 @@
         @endif
     </div>
 </div>
+@if(! $selectedTarget)
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const pendingPayments = {
+        booking: [
+            @foreach($bookings as $booking)
+                {
+                    id: '{{ $booking->id }}',
+                    label: @json($booking->booking_number.' - '.$booking->guest?->full_name.' - Room '.$booking->room?->room_number.' - Balance '.number_format($booking->balance_amount, 2)),
+                    balance: {{ (float) $booking->balance_amount }},
+                },
+            @endforeach
+        ],
+        restaurant_order: [
+            @foreach($restaurantOrders as $order)
+                {
+                    id: '{{ $order->id }}',
+                    label: @json($order->order_number.' - Food - '.($order->guest?->full_name ?? $order->walk_in_customer_name ?? 'Walk-in customer').' - Balance '.number_format($order->balance_amount, 2)),
+                    balance: {{ (float) $order->balance_amount }},
+                },
+            @endforeach
+        ],
+        invoice: [
+            @foreach($invoices as $invoice)
+                {
+                    id: '{{ $invoice->id }}',
+                    label: @json($invoice->invoice_number.' - '.$invoice->guest?->full_name.' - Balance '.number_format($invoice->balance_amount, 2)),
+                    balance: {{ (float) $invoice->balance_amount }},
+                },
+            @endforeach
+        ],
+    };
+    const targetType = document.getElementById('target_type');
+    const targetId = document.getElementById('target_id');
+    const amount = document.getElementById('amount');
+    const remainingBalance = document.getElementById('remaining_balance');
+    const oldTargetId = @json(old('target_id', $targetId));
+
+    function formatAmount(value) {
+        return Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function selectedPendingPayment() {
+        const option = targetId.options[targetId.selectedIndex];
+
+        return {
+            balance: Number(option?.dataset.balance || 0),
+        };
+    }
+
+    function updateAmount() {
+        const selected = selectedPendingPayment();
+
+        remainingBalance.value = formatAmount(selected.balance);
+        amount.value = selected.balance > 0 ? selected.balance.toFixed(2) : '';
+        amount.max = selected.balance.toFixed(2);
+    }
+
+    function updateTargetOptions() {
+        const rows = pendingPayments[targetType.value] || [];
+
+        targetId.innerHTML = '<option value="">Select pending payment</option>';
+
+        rows.forEach(function (row) {
+            const option = document.createElement('option');
+            option.value = row.id;
+            option.textContent = row.label;
+            option.dataset.balance = row.balance;
+            option.selected = oldTargetId && String(oldTargetId) === row.id;
+            targetId.appendChild(option);
+        });
+
+        updateAmount();
+    }
+
+    targetType.addEventListener('change', updateTargetOptions);
+    targetId.addEventListener('change', updateAmount);
+    updateTargetOptions();
+});
+</script>
+@endif
 @endsection
