@@ -70,9 +70,9 @@ class GuestController extends Controller
             'phone_number' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
-            'id_type' => ['nullable', 'string', 'max:100'],
+            'id_type' => ['nullable', 'in:NIDA,Driving Licence,Passport,Others'],
             'id_number' => ['nullable', 'string', 'max:100'],
-            'nationality' => ['nullable', 'string', 'max:100'],
+            'nationality' => ['nullable', 'in:Tanzanian,Kenyan,Ugandan'],
         ]);
     }
 }
