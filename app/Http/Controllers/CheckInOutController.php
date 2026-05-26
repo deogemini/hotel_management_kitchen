@@ -15,6 +15,10 @@ class CheckInOutController extends Controller
             return back()->withErrors(['booking' => 'Only pending or confirmed bookings can be checked in.']);
         }
 
+        if ($booking->check_in_date?->isFuture()) {
+            return back()->withErrors(['booking' => 'This booking cannot be checked in before the check-in date.']);
+        }
+
         $booking->update(['status' => 'Checked In', 'checked_in_at' => now()]);
         $booking->room?->update(['status' => 'Occupied']);
         AuditService::log('booking.check_in', $booking, ['status' => 'Checked In']);
