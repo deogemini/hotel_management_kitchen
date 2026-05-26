@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\Room;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
 {
@@ -133,7 +134,7 @@ class BookingController extends Controller
 
     private function validated(Request $request): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'guest_id' => ['required', 'exists:guests,id'],
             'room_id' => ['nullable', 'exists:rooms,id'],
             'check_in_date' => ['required', 'date'],
@@ -142,6 +143,25 @@ class BookingController extends Controller
             'status' => ['required', 'in:'.implode(',', Booking::STATUSES)],
             'deposit_amount' => ['nullable', 'numeric', 'min:0'],
         ]);
+
+        $total = $this->roomTotal($data);
+        $deposit = (float) ($data['deposit_amount'] ?? 0);
+
+        if ($deposit > $total) {
+            throw ValidationException::withMessages([
+                'deposit_amount' => 'Deposit cannot exceed the selected room total of '.number_format($total, 2).'.',
+            ]);
+        }
+
+        return $data;
+    }
+
+    private function roomTotal(array $data): float
+    {
+        $room = Room::find($data['room_id'] ?? null);
+        $nights = max(1, now()->parse($data['check_in_date'])->diffInDays(now()->parse($data['check_out_date'])));
+
+        return $nights * (float) ($room?->price_per_night ?? 0);
     }
 
     private function number(string $prefix): string
