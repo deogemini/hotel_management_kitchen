@@ -30,7 +30,7 @@ class RestaurantOrderController extends Controller
             'restaurantOrder' => new RestaurantOrder(),
             'bookings' => Booking::with('guest', 'room')->where('status', 'Checked In')->get(),
             'guests' => Guest::orderBy('full_name')->get(),
-            'menuItems' => MenuItem::where('is_available', true)->orderBy('category')->orderBy('name')->get(),
+            'menuItems' => MenuItem::where('is_available', true)->where('stock_quantity', '>', 0)->orderBy('category')->orderBy('name')->get(),
         ]);
     }
 
@@ -48,9 +48,42 @@ class RestaurantOrderController extends Controller
             'quantity.*' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $order = DB::transaction(function () use ($data) {
+        $requestedItems = [];
+
+        foreach ($data['menu_item_id'] as $index => $menuItemId) {
+            if (empty($menuItemId) || empty($data['quantity'][$index])) {
+                continue;
+            }
+
+            $requestedItems[(int) $menuItemId] = ($requestedItems[(int) $menuItemId] ?? 0) + (int) $data['quantity'][$index];
+        }
+
+        if (empty($requestedItems)) {
+            throw ValidationException::withMessages([
+                'menu_item_id' => 'Select at least one item for the order.',
+            ]);
+        }
+
+        $order = DB::transaction(function () use ($data, $requestedItems) {
             $booking = ! empty($data['booking_id']) ? Booking::with('guest', 'room')->find($data['booking_id']) : null;
             $subtotal = 0;
+            $menuItems = MenuItem::whereKey(array_keys($requestedItems))->lockForUpdate()->get()->keyBy('id');
+
+            foreach ($requestedItems as $menuItemId => $quantity) {
+                $menuItem = $menuItems->get($menuItemId);
+
+                if (! $menuItem || ! $menuItem->is_available) {
+                    throw ValidationException::withMessages([
+                        'menu_item_id' => 'One of the selected items is not available.',
+                    ]);
+                }
+
+                if ($quantity > $menuItem->stock_quantity) {
+                    throw ValidationException::withMessages([
+                        'quantity' => $menuItem->name.' has only '.$menuItem->stock_quantity.' item(s) in stock.',
+                    ]);
+                }
+            }
 
             $order = RestaurantOrder::create([
                 'order_number' => 'ORD-'.now()->format('YmdHis').'-'.random_int(100, 999),
@@ -69,10 +102,11 @@ class RestaurantOrderController extends Controller
                     continue;
                 }
 
-                $menuItem = MenuItem::findOrFail($menuItemId);
+                $menuItem = $menuItems->get((int) $menuItemId);
                 $quantity = (int) $data['quantity'][$index];
                 $lineTotal = $quantity * $menuItem->price;
                 $subtotal += $lineTotal;
+                $menuItem->decrement('stock_quantity', $quantity);
 
                 RestaurantOrderItem::create([
                     'restaurant_order_id' => $order->id,

@@ -14,6 +14,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RestaurantOrderController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\StockController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SmsSettingController;
 use App\Http\Middleware\AdminMiddleware;
@@ -43,6 +44,8 @@ Route::middleware('auth')->group(function () {
         Route::post('bookings/{booking}/check-in', [CheckInOutController::class, 'checkIn'])->name('bookings.check-in');
         Route::post('bookings/{booking}/check-out', [CheckInOutController::class, 'checkOut'])->name('bookings.check-out');
         Route::resource('restaurant-orders', RestaurantOrderController::class);
+        Route::get('stocks', [StockController::class, 'index'])->name('stocks.index');
+        Route::patch('stocks/{menuItem}', [StockController::class, 'update'])->name('stocks.update');
         Route::resource('payments', PaymentController::class)->except(['edit', 'update', 'destroy']);
         Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
         Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');

@@ -73,6 +73,12 @@
                             <i class="align-middle" data-feather="credit-card"></i> <span class="align-middle">Payments</span>
                         </a>
                     </li>
+
+                    <li class="sidebar-item {{ request()->routeIs('stocks.*') ? 'active' : '' }}">
+                        <a class="sidebar-link" href="{{ route('stocks.index') }}">
+                            <i class="align-middle" data-feather="package"></i> <span class="align-middle">Stock Management</span>
+                        </a>
+                    </li>
                     @endif
 
                     <li class="sidebar-item {{ request()->routeIs('kitchen-orders.*') ? 'active' : '' }}">

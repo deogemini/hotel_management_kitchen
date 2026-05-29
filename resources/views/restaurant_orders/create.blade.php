@@ -47,7 +47,7 @@
                         <select name="menu_item_id[]" class="form-select menu-item-select">
                             <option value="" data-price="0">Select item</option>
                             @foreach($menuItems as $item)
-                                <option value="{{ $item->id }}" data-price="{{ $item->price }}">{{ $item->name }} - {{ number_format($item->price, 2) }}</option>
+                                <option value="{{ $item->id }}" data-price="{{ $item->price }}" data-stock="{{ $item->stock_quantity }}">{{ $item->name }} - {{ number_format($item->price, 2) }} - Stock {{ $item->stock_quantity }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -86,8 +86,15 @@ document.addEventListener('DOMContentLoaded', function () {
             const quantity = row.querySelector('.quantity-input');
             const lineTotal = row.querySelector('.line-total');
             const price = Number(item.options[item.selectedIndex]?.dataset.price || 0);
+            const stock = Number(item.options[item.selectedIndex]?.dataset.stock || 0);
             const qty = Number(quantity.value || 0);
             const amount = price * qty;
+
+            if (stock > 0) {
+                quantity.max = stock;
+            } else {
+                quantity.removeAttribute('max');
+            }
 
             lineTotal.value = formatAmount(amount);
             total += amount;

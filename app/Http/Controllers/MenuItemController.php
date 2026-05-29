@@ -59,6 +59,8 @@ class MenuItemController extends Controller
             'category' => ['required', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
+            'stock_quantity' => ['nullable', 'integer', 'min:0'],
+            'low_stock_quantity' => ['nullable', 'integer', 'min:0'],
             'is_available' => ['nullable', 'boolean'],
         ]);
     }
