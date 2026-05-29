@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\Room;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
@@ -105,7 +106,7 @@ class BookingController extends Controller
             'number_of_nights' => $nights,
             'room_rate' => $rate,
             'room_total' => $total,
-            'balance_amount' => max(0, $total - $deposit - $booking->payments()->sum('amount')),
+            'balance_amount' => max(0, $total - $deposit - $booking->payments()->whereIn('status', ['Paid', 'Partial'])->sum('amount')),
         ]);
 
         AuditService::log('booking.update', $booking, ['from' => $original, 'to' => $booking->getAttributes()]);
@@ -123,6 +124,41 @@ class BookingController extends Controller
         $booking->delete();
 
         return redirect()->route('bookings.index')->with('success', 'Booking deleted successfully.');
+    }
+
+    public function cancel(Booking $booking)
+    {
+        if (! in_array($booking->status, ['Pending', 'Confirmed'], true)) {
+            return back()->withErrors(['booking' => 'Only pending or confirmed bookings can be cancelled.']);
+        }
+
+        if (! $booking->check_in_date?->isFuture()) {
+            return back()->withErrors(['booking' => 'This booking can only be cancelled before the check-in date.']);
+        }
+
+        DB::transaction(function () use ($booking): void {
+            $refundedAmount = $booking->payments()
+                ->whereIn('status', ['Paid', 'Partial'])
+                ->sum('amount');
+
+            $booking->payments()
+                ->whereIn('status', ['Paid', 'Partial'])
+                ->update([
+                    'status' => 'Refunded',
+                    'notes' => 'Refunded after booking cancellation.',
+                ]);
+
+            $booking->update([
+                'status' => 'Cancelled',
+                'deposit_amount' => 0,
+                'balance_amount' => 0,
+            ]);
+
+            $booking->room?->update(['status' => 'Available']);
+            AuditService::log('booking.cancel', $booking, ['refunded_amount' => $refundedAmount]);
+        });
+
+        return back()->with('success', 'Booking cancelled successfully. Any paid amount was refunded.');
     }
 
     public function receipt(Booking $booking)

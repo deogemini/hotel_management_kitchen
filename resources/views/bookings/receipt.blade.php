@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('content')
 @php
-    $paidAmount = $booking->payments->sum('amount');
+    $paidAmount = $booking->payments->whereIn('status', ['Paid', 'Partial'])->sum('amount');
 @endphp
 @push('styles')
 <style>

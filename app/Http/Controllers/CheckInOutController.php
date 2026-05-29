@@ -39,7 +39,7 @@ class CheckInOutController extends Controller
             ->sum('balance_amount');
         $otherCharges = $booking->otherCharges()->sum('amount');
         $subtotal = $booking->room_total + $restaurantTotal + $otherCharges;
-        $paid = $booking->payments()->sum('amount');
+        $paid = $booking->payments()->whereIn('status', ['Paid', 'Partial'])->sum('amount');
 
         $invoice = $booking->invoice ?: Invoice::create([
             'invoice_number' => 'INV-'.now()->format('YmdHis').'-'.random_int(100, 999),

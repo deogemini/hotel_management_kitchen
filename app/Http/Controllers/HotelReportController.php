@@ -14,7 +14,7 @@ class HotelReportController extends Controller
     public function dailyCollections(Request $request)
     {
         $date = $request->input('date', today()->toDateString());
-        $rows = Payment::with('guest')->whereDate('paid_at', $date)->latest('paid_at')->get();
+        $rows = Payment::with('guest')->whereIn('status', ['Paid', 'Partial'])->whereDate('paid_at', $date)->latest('paid_at')->get();
 
         return view('reports.hotel', ['title' => 'Daily Collection Report', 'rows' => $rows, 'type' => 'payments']);
     }
@@ -46,7 +46,7 @@ class HotelReportController extends Controller
 
     public function payments()
     {
-        return view('reports.hotel', ['title' => 'Payment Report', 'rows' => Payment::with('guest')->latest('paid_at')->get(), 'type' => 'payments']);
+        return view('reports.hotel', ['title' => 'Payment Report', 'rows' => Payment::with('guest')->whereIn('status', ['Paid', 'Partial'])->latest('paid_at')->get(), 'type' => 'payments']);
     }
 
     public function unpaidBills()

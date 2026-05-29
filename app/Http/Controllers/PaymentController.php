@@ -160,21 +160,21 @@ class PaymentController extends Controller
     private function refreshBalances(object $target): void
     {
         if ($target instanceof Booking) {
-            $paid = $target->payments()->sum('amount');
+            $paid = $target->payments()->whereIn('status', ['Paid', 'Partial'])->sum('amount');
             $target->update(['balance_amount' => max(0, $target->room_total - $paid), 'deposit_amount' => $paid]);
         }
 
         if ($target instanceof RestaurantOrder) {
-            $paid = $target->payments()->sum('amount');
+            $paid = $target->payments()->whereIn('status', ['Paid', 'Partial'])->sum('amount');
             $target->update([
                 'paid_amount' => $paid,
                 'balance_amount' => max(0, $target->subtotal - $paid),
-                'payment_status' => $paid >= $target->subtotal ? 'Paid' : 'Partial',
+                'payment_status' => $paid >= $target->subtotal ? 'Paid' : ($paid > 0 ? 'Partial' : 'Unpaid'),
             ]);
         }
 
         if ($target instanceof Invoice) {
-            $paid = $target->payments()->sum('amount');
+            $paid = $target->payments()->whereIn('status', ['Paid', 'Partial'])->sum('amount');
             $target->update([
                 'paid_amount' => $paid,
                 'balance_amount' => max(0, $target->subtotal - $paid),
