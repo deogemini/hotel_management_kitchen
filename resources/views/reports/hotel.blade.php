@@ -17,6 +17,8 @@
     .cash-movement-table td {
         border: 2px solid #111 !important;
         padding: 3px 6px;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
     .cash-movement-table .report-band {
         background: #b8d99d;
@@ -41,6 +43,11 @@
     }
 
     @media print {
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
         .sidebar,
         .navbar,
         .footer,
