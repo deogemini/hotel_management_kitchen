@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Lodge;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AuditService;
@@ -18,7 +19,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::with('roleRecord')->orderBy('name')->get();
+        $users = User::with('roleRecord', 'lodge')->orderBy('name')->get();
         return view('users.index', compact('users'));
     }
 
@@ -27,7 +28,10 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('users.create', ['roles' => Role::orderBy('display_name')->get()]);
+        return view('users.create', [
+            'roles' => Role::orderBy('display_name')->get(),
+            'lodges' => Lodge::orderBy('name')->get(),
+        ]);
     }
 
     /**
@@ -40,6 +44,7 @@ class UserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:20', 'unique:users,phone'],
             'role_id' => ['required', 'exists:roles,id'],
+            'lodge_id' => ['required', 'exists:lodges,id'],
             'password' => ['required', 'string', 'min:8'],
         ]);
         $role = Role::findOrFail($request->role_id);
@@ -50,6 +55,7 @@ class UserController extends Controller
             'phone' => $request->phone,
             'role' => $role->name,
             'role_id' => $role->id,
+            'lodge_id' => $request->lodge_id,
             'password' => Hash::make($request->password),
         ]);
         AuditService::log('user.create', $user, $user->getAttributes());
@@ -71,7 +77,11 @@ class UserController extends Controller
     public function edit(string $id)
     {
         $user = User::findOrFail($id);
-        return view('users.edit', ['user' => $user, 'roles' => Role::orderBy('display_name')->get()]);
+        return view('users.edit', [
+            'user' => $user,
+            'roles' => Role::orderBy('display_name')->get(),
+            'lodges' => Lodge::orderBy('name')->get(),
+        ]);
     }
 
     /**
@@ -86,6 +96,7 @@ class UserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'phone' => ['nullable', 'string', 'max:20', 'unique:users,phone,'.$user->id],
             'role_id' => ['required', 'exists:roles,id'],
+            'lodge_id' => ['required', 'exists:lodges,id'],
             'password' => ['nullable', 'string', 'min:8'],
         ]);
         $role = Role::findOrFail($request->role_id);
@@ -96,6 +107,7 @@ class UserController extends Controller
         $user->phone = $request->phone;
         $user->role = $role->name;
         $user->role_id = $role->id;
+        $user->lodge_id = $request->lodge_id;
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }

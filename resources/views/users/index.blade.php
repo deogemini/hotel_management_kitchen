@@ -25,6 +25,7 @@
                             <th>Jina</th>
                             <th>Email</th>
                             <th>Namba ya Simu</th>
+                            <th>Lodge</th>
                             <th>Role</th>
                             <th>Login Lock</th>
                             <th>Actions</th>
@@ -37,6 +38,7 @@
                             <td>{{ $u->name }}</td>
                             <td>{{ $u->email }}</td>
                             <td>{{ $u->phone }}</td>
+                            <td>{{ $u->lodge?->name ?? '-' }}</td>
                             <td><span class="badge {{ $u->effectiveRoleName() === 'hotel_manager' ? 'bg-danger' : 'bg-secondary' }}">{{ $u->roleRecord?->display_name ?? str_replace('_', ' ', $u->effectiveRoleName()) }}</span></td>
                             <td>
                                 @if($u->account_locked_until && $u->account_locked_until->isFuture())

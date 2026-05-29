@@ -38,6 +38,15 @@
                         @error('role_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Lodge</label>
+                        <select name="lodge_id" class="form-select @error('lodge_id') is-invalid @enderror" required>
+                            @foreach($lodges as $lodge)
+                                <option value="{{ $lodge->id }}" {{ (int) old('lodge_id', $user->lodge_id) === $lodge->id ? 'selected' : '' }}>{{ $lodge->name }}{{ $lodge->location ? ' - '.$lodge->location : '' }}</option>
+                            @endforeach
+                        </select>
+                        @error('lodge_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Password (acha tupu kama haitabadilishwa)</label>
                         <input type="password" class="form-control @error('password') is-invalid @enderror" name="password">
                         @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror

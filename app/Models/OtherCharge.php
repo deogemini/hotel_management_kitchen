@@ -10,6 +10,7 @@ class OtherCharge extends Model
 {
     protected $fillable = [
         'booking_id',
+        'lodge_id',
         'guest_id',
         'service_type',
         'description',

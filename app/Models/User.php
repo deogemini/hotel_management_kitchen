@@ -24,6 +24,7 @@ class User extends Authenticatable
         'phone',
         'role',
         'role_id',
+        'lodge_id',
         'avatar',
         'password',
         'failed_login_attempts',
@@ -59,6 +60,11 @@ class User extends Authenticatable
     public function roleRecord(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    public function lodge(): BelongsTo
+    {
+        return $this->belongsTo(Lodge::class);
     }
 
     public function effectiveRoleName(): ?string

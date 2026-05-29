@@ -10,7 +10,10 @@ class GuestController extends Controller
 {
     public function index()
     {
-        $guests = Guest::withCount('bookings')->latest()->get();
+        $guests = Guest::withCount('bookings')
+            ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
+            ->latest()
+            ->get();
 
         return view('guests.index', compact('guests'));
     }
@@ -23,6 +26,7 @@ class GuestController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
+        $data['lodge_id'] = auth()->user()?->lodge_id;
         $data['created_by'] = auth()->id();
         $guest = Guest::create($data);
         AuditService::log('guest.create', $guest, $guest->getAttributes());
@@ -79,5 +83,10 @@ class GuestController extends Controller
             'id_number' => ['nullable', 'string', 'max:100'],
             'nationality' => ['nullable', 'in:Tanzanian,Kenyan,Ugandan'],
         ]);
+    }
+
+    private function canSeeAllLodges(): bool
+    {
+        return auth()->user()?->hasRole('hotel_manager') ?? false;
     }
 }

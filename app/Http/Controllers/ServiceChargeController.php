@@ -15,7 +15,10 @@ class ServiceChargeController extends Controller
 {
     public function index()
     {
-        $serviceCharges = OtherCharge::with('guest', 'booking.room')->latest()->get();
+        $serviceCharges = OtherCharge::with('guest', 'booking.room')
+            ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
+            ->latest()
+            ->get();
 
         return view('service_charges.index', compact('serviceCharges'));
     }
@@ -26,11 +29,11 @@ class ServiceChargeController extends Controller
 
         return view('service_charges.create', [
             'serviceCharge' => new OtherCharge(),
-            'guests' => Guest::orderBy('full_name')->get(),
-            'bookings' => Booking::with('guest', 'room')
+            'guests' => $this->lodgeQuery(Guest::query())->orderBy('full_name')->get(),
+            'bookings' => $this->lodgeQuery(Booking::with('guest', 'room')
                 ->whereIn('status', ['Pending', 'Confirmed', 'Checked In'])
                 ->when($guestId, fn ($query) => $query->where('guest_id', $guestId))
-                ->latest()
+                ->latest())
                 ->get(),
             'guestId' => $guestId,
         ]);
@@ -48,7 +51,7 @@ class ServiceChargeController extends Controller
             'payment_method' => ['required', 'in:Cash,Mobile money,Card,Room charge'],
         ]);
 
-        $booking = Booking::where('guest_id', $data['guest_id'])->findOrFail($data['booking_id']);
+        $booking = $this->lodgeQuery(Booking::where('guest_id', $data['guest_id']))->findOrFail($data['booking_id']);
         $amount = (float) $data['amount'];
         $paid = $data['payment_method'] === 'Room charge' ? 0 : (float) ($data['paid_amount'] ?? 0);
 
@@ -62,6 +65,7 @@ class ServiceChargeController extends Controller
             $serviceCharge = OtherCharge::create([
                 'guest_id' => $data['guest_id'],
                 'booking_id' => $booking->id,
+                'lodge_id' => $booking->lodge_id,
                 'service_type' => $data['service_type'],
                 'description' => $data['description'],
                 'amount' => $amount,
@@ -79,6 +83,7 @@ class ServiceChargeController extends Controller
                     'payable_id' => $serviceCharge->id,
                     'guest_id' => $serviceCharge->guest_id,
                     'booking_id' => $serviceCharge->booking_id,
+                    'lodge_id' => $serviceCharge->lodge_id,
                     'amount' => $paid,
                     'payment_method' => $data['payment_method'],
                     'status' => $paid >= $amount ? 'Paid' : 'Partial',
@@ -100,5 +105,19 @@ class ServiceChargeController extends Controller
         $serviceCharge->load('guest', 'booking.room', 'payments');
 
         return view('service_charges.show', compact('serviceCharge'));
+    }
+
+    private function canSeeAllLodges(): bool
+    {
+        return auth()->user()?->hasRole('hotel_manager') ?? false;
+    }
+
+    private function lodgeQuery($query)
+    {
+        if (! $this->canSeeAllLodges()) {
+            $query->where('lodge_id', auth()->user()?->lodge_id);
+        }
+
+        return $query;
     }
 }

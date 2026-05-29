@@ -23,6 +23,17 @@
             <x-input-error :messages="$errors->get('phone')" class="mt-2" />
         </div>
 
+        <div class="mt-4">
+            <x-input-label for="lodge_id" :value="__('Lodge')" />
+            <select id="lodge_id" name="lodge_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                <option value="">{{ __('Select lodge') }}</option>
+                @foreach($lodges as $lodge)
+                    <option value="{{ $lodge->id }}" @selected((int) old('lodge_id') === $lodge->id)>{{ $lodge->name }}{{ $lodge->location ? ' - '.$lodge->location : '' }}</option>
+                @endforeach
+            </select>
+            <x-input-error :messages="$errors->get('lodge_id')" class="mt-2" />
+        </div>
+
         <!-- Password -->
         <div class="mt-4">
             <x-input-label for="password" :value="__('Password')" />

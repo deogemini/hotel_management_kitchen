@@ -4,6 +4,16 @@
         <label class="form-label">Room Number</label>
         <input name="room_number" class="form-control" value="{{ old('room_number', $room->room_number) }}" required>
     </div>
+    @if(auth()->user()?->hasRole('hotel_manager'))
+    <div class="col-md-4 mb-3">
+        <label class="form-label">Lodge</label>
+        <select name="lodge_id" class="form-select" required>
+            @foreach($lodges as $lodge)
+                <option value="{{ $lodge->id }}" @selected((int) old('lodge_id', $room->lodge_id ?: auth()->user()?->lodge_id) === $lodge->id)>{{ $lodge->name }}</option>
+            @endforeach
+        </select>
+    </div>
+    @endif
     <div class="col-md-4 mb-3">
         <label class="form-label">Room Type</label>
         <select name="room_type" class="form-select" required>

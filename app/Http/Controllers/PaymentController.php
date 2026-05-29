@@ -14,7 +14,10 @@ class PaymentController extends Controller
 {
     public function index()
     {
-        $payments = Payment::with('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice', 'payable')->latest('paid_at')->get();
+        $payments = Payment::with('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice', 'payable')
+            ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
+            ->latest('paid_at')
+            ->get();
 
         return view('payments.index', compact('payments'));
     }
@@ -30,10 +33,10 @@ class PaymentController extends Controller
         }
 
         return view('payments.create', [
-            'bookings' => Booking::with('guest', 'room')->whereIn('status', ['Pending', 'Confirmed', 'Checked In', 'Checked Out'])->where('balance_amount', '>', 0)->get(),
-            'restaurantOrders' => RestaurantOrder::with('guest', 'room')->whereIn('payment_status', ['Unpaid', 'Partial'])->where('balance_amount', '>', 0)->get(),
-            'invoices' => Invoice::with('guest')->whereIn('status', ['Unpaid', 'Partial'])->get(),
-            'serviceCharges' => OtherCharge::with('guest', 'booking.room')->whereIn('payment_status', ['Unpaid', 'Partial'])->where('balance_amount', '>', 0)->get(),
+            'bookings' => $this->lodgeQuery(Booking::with('guest', 'room')->whereIn('status', ['Pending', 'Confirmed', 'Checked In', 'Checked Out'])->where('balance_amount', '>', 0))->get(),
+            'restaurantOrders' => $this->lodgeQuery(RestaurantOrder::with('guest', 'room')->whereIn('payment_status', ['Unpaid', 'Partial'])->where('balance_amount', '>', 0))->get(),
+            'invoices' => $this->lodgeQuery(Invoice::with('guest')->whereIn('status', ['Unpaid', 'Partial']))->get(),
+            'serviceCharges' => $this->lodgeQuery(OtherCharge::with('guest', 'booking.room')->whereIn('payment_status', ['Unpaid', 'Partial'])->where('balance_amount', '>', 0))->get(),
             'targetType' => $targetType,
             'targetId' => $targetId,
             'selectedTarget' => $selectedTarget,
@@ -77,6 +80,7 @@ class PaymentController extends Controller
             'booking_id' => $bookingId,
             'restaurant_order_id' => $restaurantOrderId,
             'invoice_id' => $invoiceId,
+            'lodge_id' => $target->lodge_id ?? auth()->user()?->lodge_id,
             'amount' => $amount,
             'payment_method' => $data['payment_method'],
             'status' => 'Paid',
@@ -125,19 +129,19 @@ class PaymentController extends Controller
     private function findTarget(string $type, int $id): object
     {
         if ($type === 'booking') {
-            return Booking::with('guest', 'room')->findOrFail($id);
+            return $this->lodgeQuery(Booking::with('guest', 'room'))->findOrFail($id);
         }
 
         if ($type === 'restaurant_order') {
-            return RestaurantOrder::with('guest', 'room')->findOrFail($id);
+            return $this->lodgeQuery(RestaurantOrder::with('guest', 'room'))->findOrFail($id);
         }
 
         if ($type === 'invoice') {
-            return Invoice::with('guest')->findOrFail($id);
+            return $this->lodgeQuery(Invoice::with('guest'))->findOrFail($id);
         }
 
         if ($type === 'service_charge') {
-            return OtherCharge::with('guest', 'booking.room')->findOrFail($id);
+            return $this->lodgeQuery(OtherCharge::with('guest', 'booking.room'))->findOrFail($id);
         }
 
         abort(404);
@@ -204,5 +208,19 @@ class PaymentController extends Controller
                 'payment_status' => $paid >= $target->amount ? 'Paid' : ($paid > 0 ? 'Partial' : 'Unpaid'),
             ]);
         }
+    }
+
+    private function canSeeAllLodges(): bool
+    {
+        return auth()->user()?->hasRole('hotel_manager') ?? false;
+    }
+
+    private function lodgeQuery($query)
+    {
+        if (! $this->canSeeAllLodges()) {
+            $query->where('lodge_id', auth()->user()?->lodge_id);
+        }
+
+        return $query;
     }
 }

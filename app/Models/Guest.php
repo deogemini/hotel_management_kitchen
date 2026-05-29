@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Guest extends Model
 {
     protected $fillable = [
         'full_name',
+        'lodge_id',
         'phone_number',
         'email',
         'address',
@@ -21,6 +23,11 @@ class Guest extends Model
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+    public function lodge(): BelongsTo
+    {
+        return $this->belongsTo(Lodge::class);
     }
 
     public function restaurantOrders(): HasMany

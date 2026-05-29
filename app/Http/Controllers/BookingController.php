@@ -16,6 +16,8 @@ class BookingController extends Controller
     public function index(Request $request)
     {
         $bookings = Booking::with('guest', 'room')
+            ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
+            ->when($this->canSeeAllLodges() && $request->lodge_id, fn ($query, $lodgeId) => $query->where('lodge_id', $lodgeId))
             ->when($request->status, fn ($query, $status) => $query->where('status', $status))
             ->latest()
             ->get();
@@ -27,15 +29,15 @@ class BookingController extends Controller
     {
         return view('bookings.create', [
             'booking' => new Booking(),
-            'guests' => Guest::orderBy('full_name')->get(),
-            'rooms' => Room::whereIn('status', ['Available', 'Reserved'])->orderBy('room_number')->get(),
+            'guests' => $this->lodgeQuery(Guest::query())->orderBy('full_name')->get(),
+            'rooms' => $this->lodgeQuery(Room::whereIn('status', ['Available', 'Reserved']))->orderBy('room_number')->get(),
         ]);
     }
 
     public function store(Request $request)
     {
         $data = $this->validated($request);
-        $room = Room::find($data['room_id']);
+        $room = $this->lodgeQuery(Room::query())->find($data['room_id']);
         $nights = max(1, now()->parse($data['check_in_date'])->diffInDays(now()->parse($data['check_out_date'])));
         $rate = $room?->price_per_night ?? 0;
         $total = $nights * $rate;
@@ -43,6 +45,7 @@ class BookingController extends Controller
 
         $booking = Booking::create($data + [
             'booking_number' => $this->number('BK'),
+            'lodge_id' => $room?->lodge_id ?: auth()->user()?->lodge_id,
             'room_type' => $room?->room_type,
             'number_of_nights' => $nights,
             'room_rate' => $rate,
@@ -62,6 +65,7 @@ class BookingController extends Controller
                 'payable_id' => $booking->id,
                 'guest_id' => $booking->guest_id,
                 'booking_id' => $booking->id,
+                'lodge_id' => $booking->lodge_id,
                 'amount' => $deposit,
                 'payment_method' => $request->input('payment_method', 'Cash'),
                 'status' => $deposit >= $total ? 'Paid' : 'Partial',
@@ -86,15 +90,15 @@ class BookingController extends Controller
     {
         return view('bookings.edit', [
             'booking' => $booking,
-            'guests' => Guest::orderBy('full_name')->get(),
-            'rooms' => Room::orderBy('room_number')->get(),
+            'guests' => $this->lodgeQuery(Guest::query())->orderBy('full_name')->get(),
+            'rooms' => $this->lodgeQuery(Room::query())->orderBy('room_number')->get(),
         ]);
     }
 
     public function update(Request $request, Booking $booking)
     {
         $data = $this->validated($request);
-        $room = Room::find($data['room_id']);
+        $room = $this->lodgeQuery(Room::query())->find($data['room_id']);
         $nights = max(1, now()->parse($data['check_in_date'])->diffInDays(now()->parse($data['check_out_date'])));
         $rate = $room?->price_per_night ?? 0;
         $total = $nights * $rate;
@@ -201,7 +205,7 @@ class BookingController extends Controller
 
     private function roomTotal(array $data): float
     {
-        $room = Room::find($data['room_id'] ?? null);
+        $room = $this->lodgeQuery(Room::query())->find($data['room_id'] ?? null);
         $nights = max(1, now()->parse($data['check_in_date'])->diffInDays(now()->parse($data['check_out_date'])));
 
         return $nights * (float) ($room?->price_per_night ?? 0);
@@ -210,5 +214,19 @@ class BookingController extends Controller
     private function number(string $prefix): string
     {
         return $prefix.'-'.now()->format('YmdHis').'-'.random_int(100, 999);
+    }
+
+    private function canSeeAllLodges(): bool
+    {
+        return auth()->user()?->hasRole('hotel_manager') ?? false;
+    }
+
+    private function lodgeQuery($query)
+    {
+        if (! $this->canSeeAllLodges()) {
+            $query->where('lodge_id', auth()->user()?->lodge_id);
+        }
+
+        return $query;
     }
 }

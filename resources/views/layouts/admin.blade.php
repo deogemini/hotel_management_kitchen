@@ -112,6 +112,12 @@
 
                     <li class="sidebar-header">Administration</li>
 
+                    <li class="sidebar-item {{ request()->routeIs('lodges.*') ? 'active' : '' }}">
+                        <a class="sidebar-link" href="{{ route('lodges.index') }}">
+                            <i class="align-middle" data-feather="map-pin"></i> <span class="align-middle">Lodges</span>
+                        </a>
+                    </li>
+
                     <li class="sidebar-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('users.index') }}">
                             <i class="align-middle" data-feather="shield"></i> <span class="align-middle">Users & Roles</span>

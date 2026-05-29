@@ -9,16 +9,20 @@
     </div>
     <div class="card-body">
         <form class="row g-2 mb-3">
+            @if(auth()->user()?->hasRole('hotel_manager'))
+            <div class="col-md-3"><select name="lodge_id" class="form-select"><option value="">All Lodges</option>@foreach($lodges as $lodge)<option value="{{ $lodge->id }}" @selected((int) request('lodge_id')===$lodge->id)>{{ $lodge->name }}</option>@endforeach</select></div>
+            @endif
             <div class="col-md-3"><select name="status" class="form-select"><option value="">All Statuses</option>@foreach(\App\Models\Room::STATUSES as $status)<option value="{{ $status }}" @selected(request('status')===$status)>{{ $status }}</option>@endforeach</select></div>
             <div class="col-md-3"><select name="room_type" class="form-select"><option value="">All Types</option>@foreach(\App\Models\Room::TYPES as $type)<option value="{{ $type }}" @selected(request('room_type')===$type)>{{ $type }}</option>@endforeach</select></div>
             <div class="col-md-2"><button class="btn btn-secondary">Filter</button></div>
         </form>
         <table class="table table-hover">
-            <thead><tr><th>#</th><th>Room</th><th>Type</th><th>Price</th><th>Status</th><th>Features</th><th>Actions</th></tr></thead>
+            <thead><tr><th>#</th><th>Lodge</th><th>Room</th><th>Type</th><th>Price</th><th>Status</th><th>Features</th><th>Actions</th></tr></thead>
             <tbody>
             @foreach($rooms as $room)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
+                    <td>{{ $room->lodge?->name ?? '-' }}</td>
                     <td>{{ $room->room_number }}</td>
                     <td>{{ $room->room_type }}</td>
                     <td>{{ number_format($room->price_per_night, 2) }}</td>

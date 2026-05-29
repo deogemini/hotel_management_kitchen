@@ -10,7 +10,7 @@ class MenuItemController extends Controller
 {
     public function index()
     {
-        $menuItems = MenuItem::orderBy('category')->orderBy('name')->get();
+        $menuItems = $this->lodgeQuery(MenuItem::query())->orderBy('category')->orderBy('name')->get();
 
         return view('menu_items.index', compact('menuItems'));
     }
@@ -23,6 +23,7 @@ class MenuItemController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
+        $data['lodge_id'] = auth()->user()?->lodge_id;
         $data['is_available'] = $request->boolean('is_available');
         $data['created_by'] = auth()->id();
         $menuItem = MenuItem::create($data);
@@ -63,5 +64,14 @@ class MenuItemController extends Controller
             'low_stock_quantity' => ['nullable', 'integer', 'min:0'],
             'is_available' => ['nullable', 'boolean'],
         ]);
+    }
+
+    private function lodgeQuery($query)
+    {
+        if (! (auth()->user()?->hasRole('hotel_manager') ?? false)) {
+            $query->where('lodge_id', auth()->user()?->lodge_id);
+        }
+
+        return $query;
     }
 }

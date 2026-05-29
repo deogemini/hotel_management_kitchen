@@ -10,6 +10,7 @@ class Invoice extends Model
 {
     protected $fillable = [
         'invoice_number',
+        'lodge_id',
         'guest_id',
         'booking_id',
         'subtotal',

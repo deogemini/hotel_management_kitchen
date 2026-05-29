@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MenuItem extends Model
 {
     protected $fillable = [
         'name',
+        'lodge_id',
         'category',
         'description',
         'price',
@@ -31,5 +33,10 @@ class MenuItem extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(RestaurantOrderItem::class);
+    }
+
+    public function lodge(): BelongsTo
+    {
+        return $this->belongsTo(Lodge::class);
     }
 }

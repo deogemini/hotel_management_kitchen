@@ -9,6 +9,7 @@ use App\Http\Controllers\GuestController;
 use App\Http\Controllers\HotelReportController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\KitchenOrderController;
+use App\Http\Controllers\LodgeController;
 use App\Http\Controllers\MenuItemController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RestaurantOrderController;
@@ -55,6 +56,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:hotel_manager')->group(function () {
         Route::resource('menu-items', MenuItemController::class)->except(['show']);
+        Route::resource('lodges', LodgeController::class)->except(['show', 'destroy']);
         Route::resource('users', UserController::class);
         Route::get('roles', [RoleController::class, 'index'])->name('roles.index');
         Route::put('roles/{role}', [RoleController::class, 'update'])->name('roles.update');

@@ -17,6 +17,7 @@ class RestaurantOrderController extends Controller
     public function index(Request $request)
     {
         $restaurantOrders = RestaurantOrder::with('guest', 'room', 'items.menuItem')
+            ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->when($request->status, fn ($query, $status) => $query->where('status', $status))
             ->latest()
             ->get();
@@ -30,9 +31,9 @@ class RestaurantOrderController extends Controller
 
         return view('restaurant_orders.create', [
             'restaurantOrder' => new RestaurantOrder(),
-            'bookings' => Booking::with('guest', 'room')->where('status', 'Checked In')->get(),
-            'guests' => Guest::orderBy('full_name')->get(),
-            'menuItems' => MenuItem::where('is_available', true)->where('stock_quantity', '>', 0)->orderBy('category')->orderBy('name')->get(),
+            'bookings' => $this->lodgeQuery(Booking::with('guest', 'room')->where('status', 'Checked In'))->get(),
+            'guests' => $this->lodgeQuery(Guest::query())->orderBy('full_name')->get(),
+            'menuItems' => $this->lodgeQuery(MenuItem::where('is_available', true)->where('stock_quantity', '>', 0))->orderBy('category')->orderBy('name')->get(),
             'guestId' => $guestId,
         ]);
     }
@@ -69,10 +70,12 @@ class RestaurantOrderController extends Controller
         }
 
         $order = DB::transaction(function () use ($data, $requestedItems) {
-            $booking = ! empty($data['booking_id']) ? Booking::with('guest', 'room')->find($data['booking_id']) : null;
+            $booking = ! empty($data['booking_id']) ? $this->lodgeQuery(Booking::with('guest', 'room'))->find($data['booking_id']) : null;
+            $guest = ! empty($data['guest_id']) ? $this->lodgeQuery(Guest::query())->find($data['guest_id']) : null;
             $guestId = $booking?->guest_id ?: ($data['guest_id'] ?? null);
+            $lodgeId = $booking?->lodge_id ?: $guest?->lodge_id ?: auth()->user()?->lodge_id;
             $subtotal = 0;
-            $menuItems = MenuItem::whereKey(array_keys($requestedItems))->lockForUpdate()->get()->keyBy('id');
+            $menuItems = $this->lodgeQuery(MenuItem::whereKey(array_keys($requestedItems))->where('lodge_id', $lodgeId))->lockForUpdate()->get()->keyBy('id');
 
             foreach ($requestedItems as $menuItemId => $quantity) {
                 $menuItem = $menuItems->get($menuItemId);
@@ -92,6 +95,7 @@ class RestaurantOrderController extends Controller
 
             $order = RestaurantOrder::create([
                 'order_number' => 'ORD-'.now()->format('YmdHis').'-'.random_int(100, 999),
+                'lodge_id' => $lodgeId,
                 'customer_type' => $data['customer_type'],
                 'guest_id' => $guestId,
                 'booking_id' => $booking?->id,
@@ -115,6 +119,7 @@ class RestaurantOrderController extends Controller
 
                 RestaurantOrderItem::create([
                     'restaurant_order_id' => $order->id,
+                    'lodge_id' => $order->lodge_id,
                     'menu_item_id' => $menuItem->id,
                     'quantity' => $quantity,
                     'unit_price' => $menuItem->price,
@@ -188,5 +193,19 @@ class RestaurantOrderController extends Controller
         $restaurantOrder->delete();
 
         return redirect()->route('restaurant-orders.index')->with('success', 'Restaurant order deleted successfully.');
+    }
+
+    private function canSeeAllLodges(): bool
+    {
+        return auth()->user()?->hasRole('hotel_manager') ?? false;
+    }
+
+    private function lodgeQuery($query)
+    {
+        if (! $this->canSeeAllLodges()) {
+            $query->where('lodge_id', auth()->user()?->lodge_id);
+        }
+
+        return $query;
     }
 }

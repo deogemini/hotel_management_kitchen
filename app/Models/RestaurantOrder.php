@@ -12,6 +12,7 @@ class RestaurantOrder extends Model
 
     protected $fillable = [
         'order_number',
+        'lodge_id',
         'customer_type',
         'guest_id',
         'booking_id',
@@ -39,6 +40,11 @@ class RestaurantOrder extends Model
     public function guest(): BelongsTo
     {
         return $this->belongsTo(Guest::class);
+    }
+
+    public function lodge(): BelongsTo
+    {
+        return $this->belongsTo(Lodge::class);
     }
 
     public function booking(): BelongsTo

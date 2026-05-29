@@ -10,6 +10,7 @@ class Payment extends Model
 {
     protected $fillable = [
         'payment_number',
+        'lodge_id',
         'payable_type',
         'payable_id',
         'guest_id',

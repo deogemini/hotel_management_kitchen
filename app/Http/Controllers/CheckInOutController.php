@@ -43,6 +43,7 @@ class CheckInOutController extends Controller
 
         $invoice = $booking->invoice ?: Invoice::create([
             'invoice_number' => 'INV-'.now()->format('YmdHis').'-'.random_int(100, 999),
+            'lodge_id' => $booking->lodge_id,
             'guest_id' => $booking->guest_id,
             'booking_id' => $booking->id,
             'subtotal' => $subtotal,

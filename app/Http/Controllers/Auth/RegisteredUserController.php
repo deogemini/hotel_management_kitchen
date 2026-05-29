@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Lodge;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AuditService;
@@ -21,7 +22,7 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        return view('auth.register');
+        return view('auth.register', ['lodges' => Lodge::orderBy('name')->get()]);
     }
 
     /**
@@ -35,6 +36,7 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'phone' => ['nullable', 'string', 'max:20', 'unique:users,phone'],
+            'lodge_id' => ['required', 'exists:lodges,id'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -46,6 +48,7 @@ class RegisteredUserController extends Controller
             'phone' => $request->phone,
             'role' => 'cashier',
             'role_id' => $role?->id,
+            'lodge_id' => $request->lodge_id,
             'password' => Hash::make($request->password),
         ]);
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Lodge;
 use App\Models\Room;
 use App\Models\RoomImage;
 use App\Services\AuditService;
@@ -11,23 +12,26 @@ class RoomController extends Controller
 {
     public function index(Request $request)
     {
-        $rooms = Room::with('images')
+        $rooms = Room::with('images', 'lodge')
+            ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
+            ->when($this->canSeeAllLodges() && $request->lodge_id, fn ($query, $lodgeId) => $query->where('lodge_id', $lodgeId))
             ->when($request->status, fn ($query, $status) => $query->where('status', $status))
             ->when($request->room_type, fn ($query, $type) => $query->where('room_type', $type))
             ->orderBy('room_number')
             ->get();
 
-        return view('rooms.index', compact('rooms'));
+        return view('rooms.index', ['rooms' => $rooms, 'lodges' => Lodge::orderBy('name')->get()]);
     }
 
     public function create()
     {
-        return view('rooms.create', ['room' => new Room()]);
+        return view('rooms.create', ['room' => new Room(), 'lodges' => Lodge::orderBy('name')->get()]);
     }
 
     public function store(Request $request)
     {
         $data = $this->validated($request);
+        $data['lodge_id'] = $this->selectedLodgeId($request);
         $data['features'] = $request->input('features', []);
         $data['created_by'] = auth()->id();
 
@@ -47,12 +51,13 @@ class RoomController extends Controller
 
     public function edit(Room $room)
     {
-        return view('rooms.edit', compact('room'));
+        return view('rooms.edit', ['room' => $room, 'lodges' => Lodge::orderBy('name')->get()]);
     }
 
     public function update(Request $request, Room $room)
     {
         $data = $this->validated($request, $room);
+        $data['lodge_id'] = $this->selectedLodgeId($request, $room);
         $data['features'] = $request->input('features', []);
         $original = $room->getOriginal();
 
@@ -79,6 +84,7 @@ class RoomController extends Controller
     {
         return $request->validate([
             'room_number' => ['required', 'string', 'max:50', 'unique:rooms,room_number,'.($room?->id ?? 'NULL')],
+            'lodge_id' => [$this->canSeeAllLodges() ? 'required' : 'nullable', 'exists:lodges,id'],
             'room_type' => ['required', 'in:'.implode(',', Room::TYPES)],
             'price_per_night' => ['required', 'numeric', 'min:0'],
             'status' => ['required', 'in:'.implode(',', Room::STATUSES)],
@@ -98,5 +104,19 @@ class RoomController extends Controller
                 'is_primary' => ! $room->images()->exists(),
             ]);
         }
+    }
+
+    private function canSeeAllLodges(): bool
+    {
+        return auth()->user()?->hasRole('hotel_manager') ?? false;
+    }
+
+    private function selectedLodgeId(Request $request, ?Room $room = null): ?int
+    {
+        if ($this->canSeeAllLodges()) {
+            return (int) $request->input('lodge_id', $room?->lodge_id ?: auth()->user()?->lodge_id);
+        }
+
+        return auth()->user()?->lodge_id;
     }
 }

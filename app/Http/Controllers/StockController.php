@@ -10,7 +10,7 @@ class StockController extends Controller
 {
     public function index()
     {
-        $menuItems = MenuItem::orderBy('category')->orderBy('name')->get();
+        $menuItems = $this->lodgeQuery(MenuItem::query())->orderBy('category')->orderBy('name')->get();
 
         return view('stocks.index', compact('menuItems'));
     }
@@ -27,5 +27,14 @@ class StockController extends Controller
         AuditService::log('stock.update', $menuItem, ['from' => $original, 'to' => $data]);
 
         return back()->with('success', 'Stock updated successfully.');
+    }
+
+    private function lodgeQuery($query)
+    {
+        if (! (auth()->user()?->hasRole('hotel_manager') ?? false)) {
+            $query->where('lodge_id', auth()->user()?->lodge_id);
+        }
+
+        return $query;
     }
 }

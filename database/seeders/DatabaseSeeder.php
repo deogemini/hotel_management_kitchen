@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Permission;
+use App\Models\Lodge;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -18,6 +19,10 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->seedRolesAndPermissions();
+        $defaultLodge = Lodge::firstOrCreate(
+            ['name' => 'Lodge One'],
+            ['location' => 'Main lodge', 'description' => 'Default lodge for existing rooms and records.']
+        );
 
         if (!User::where('role', 'hotel_manager')->exists()) {
             $role = Role::where('name', 'hotel_manager')->first();
@@ -28,6 +33,7 @@ class DatabaseSeeder extends Seeder
                 'password' => bcrypt('password'),
                 'role' => 'hotel_manager',
                 'role_id' => $role?->id,
+                'lodge_id' => $defaultLodge->id,
             ]);
         }
 
@@ -38,6 +44,7 @@ class DatabaseSeeder extends Seeder
                 'email' => 'test@example.com',
                 'role' => 'cashier',
                 'role_id' => $role?->id,
+                'lodge_id' => $defaultLodge->id,
             ]);
         }
     }

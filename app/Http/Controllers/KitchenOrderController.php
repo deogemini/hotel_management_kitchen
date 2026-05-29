@@ -11,6 +11,7 @@ class KitchenOrderController extends Controller
     {
         $restaurantOrders = RestaurantOrder::with('items.menuItem', 'room')
             ->whereIn('status', ['Pending', 'Preparing', 'Ready'])
+            ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->latest()
             ->get();
 
@@ -19,6 +20,10 @@ class KitchenOrderController extends Controller
 
     public function updateStatus(Request $request, RestaurantOrder $restaurantOrder)
     {
+        if (! $this->canSeeAllLodges() && $restaurantOrder->lodge_id !== auth()->user()?->lodge_id) {
+            abort(403);
+        }
+
         $data = $request->validate([
             'status' => ['required', 'in:Pending,Preparing,Ready,Served,Cancelled'],
         ]);
@@ -26,5 +31,10 @@ class KitchenOrderController extends Controller
         $restaurantOrder->update($data + ['chef_id' => auth()->id()]);
 
         return back()->with('success', 'Kitchen order status updated.');
+    }
+
+    private function canSeeAllLodges(): bool
+    {
+        return auth()->user()?->hasRole('hotel_manager') ?? false;
     }
 }
