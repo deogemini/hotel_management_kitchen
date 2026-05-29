@@ -168,6 +168,13 @@ class BookingController extends Controller
         return view('bookings.receipt', compact('booking'));
     }
 
+    public function invoice(Booking $booking)
+    {
+        $booking->load('guest', 'room', 'payments');
+
+        return view('bookings.invoice', compact('booking'));
+    }
+
     private function validated(Request $request): array
     {
         $data = $request->validate([

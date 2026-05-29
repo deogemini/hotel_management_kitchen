@@ -1,0 +1,37 @@
+@extends('layouts.admin')
+@section('content')
+@php
+    $paidAmount = $booking->payments->whereIn('status', ['Paid', 'Partial'])->sum('amount');
+@endphp
+<h1 class="h3 mb-3">Invoice {{ $booking->booking_number }}</h1>
+<div class="card"><div class="card-body">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <p><strong>Guest:</strong> {{ $booking->guest->full_name }}</p>
+            <p><strong>Room:</strong> {{ $booking->room?->room_number }} {{ $booking->room_type }}</p>
+            <p><strong>Dates:</strong> {{ $booking->check_in_date?->format('Y-m-d') }} to {{ $booking->check_out_date?->format('Y-m-d') }}</p>
+        </div>
+        <div class="col-md-6">
+            <p><strong>Status:</strong> {{ $booking->status }}</p>
+            <p><strong>Issued:</strong> {{ now()->format('Y-m-d H:i') }}</p>
+        </div>
+    </div>
+
+    <table class="table">
+        <thead><tr><th>Description</th><th>Qty</th><th>Unit</th><th>Total</th></tr></thead>
+        <tbody>
+            <tr>
+                <td>Room {{ $booking->room?->room_number }} charges</td>
+                <td>{{ $booking->number_of_nights }}</td>
+                <td>{{ number_format($booking->room_rate, 2) }}</td>
+                <td>{{ number_format($booking->room_total, 2) }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h5>Subtotal: {{ number_format($booking->room_total, 2) }}</h5>
+    <h5>Paid: {{ number_format($paidAmount, 2) }}</h5>
+    <h5>Balance: {{ number_format($booking->balance_amount, 2) }}</h5>
+    <button onclick="window.print()" class="btn btn-secondary">Print</button>
+</div></div>
+@endsection
