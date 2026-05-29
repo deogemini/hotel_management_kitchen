@@ -16,13 +16,24 @@ class HotelReportController extends Controller
     public function dailyCollections(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request, today()->toDateString(), today()->toDateString());
-        $rows = $this->lodgeQuery(Payment::with('guest'), $request)
+        $rooms = $this->lodgeQuery(Room::with('lodge'), $request)
+            ->orderBy('room_number')
+            ->get();
+        $payments = $this->lodgeQuery(Payment::with('booking.room'), $request)
             ->whereIn('status', ['Paid', 'Partial'])
             ->whereBetween('paid_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])
-            ->latest('paid_at')
+            ->get();
+        $balances = $this->lodgeQuery(Booking::with('room'), $request)
+            ->where('balance_amount', '>', 0)
+            ->whereDate('check_in_date', '<=', $endDate)
+            ->whereDate('check_out_date', '>=', $startDate)
             ->get();
 
-        return $this->reportView($request, 'Daily Collection Report', $rows, 'payments', $startDate, $endDate);
+        $cashMovement = $this->cashMovementRows($rooms, $payments, $balances);
+
+        return $this->reportView($request, 'Cash Movement Report', $rooms, 'cash_movement', $startDate, $endDate, [
+            'cashMovement' => $cashMovement,
+        ]);
     }
 
     public function roomBookings(Request $request)
@@ -126,9 +137,9 @@ class HotelReportController extends Controller
         return [$startDate, $endDate];
     }
 
-    private function reportView(Request $request, string $title, $rows, string $type, string $startDate, string $endDate)
+    private function reportView(Request $request, string $title, $rows, string $type, string $startDate, string $endDate, array $extra = [])
     {
-        return view('reports.hotel', [
+        return view('reports.hotel', array_merge([
             'title' => $title,
             'rows' => $rows,
             'type' => $type,
@@ -136,7 +147,47 @@ class HotelReportController extends Controller
             'endDate' => $endDate,
             'lodges' => Lodge::orderBy('name')->get(),
             'selectedLodgeId' => $request->input('lodge_id'),
-        ]);
+        ], $extra));
+    }
+
+    private function cashMovementRows($rooms, $payments, $balances): array
+    {
+        $paymentsByRoom = $payments
+            ->filter(fn ($payment) => $payment->booking?->room_id)
+            ->groupBy(fn ($payment) => $payment->booking->room_id);
+        $balancesByRoom = $balances
+            ->filter(fn ($booking) => $booking->room_id)
+            ->groupBy('room_id');
+        $collectionRows = [];
+        $outstandingRows = [];
+
+        foreach ($rooms as $room) {
+            $roomPayments = $paymentsByRoom->get($room->id, collect());
+            $roomBalances = $balancesByRoom->get($room->id, collect());
+            $cash = (float) $roomPayments->where('payment_method', 'Cash')->sum('amount');
+            $lipaNamba = (float) $roomPayments->whereIn('payment_method', ['Mobile money', 'Card'])->sum('amount');
+            $debtor = (float) $roomBalances->sum('balance_amount');
+
+            $collectionRows[] = [
+                'room_number' => $room->room_number,
+                'debtor' => $debtor,
+                'cash' => $cash,
+                'lipa_namba' => $lipaNamba,
+                'amount' => $debtor + $cash + $lipaNamba,
+            ];
+            $outstandingRows[] = [
+                'room_number' => $room->room_number,
+                'amount' => $debtor,
+            ];
+        }
+
+        return [
+            'collectionRows' => $collectionRows,
+            'outstandingRows' => $outstandingRows,
+            'totalCollections' => collect($collectionRows)->sum('amount'),
+            'totalOutstanding' => collect($outstandingRows)->sum('amount'),
+            'totalIncome' => collect($collectionRows)->sum('amount'),
+        ];
     }
 
     private function lodgeQuery($query, Request $request)

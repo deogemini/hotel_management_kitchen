@@ -13,6 +13,32 @@
     .report-print-header {
         display: none;
     }
+    .cash-movement-table th,
+    .cash-movement-table td {
+        border: 2px solid #111 !important;
+        padding: 3px 6px;
+    }
+    .cash-movement-table .report-band {
+        background: #b8d99d;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .cash-movement-table .section-band {
+        background: #e9f2fb;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .cash-movement-table tbody td {
+        background: #cfe2f3;
+    }
+    .cash-movement-table td.report-band,
+    .cash-movement-table tr.report-band td {
+        background: #b8d99d !important;
+    }
+    .cash-movement-table td.section-band,
+    .cash-movement-table tr.section-band td {
+        background: #e9f2fb !important;
+    }
 
     @media print {
         .sidebar,
@@ -97,6 +123,42 @@
 </div></div>
 <div class="card"><div class="card-body">
 <p class="text-muted report-screen-title">Period: {{ $startDate }} to {{ $endDate }}</p>
+@if($type === 'cash_movement')
+<table class="table cash-movement-table">
+    <tbody>
+        <tr><td colspan="6" class="report-band">{{ optional($rows->first()?->lodge)->name ?? config('app.name', 'Hotel Management System') }}</td></tr>
+        <tr><td colspan="6" class="report-band">{{ strtoupper($title) }}</td></tr>
+        <tr><td class="report-band">DATE</td><td colspan="5" class="report-band">{{ \Illuminate\Support\Carbon::parse($startDate)->format('d.m.Y') }}@if($startDate !== $endDate) to {{ \Illuminate\Support\Carbon::parse($endDate)->format('d.m.Y') }}@endif</td></tr>
+        <tr><td></td><td colspan="5" class="section-band text-center">collection</td></tr>
+        <tr class="section-band"><td>S/N</td><td>ROOM NUMBER</td><td>debtor</td><td>CASH</td><td>LIPA NAMBA</td><td>AMOUNT</td></tr>
+        @foreach($cashMovement['collectionRows'] as $row)
+            <tr>
+                <td class="text-end">{{ $loop->iteration }}</td>
+                <td>Room No. {{ $row['room_number'] }}</td>
+                <td class="text-end">{{ $row['debtor'] > 0 ? number_format($row['debtor'], 0) : '' }}</td>
+                <td class="text-end">{{ $row['cash'] > 0 ? number_format($row['cash'], 0) : '' }}</td>
+                <td class="text-end">{{ $row['lipa_namba'] > 0 ? number_format($row['lipa_namba'], 0) : '' }}</td>
+                <td class="text-end">{{ $row['amount'] > 0 ? number_format($row['amount'], 0) : '' }}</td>
+            </tr>
+        @endforeach
+        <tr class="section-band"><td></td><td colspan="4">TOTAL COLLECTIONS</td><td class="text-end">{{ number_format($cashMovement['totalCollections'], 0) }}</td></tr>
+        <tr><td colspan="6">&nbsp;</td></tr>
+        <tr><td></td><td colspan="5" class="section-band">OUTSTANDING COLLECTIONS</td></tr>
+        @foreach($cashMovement['outstandingRows'] as $row)
+            <tr>
+                <td class="text-end">{{ $loop->iteration + count($cashMovement['collectionRows']) }}</td>
+                <td>Room No. {{ $row['room_number'] }}</td>
+                <td class="text-center">{{ $row['amount'] > 0 ? number_format($row['amount'], 0) : '-' }}</td>
+                <td></td>
+                <td></td>
+                <td class="text-end">{{ $row['amount'] > 0 ? number_format($row['amount'], 0) : '' }}</td>
+            </tr>
+        @endforeach
+        <tr class="section-band"><td></td><td colspan="4">TOTAL COLLECTIONS</td><td class="text-end">{{ $cashMovement['totalOutstanding'] > 0 ? number_format($cashMovement['totalOutstanding'], 0) : '-' }}</td></tr>
+        <tr class="section-band"><td></td><td colspan="4">TOTAL INCOME COLLECTIONS</td><td class="text-end">{{ number_format($cashMovement['totalIncome'], 0) }}</td></tr>
+    </tbody>
+</table>
+@else
 <table class="table table-hover"><thead><tr>
 @if($type === 'payments')<th>Receipt</th><th>Guest</th><th>Method</th><th>Amount</th><th>Date</th>@endif
 @if($type === 'bookings')<th>Booking</th><th>Guest</th><th>Room</th><th>Status</th><th>Total</th><th>Balance</th>@endif
@@ -123,4 +185,6 @@
 </tfoot>
 @endif
 </table><button onclick="window.print()" class="btn btn-secondary">Print</button></div></div>
+@endif
+@if($type === 'cash_movement')<button onclick="window.print()" class="btn btn-secondary">Print</button></div></div>@endif
 @endsection
