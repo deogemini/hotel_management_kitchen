@@ -24,13 +24,16 @@ class RestaurantOrderController extends Controller
         return view('restaurant_orders.index', compact('restaurantOrders'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        $guestId = $request->integer('guest_id') ?: null;
+
         return view('restaurant_orders.create', [
             'restaurantOrder' => new RestaurantOrder(),
             'bookings' => Booking::with('guest', 'room')->where('status', 'Checked In')->get(),
             'guests' => Guest::orderBy('full_name')->get(),
             'menuItems' => MenuItem::where('is_available', true)->where('stock_quantity', '>', 0)->orderBy('category')->orderBy('name')->get(),
+            'guestId' => $guestId,
         ]);
     }
 
@@ -39,6 +42,7 @@ class RestaurantOrderController extends Controller
         $data = $request->validate([
             'customer_type' => ['required', 'in:Room guest,Walk-in customer'],
             'booking_id' => ['nullable', 'exists:bookings,id'],
+            'guest_id' => ['nullable', 'exists:guests,id'],
             'walk_in_customer_name' => ['nullable', 'string', 'max:255'],
             'payment_method' => ['required', 'in:Cash,Mobile money,Card,Room charge'],
             'paid_amount' => ['nullable', 'numeric', 'min:0'],
@@ -66,6 +70,7 @@ class RestaurantOrderController extends Controller
 
         $order = DB::transaction(function () use ($data, $requestedItems) {
             $booking = ! empty($data['booking_id']) ? Booking::with('guest', 'room')->find($data['booking_id']) : null;
+            $guestId = $booking?->guest_id ?: ($data['guest_id'] ?? null);
             $subtotal = 0;
             $menuItems = MenuItem::whereKey(array_keys($requestedItems))->lockForUpdate()->get()->keyBy('id');
 
@@ -88,7 +93,7 @@ class RestaurantOrderController extends Controller
             $order = RestaurantOrder::create([
                 'order_number' => 'ORD-'.now()->format('YmdHis').'-'.random_int(100, 999),
                 'customer_type' => $data['customer_type'],
-                'guest_id' => $booking?->guest_id,
+                'guest_id' => $guestId,
                 'booking_id' => $booking?->id,
                 'room_id' => $booking?->room_id,
                 'walk_in_customer_name' => $data['walk_in_customer_name'] ?? null,

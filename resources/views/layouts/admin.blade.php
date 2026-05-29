@@ -74,6 +74,12 @@
                         </a>
                     </li>
 
+                    <li class="sidebar-item {{ request()->routeIs('service-charges.*') ? 'active' : '' }}">
+                        <a class="sidebar-link" href="{{ route('service-charges.index') }}">
+                            <i class="align-middle" data-feather="shopping-bag"></i> <span class="align-middle">Guest Services</span>
+                        </a>
+                    </li>
+
                     <li class="sidebar-item {{ request()->routeIs('stocks.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('stocks.index') }}">
                             <i class="align-middle" data-feather="package"></i> <span class="align-middle">Stock Management</span>

@@ -32,7 +32,12 @@ class GuestController extends Controller
 
     public function show(Guest $guest)
     {
-        $guest->load(['bookings.room', 'restaurantOrders.items.menuItem', 'payments']);
+        $guest->load([
+            'bookings.room',
+            'restaurantOrders.items.menuItem',
+            'otherCharges.booking.room',
+            'payments',
+        ]);
 
         return view('guests.show', compact('guest'));
     }

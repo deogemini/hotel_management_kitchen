@@ -33,6 +33,11 @@ class Guest extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function otherCharges(): HasMany
+    {
+        return $this->hasMany(OtherCharge::class);
+    }
+
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);

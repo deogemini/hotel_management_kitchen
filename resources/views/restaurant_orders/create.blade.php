@@ -23,6 +23,15 @@
                     </select>
                 </div>
                 <div class="col-md-4 mb-3">
+                    <label class="form-label">Guest</label>
+                    <select name="guest_id" class="form-select">
+                        <option value="">Walk-in / none</option>
+                        @foreach($guests as $guest)
+                            <option value="{{ $guest->id }}" @selected((int) old('guest_id', $guestId ?? null) === $guest->id)>{{ $guest->full_name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
                     <label class="form-label">Walk-in Name</label>
                     <input name="walk_in_customer_name" class="form-control">
                 </div>

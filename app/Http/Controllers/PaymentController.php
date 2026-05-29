@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Invoice;
+use App\Models\OtherCharge;
 use App\Models\Payment;
 use App\Models\RestaurantOrder;
 use Illuminate\Http\Request;
@@ -13,7 +14,7 @@ class PaymentController extends Controller
 {
     public function index()
     {
-        $payments = Payment::with('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice')->latest('paid_at')->get();
+        $payments = Payment::with('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice', 'payable')->latest('paid_at')->get();
 
         return view('payments.index', compact('payments'));
     }
@@ -32,6 +33,7 @@ class PaymentController extends Controller
             'bookings' => Booking::with('guest', 'room')->whereIn('status', ['Pending', 'Confirmed', 'Checked In', 'Checked Out'])->where('balance_amount', '>', 0)->get(),
             'restaurantOrders' => RestaurantOrder::with('guest', 'room')->whereIn('payment_status', ['Unpaid', 'Partial'])->where('balance_amount', '>', 0)->get(),
             'invoices' => Invoice::with('guest')->whereIn('status', ['Unpaid', 'Partial'])->get(),
+            'serviceCharges' => OtherCharge::with('guest', 'booking.room')->whereIn('payment_status', ['Unpaid', 'Partial'])->where('balance_amount', '>', 0)->get(),
             'targetType' => $targetType,
             'targetId' => $targetId,
             'selectedTarget' => $selectedTarget,
@@ -43,7 +45,7 @@ class PaymentController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'target_type' => ['required', 'in:booking,restaurant_order,invoice'],
+            'target_type' => ['required', 'in:booking,restaurant_order,invoice,service_charge'],
             'target_id' => ['required', 'integer'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'payment_method' => ['required', 'in:Cash,Mobile money,Card,Room charge'],
@@ -96,7 +98,7 @@ class PaymentController extends Controller
 
     public function receipt(Payment $payment)
     {
-        $payment->load('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice');
+        $payment->load('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice', 'payable');
 
         return view('payments.receipt', compact('payment'));
     }
@@ -111,6 +113,10 @@ class PaymentController extends Controller
 
         if ($type === 'restaurant_order') {
             return [$target, $target->guest_id, $target->booking_id, $target->id, null];
+        }
+
+        if ($type === 'service_charge') {
+            return [$target, $target->guest_id, $target->booking_id, null, null];
         }
 
         return [$target, $target->guest_id, $target->booking_id, null, $target->id];
@@ -128,6 +134,10 @@ class PaymentController extends Controller
 
         if ($type === 'invoice') {
             return Invoice::with('guest')->findOrFail($id);
+        }
+
+        if ($type === 'service_charge') {
+            return OtherCharge::with('guest', 'booking.room')->findOrFail($id);
         }
 
         abort(404);
@@ -152,6 +162,10 @@ class PaymentController extends Controller
 
         if ($target instanceof Invoice) {
             return $target->invoice_number.' - '.$target->guest?->full_name;
+        }
+
+        if ($target instanceof OtherCharge) {
+            return $target->service_type.' - '.$target->guest?->full_name.' - Balance '.number_format($target->balance_amount, 2);
         }
 
         return '-';
@@ -179,6 +193,15 @@ class PaymentController extends Controller
                 'paid_amount' => $paid,
                 'balance_amount' => max(0, $target->subtotal - $paid),
                 'status' => $paid >= $target->subtotal ? 'Paid' : ($paid > 0 ? 'Partial' : 'Unpaid'),
+            ]);
+        }
+
+        if ($target instanceof OtherCharge) {
+            $paid = $target->payments()->whereIn('status', ['Paid', 'Partial'])->sum('amount');
+            $target->update([
+                'paid_amount' => $paid,
+                'balance_amount' => max(0, $target->amount - $paid),
+                'payment_status' => $paid >= $target->amount ? 'Paid' : ($paid > 0 ? 'Partial' : 'Unpaid'),
             ]);
         }
     }

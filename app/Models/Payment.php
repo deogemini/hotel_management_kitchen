@@ -71,6 +71,10 @@ class Payment extends Model
 
     public function purposeLabel(): string
     {
+        if ($this->payable instanceof OtherCharge) {
+            return $this->payable->service_type.' - '.$this->payable->description;
+        }
+
         if ($this->restaurantOrder) {
             $details = $this->restaurantOrder->customer_type;
 

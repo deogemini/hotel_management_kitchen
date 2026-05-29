@@ -31,6 +31,7 @@
                                 <option value="booking" @selected(($targetType ?? 'booking')==='booking')>Booking</option>
                                 <option value="restaurant_order" @selected($targetType==='restaurant_order')>Restaurant Order</option>
                                 <option value="invoice" @selected($targetType==='invoice')>Invoice</option>
+                                <option value="service_charge" @selected($targetType==='service_charge')>Guest Service</option>
                             </select>
                         </div>
                         <div class="col-md-8 mb-3">
@@ -99,6 +100,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     id: '{{ $invoice->id }}',
                     label: @json($invoice->invoice_number.' - '.$invoice->guest?->full_name.' - Balance '.number_format($invoice->balance_amount, 2)),
                     balance: {{ (float) $invoice->balance_amount }},
+                },
+            @endforeach
+        ],
+        service_charge: [
+            @foreach($serviceCharges as $charge)
+                {
+                    id: '{{ $charge->id }}',
+                    label: @json($charge->service_type.' - '.$charge->guest?->full_name.' - Balance '.number_format($charge->balance_amount, 2)),
+                    balance: {{ (float) $charge->balance_amount }},
                 },
             @endforeach
         ],
