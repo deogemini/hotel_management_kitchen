@@ -20,6 +20,7 @@
         .footer,
         .btn,
         .alert,
+        .report-filter,
         .report-screen-title {
             display: none !important;
         }
@@ -63,10 +64,40 @@
 <div class="report-print-header">
     <h1>Hard Rock Executive Lodge</h1>
     <h2>{{ $title }}</h2>
+    <div>Period: {{ $startDate }} to {{ $endDate }}</div>
     <div>Generated on {{ now()->format('Y-m-d H:i') }}</div>
 </div>
 <h1 class="h3 mb-3 report-screen-title">{{ $title }}</h1>
-<div class="card"><div class="card-body"><table class="table table-hover"><thead><tr>
+<div class="card report-filter"><div class="card-body">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Start Date</label>
+            <input type="date" name="start_date" class="form-control" value="{{ $startDate }}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">End Date</label>
+            <input type="date" name="end_date" class="form-control" value="{{ $endDate }}">
+        </div>
+        @if(auth()->user()?->hasRole('hotel_manager'))
+        <div class="col-md-3">
+            <label class="form-label">Lodge</label>
+            <select name="lodge_id" class="form-select">
+                <option value="">All Lodges</option>
+                @foreach($lodges as $lodge)
+                    <option value="{{ $lodge->id }}" @selected((int) $selectedLodgeId === $lodge->id)>{{ $lodge->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        @endif
+        <div class="col-md-3">
+            <button class="btn btn-primary">Pull Report</button>
+            <a href="{{ url()->current() }}" class="btn btn-secondary">Reset</a>
+        </div>
+    </form>
+</div></div>
+<div class="card"><div class="card-body">
+<p class="text-muted report-screen-title">Period: {{ $startDate }} to {{ $endDate }}</p>
+<table class="table table-hover"><thead><tr>
 @if($type === 'payments')<th>Receipt</th><th>Guest</th><th>Method</th><th>Amount</th><th>Date</th>@endif
 @if($type === 'bookings')<th>Booking</th><th>Guest</th><th>Room</th><th>Status</th><th>Total</th><th>Balance</th>@endif
 @if($type === 'rooms')<th>Room</th><th>Type</th><th>Status</th><th>Price</th>@endif
