@@ -36,7 +36,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::middleware('role:hotel_manager,cashier')->group(function () {
+    Route::middleware('role:hotel_manager,cashier,Owner,owner')->group(function () {
         Route::resource('rooms', RoomController::class);
         Route::resource('guests', GuestController::class);
         Route::resource('bookings', BookingController::class);
