@@ -12,7 +12,7 @@ class RoomController extends Controller
 {
     public function index(Request $request)
     {
-        $rooms = Room::with('images', 'lodge')
+        $rooms = Room::with(['images', 'lodge', 'bookings' => fn ($query) => $query->latest('updated_at')])
             ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->when($this->canSeeAllLodges() && $request->lodge_id, fn ($query, $lodgeId) => $query->where('lodge_id', $lodgeId))
             ->when($request->status, fn ($query, $status) => $query->where('status', $status))
