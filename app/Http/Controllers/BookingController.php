@@ -120,7 +120,7 @@ class BookingController extends Controller
 
     public function destroy(Booking $booking)
     {
-        abort_unless(auth()->user()?->hasAnyRole(['Owner', 'owner']), 403);
+        abort_unless(auth()->user()?->hasRole('Owner', 'owner'), 403);
 
         if ($booking->status === 'Checked In') {
             return back()->withErrors(['booking' => 'Cannot delete a checked-in booking.']);
