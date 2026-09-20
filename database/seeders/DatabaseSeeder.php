@@ -24,12 +24,12 @@ class DatabaseSeeder extends Seeder
             ['location' => 'Main lodge', 'description' => 'Default lodge for existing rooms and records.']
         );
 
-        if (!User::where('role', 'hotel_manager')->exists()) {
+        if (!User::where('email', 'manager@hotel.test')->exists()) {
             $role = Role::where('name', 'hotel_manager')->first();
             User::create([
                 'name' => 'Hotel Manager',
                 'email' => 'manager@hotel.test',
-                'phone' => '0700000000',
+                'phone' => env('MANAGER_PHONE'),
                 'password' => bcrypt('password'),
                 'role' => 'hotel_manager',
                 'role_id' => $role?->id,
@@ -47,6 +47,19 @@ class DatabaseSeeder extends Seeder
                 'lodge_id' => $defaultLodge->id,
             ]);
         }
+
+        $ownerRole = Role::where('name', 'Owner')->first();
+        User::firstOrCreate(
+            ['email' => env('OWNER_EMAIL', 'owner@hotel.test')],
+            [
+                'name' => env('OWNER_NAME', 'Hotel Owner'),
+                'phone' => env('OWNER_PHONE'),
+                'password' => bcrypt(env('OWNER_PASSWORD', 'password')),
+                'role' => 'Owner',
+                'role_id' => $ownerRole?->id,
+                'lodge_id' => $defaultLodge->id,
+            ]
+        );
     }
 
     private function seedRolesAndPermissions(): void
@@ -55,6 +68,7 @@ class DatabaseSeeder extends Seeder
             'hotel_manager' => ['Hotel Manager', 'Full access to hotel operations, reports, users, and settings.'],
             'cashier' => ['Cashier', 'Front desk, booking, payment, and restaurant cashier access.'],
             'chef' => ['Chef', 'Kitchen order viewing and status updates only.'],
+            'Owner' => ['Owner', 'Full access to all hotel operations and owner-only actions.'],
         ];
 
         foreach ($roles as $name => [$displayName, $description]) {
@@ -90,6 +104,7 @@ class DatabaseSeeder extends Seeder
 
         $rolePermissions = [
             'hotel_manager' => Permission::pluck('name')->all(),
+            'Owner' => Permission::pluck('name')->all(),
             'cashier' => [
                 'dashboard.view',
                 'rooms.manage',

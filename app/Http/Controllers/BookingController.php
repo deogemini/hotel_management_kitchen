@@ -122,10 +122,6 @@ class BookingController extends Controller
     {
         abort_unless(auth()->user()?->hasRole('Owner', 'owner'), 403);
 
-        if ($booking->status === 'Checked In') {
-            return back()->withErrors(['booking' => 'Cannot delete a checked-in booking.']);
-        }
-
         $attributes = $booking->getAttributes();
         $booking->room?->update(['status' => 'Available']);
         $booking->delete();
