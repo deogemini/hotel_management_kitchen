@@ -15,9 +15,9 @@
 
 <body>
     @php
-        $role = Auth::user()?->role;
-        $isManager = in_array($role, ['hotel_manager', 'admin'], true);
-        $isCashier = in_array($role, ['cashier', 'user'], true);
+        $role = Auth::user()?->effectiveRoleName();
+        $isManager = Auth::user()?->hasRole('hotel_manager') ?? false;
+        $isCashier = Auth::user()?->hasRole('cashier') ?? false;
         $isChef = $role === 'chef';
     @endphp
     <div class="wrapper">
