@@ -56,7 +56,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:hotel_manager')->group(function () {
         Route::resource('menu-items', MenuItemController::class)->except(['show']);
-        Route::resource('lodges', LodgeController::class)->except(['show', 'destroy']);
+        Route::resource('lodges', LodgeController::class)->except(['show']);
         Route::resource('users', UserController::class);
         Route::get('roles', [RoleController::class, 'index'])->name('roles.index');
         Route::put('roles/{role}', [RoleController::class, 'update'])->name('roles.update');

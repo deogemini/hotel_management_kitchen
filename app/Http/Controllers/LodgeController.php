@@ -42,6 +42,15 @@ class LodgeController extends Controller
         return redirect()->route('lodges.index')->with('success', 'Lodge updated successfully.');
     }
 
+    public function destroy(Lodge $lodge)
+    {
+        $attributes = $lodge->getAttributes();
+        $lodge->delete();
+        AuditService::log('lodge.delete', null, $attributes);
+
+        return redirect()->route('lodges.index')->with('success', 'Lodge deleted successfully.');
+    }
+
     private function validated(Request $request, ?Lodge $lodge = null): array
     {
         return $request->validate([
