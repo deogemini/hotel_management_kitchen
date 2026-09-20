@@ -79,6 +79,11 @@ class User extends Authenticatable
 
     public function hasRole(string ...$roles): bool
     {
+        // Owner is the system-wide role and inherits every role's access.
+        if (strtolower((string) $this->effectiveRoleName()) === 'owner') {
+            return true;
+        }
+
         return in_array($this->effectiveRoleName(), $roles, true);
     }
 
