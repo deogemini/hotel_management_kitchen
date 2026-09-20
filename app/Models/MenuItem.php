@@ -13,6 +13,8 @@ class MenuItem extends Model
         'lodge_id',
         'category',
         'description',
+        'buying_price',
+        'selling_price',
         'price',
         'stock_quantity',
         'low_stock_quantity',
@@ -24,6 +26,8 @@ class MenuItem extends Model
     {
         return [
             'price' => 'decimal:2',
+            'buying_price' => 'decimal:2',
+            'selling_price' => 'decimal:2',
             'stock_quantity' => 'integer',
             'low_stock_quantity' => 'integer',
             'is_available' => 'boolean',

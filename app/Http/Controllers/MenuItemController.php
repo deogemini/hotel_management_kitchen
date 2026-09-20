@@ -25,6 +25,7 @@ class MenuItemController extends Controller
         $data = $this->validated($request);
         $data['lodge_id'] = auth()->user()?->lodge_id;
         $data['is_available'] = $request->boolean('is_available');
+        $data['price'] = $data['selling_price'];
         $data['created_by'] = auth()->id();
         $menuItem = MenuItem::create($data);
         AuditService::log('menu_item.create', $menuItem, $menuItem->getAttributes());
@@ -41,6 +42,7 @@ class MenuItemController extends Controller
     {
         $data = $this->validated($request);
         $data['is_available'] = $request->boolean('is_available');
+        $data['price'] = $data['selling_price'];
         $menuItem->update($data);
 
         return redirect()->route('menu-items.index')->with('success', 'Menu item updated successfully.');
@@ -57,9 +59,10 @@ class MenuItemController extends Controller
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'category' => ['required', 'string', 'max:100'],
+            'category' => ['required', 'in:Food,Drinks'],
             'description' => ['nullable', 'string'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'buying_price' => ['required', 'numeric', 'min:0'],
+            'selling_price' => ['required', 'numeric', 'min:0'],
             'stock_quantity' => ['nullable', 'integer', 'min:0'],
             'low_stock_quantity' => ['nullable', 'integer', 'min:0'],
             'is_available' => ['nullable', 'boolean'],

@@ -1,8 +1,9 @@
 @csrf
 <div class="row">
 <div class="col-md-6 mb-3"><label class="form-label">Name</label><input name="name" class="form-control" value="{{ old('name', $menuItem->name) }}" required></div>
-<div class="col-md-3 mb-3"><label class="form-label">Category</label><input name="category" class="form-control" value="{{ old('category', $menuItem->category) }}" required></div>
-<div class="col-md-3 mb-3"><label class="form-label">Price</label><input type="number" step="0.01" name="price" class="form-control" value="{{ old('price', $menuItem->price) }}" required></div>
+<div class="col-md-3 mb-3"><label class="form-label">Category</label><select name="category" class="form-select" required><option value="">Select category</option><option value="Food" @selected(old('category', $menuItem->category) === 'Food')>Food</option><option value="Drinks" @selected(old('category', $menuItem->category) === 'Drinks')>Drinks</option></select></div>
+<div class="col-md-3 mb-3"><label class="form-label">Buying Price</label><input type="number" step="0.01" min="0" name="buying_price" class="form-control" value="{{ old('buying_price', $menuItem->buying_price) }}" required></div>
+<div class="col-md-3 mb-3"><label class="form-label">Selling Price</label><input type="number" step="0.01" min="0" name="selling_price" class="form-control" value="{{ old('selling_price', $menuItem->selling_price ?? $menuItem->price) }}" required></div>
 <div class="col-md-3 mb-3"><label class="form-label">Stock Quantity</label><input type="number" min="0" name="stock_quantity" class="form-control" value="{{ old('stock_quantity', $menuItem->stock_quantity ?? 0) }}"></div>
 <div class="col-md-3 mb-3"><label class="form-label">Low Stock Alert</label><input type="number" min="0" name="low_stock_quantity" class="form-control" value="{{ old('low_stock_quantity', $menuItem->low_stock_quantity ?? 5) }}"></div>
 <div class="col-12 mb-3"><label class="form-label">Description</label><textarea name="description" class="form-control">{{ old('description', $menuItem->description) }}</textarea></div>
