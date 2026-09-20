@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Room extends Model
 {
-    public const TYPES = ['Single', 'Double', 'Twin', 'Deluxe', 'Suite'];
+    public const TYPES = ['Single', 'Executive', 'Deluxe', 'Suite'];
     public const STATUSES = ['Available', 'Occupied', 'Reserved', 'Maintenance'];
     public const FEATURES = ['AC', 'TV', 'WiFi', 'Hot shower', 'Fridge', 'Balcony', 'Feni', 'Kabati', 'Kiti', 'Kiti na Meza'];
 
