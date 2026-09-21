@@ -68,6 +68,8 @@ class DatabaseSeeder extends Seeder
             'hotel_manager' => ['Hotel Manager', 'Full access to hotel operations, reports, users, and settings.'],
             'cashier' => ['Cashier', 'Front desk, booking, payment, and restaurant cashier access.'],
             'chef' => ['Chef', 'Kitchen order viewing and status updates only.'],
+            'bar_counter' => ['Bar Counter', 'Bar counter operations.'],
+            'reception' => ['Reception', 'Reception and front desk operations.'],
             'Owner' => ['Owner', 'Full access to all hotel operations and owner-only actions.'],
         ];
 

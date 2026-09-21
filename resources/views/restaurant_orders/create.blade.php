@@ -32,10 +32,6 @@
                     </select>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Walk-in Name</label>
-                    <input name="walk_in_customer_name" class="form-control">
-                </div>
-                <div class="col-md-4 mb-3">
                     <label class="form-label">Payment Method</label>
                     <select name="payment_method" class="form-select">
                         <option>Cash</option>

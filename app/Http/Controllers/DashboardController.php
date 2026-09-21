@@ -37,7 +37,12 @@ class DashboardController extends Controller
         $todayCheckIns = $this->lodgeQuery(Booking::with('guest', 'room'))->whereDate('check_in_date', today())->latest()->limit(8)->get();
         $todayCheckOuts = $this->lodgeQuery(Booking::with('guest', 'room'))->whereDate('check_out_date', today())->latest()->limit(8)->get();
         $recentPayments = $this->lodgeQuery(Payment::with('guest'))->latest('paid_at')->limit(8)->get();
-        $pendingKitchenOrders = $this->lodgeQuery(RestaurantOrder::with('items.menuItem', 'room'))->whereIn('status', ['Pending', 'Preparing'])->latest()->limit(8)->get();
+        $pendingKitchenOrders = $this->lodgeQuery(RestaurantOrder::with('items.menuItem', 'room'))
+            ->whereHas('items.menuItem', fn ($query) => $query->where('category', 'Food'))
+            ->whereIn('status', ['Pending', 'Preparing'])
+            ->latest()
+            ->limit(8)
+            ->get();
 
         return view('dashboard', compact('stats', 'todayCheckIns', 'todayCheckOuts', 'recentPayments', 'pendingKitchenOrders'));
     }
