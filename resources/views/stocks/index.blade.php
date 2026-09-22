@@ -60,7 +60,9 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="text-muted">No menu items found.</td></tr>
+                    <tr>
+                        <td></td><td class="text-muted">No menu items found.</td><td></td><td></td><td></td><td></td>
+                    </tr>
                 @endforelse
             </tbody>
         </table>
@@ -79,7 +81,7 @@
             pageLength: 10,
             lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
             order: [[1, 'asc']],
-            columnDefs: [{ orderable: false, targets: [5, 6] }],
+            columnDefs: [{ orderable: false, targets: [5] }],
             language: {
                 search: 'Search stock:',
                 lengthMenu: 'Show _MENU_ entries',
