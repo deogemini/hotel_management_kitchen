@@ -11,6 +11,7 @@ use App\Models\StockMovement;
 use App\Models\Expense;
 use App\Models\OtherCharge;
 use App\Models\Purchase;
+use App\Models\MenuItem;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -137,8 +138,12 @@ class HotelReportController extends Controller
         $services = $this->lodgeQuery(OtherCharge::query(), $request)->whereBetween('created_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])->sum('amount');
         $purchases = $this->lodgeQuery(Purchase::query(), $request)->whereBetween('purchased_at', [$startDate, $endDate])->sum('total_cost');
         $expenses = $this->lodgeQuery(Expense::query(), $request)->whereBetween('spent_at', [$startDate, $endDate])->sum('amount');
+        $currentStockValue = $this->lodgeQuery(MenuItem::query(), $request)
+            ->whereRaw('LOWER(category) != ?', ['food'])
+            ->get()
+            ->sum(fn ($item) => (float) $item->stock_quantity * (float) $item->buying_price);
         $revenue = $rooms + $restaurant + $services;
-        return view('reports.accounting', compact('startDate','endDate','rooms','restaurant','services','purchases','expenses','revenue'));
+        return view('reports.accounting', compact('startDate','endDate','rooms','restaurant','services','purchases','expenses','revenue','currentStockValue'));
     }
 
     public function payments(Request $request)
