@@ -8,9 +8,11 @@ use Illuminate\Http\Request;
 
 class MenuItemController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $menuItems = $this->lodgeQuery(MenuItem::query())->orderBy('category')->orderBy('name')->get();
+        $menuItems = $this->lodgeQuery(MenuItem::query())
+            ->when($request->filled('category'), fn ($query) => $query->where('category', $request->category))
+            ->orderBy('category')->orderBy('name')->get();
 
         return view('menu_items.index', compact('menuItems'));
     }
