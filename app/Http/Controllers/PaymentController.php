@@ -107,6 +107,19 @@ class PaymentController extends Controller
         return view('payments.receipt', compact('payment'));
     }
 
+    public function destroy(Payment $payment)
+    {
+        abort_unless(in_array(strtolower((string) auth()->user()?->effectiveRoleName()), ['owner']), 403);
+
+        $target = $payment->payable;
+        $payment->delete();
+        if ($target) {
+            $this->refreshBalances($target);
+        }
+
+        return redirect()->route('payments.index')->with('success', 'Payment deleted and balance restored.');
+    }
+
     private function resolveTarget(string $type, int $id): array
     {
         $target = $this->findTarget($type, $id);

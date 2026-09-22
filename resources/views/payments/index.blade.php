@@ -30,7 +30,7 @@
                         <td>{{ $payment->payment_method }}</td>
                         <td>{{ number_format($payment->amount, 2) }}</td>
                         <td>{{ $payment->paid_at?->format('Y-m-d H:i') }}</td>
-                        <td><a class="btn btn-sm btn-secondary" href="{{ route('payments.receipt', $payment) }}">Receipt</a></td>
+                        <td><a class="btn btn-sm btn-secondary" href="{{ route('payments.receipt', $payment) }}">Receipt</a> @if(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner')<form method="POST" action="{{ route('payments.destroy', $payment) }}" class="d-inline" onsubmit="return confirm('Delete this payment? The related balance will be restored.');">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-danger">Delete</button></form>@endif</td>
                     </tr>
                 @endforeach
             </tbody>

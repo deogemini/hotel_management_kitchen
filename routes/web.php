@@ -54,6 +54,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('purchases', PurchaseController::class)->only(['index', 'create', 'store']);
         Route::resource('expenses', ExpenseController::class)->only(['index', 'create', 'store']);
         Route::resource('payments', PaymentController::class)->except(['edit', 'update', 'destroy']);
+        Route::delete('payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
         Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
         Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');
     });
