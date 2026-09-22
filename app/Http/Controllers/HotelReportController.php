@@ -7,8 +7,10 @@ use App\Models\Guest;
 use App\Models\Lodge;
 use App\Models\Payment;
 use App\Models\RestaurantOrder;
-use App\Models\Purchase;
 use App\Models\StockMovement;
+use App\Models\Expense;
+use App\Models\OtherCharge;
+use App\Models\Purchase;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -125,6 +127,18 @@ class HotelReportController extends Controller
             ->when($request->filled('category'), fn ($query) => $query->whereHas('menuItem', fn ($item) => $item->where('category', $request->category)))
             ->latest('movement_date')->get();
         return $this->reportView($request, 'Food & Drinks Sales Report', $rows, 'food_sales', $startDate, $endDate);
+    }
+
+    public function accounting(Request $request)
+    {
+        [$startDate, $endDate] = $this->dateRange($request);
+        $rooms = $this->lodgeQuery(Booking::query(), $request)->whereBetween('check_in_date', [$startDate, $endDate])->sum('room_total');
+        $restaurant = $this->lodgeQuery(RestaurantOrder::query(), $request)->whereBetween('created_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])->sum('subtotal');
+        $services = $this->lodgeQuery(OtherCharge::query(), $request)->whereBetween('created_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])->sum('amount');
+        $purchases = $this->lodgeQuery(Purchase::query(), $request)->whereBetween('purchased_at', [$startDate, $endDate])->sum('total_cost');
+        $expenses = $this->lodgeQuery(Expense::query(), $request)->whereBetween('spent_at', [$startDate, $endDate])->sum('amount');
+        $revenue = $rooms + $restaurant + $services;
+        return view('reports.accounting', compact('startDate','endDate','rooms','restaurant','services','purchases','expenses','revenue'));
     }
 
     public function payments(Request $request)

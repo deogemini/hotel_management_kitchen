@@ -90,6 +90,9 @@
                             <i class="align-middle" data-feather="shopping-cart"></i> <span class="align-middle">Purchase Management</span>
                         </a>
                     </li>
+                    <li class="sidebar-item {{ request()->routeIs('expenses.*') ? 'active' : '' }}">
+                        <a class="sidebar-link" href="{{ route('expenses.index') }}"><i class="align-middle" data-feather="minus-circle"></i> <span class="align-middle">Other Money Usage</span></a>
+                    </li>
                     @endif
 
                     <li class="sidebar-item {{ request()->routeIs('kitchen-orders.*') ? 'active' : '' }}">
@@ -113,6 +116,7 @@
                             <li><a class="sidebar-link" href="{{ route('reports.food-sales') }}">Food & Drinks Sales</a></li>
                             <li><a class="sidebar-link" href="{{ route('reports.purchases') }}">Purchases</a></li>
                             <li><a class="sidebar-link" href="{{ route('reports.stock-movements') }}">Stock Movements</a></li>
+                            <li><a class="sidebar-link" href="{{ route('reports.accounting') }}">Accounting</a></li>
                             <li><a class="sidebar-link" href="{{ route('reports.payments') }}">Payments</a></li>
                             <li><a class="sidebar-link" href="{{ route('reports.unpaid-bills') }}">Unpaid Bills</a></li>
                         </ul>

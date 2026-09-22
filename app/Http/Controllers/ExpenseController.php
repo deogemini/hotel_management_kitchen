@@ -1,0 +1,18 @@
+<?php
+namespace App\Http\Controllers;
+use App\Models\Expense;
+use Illuminate\Http\Request;
+class ExpenseController extends Controller {
+    public function index() {
+        $expenses = $this->query()->latest('spent_at')->get();
+        return view('expenses.index', compact('expenses'));
+    }
+    public function create() { return view('expenses.create'); }
+    public function store(Request $request) {
+        $data = $request->validate(['category'=>'required|string|max:100','description'=>'required|string|max:255','amount'=>'required|numeric|min:0.01','payment_method'=>'required|in:Cash,Mobile money,Card','spent_at'=>'required|date']);
+        $data['lodge_id'] = auth()->user()->lodge_id; $data['created_by'] = auth()->id();
+        Expense::create($data);
+        return redirect()->route('expenses.index')->with('success','Expense recorded successfully.');
+    }
+    private function query() { return (auth()->user()?->hasRole('hotel_manager') ?? false) ? Expense::query() : Expense::where('lodge_id', auth()->user()?->lodge_id); }
+}

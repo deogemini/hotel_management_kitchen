@@ -18,6 +18,7 @@ use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ServiceChargeController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SmsSettingController;
 use App\Http\Middleware\AdminMiddleware;
@@ -51,6 +52,7 @@ Route::middleware('auth')->group(function () {
         Route::get('stocks', [StockController::class, 'index'])->name('stocks.index');
         Route::get('stocks/drinks', [StockController::class, 'drinks'])->name('stocks.drinks');
         Route::resource('purchases', PurchaseController::class)->only(['index', 'create', 'store']);
+        Route::resource('expenses', ExpenseController::class)->only(['index', 'create', 'store']);
         Route::resource('payments', PaymentController::class)->except(['edit', 'update', 'destroy']);
         Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
         Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');
@@ -76,6 +78,7 @@ Route::middleware('auth')->group(function () {
         Route::get('reports/stock-movements', [HotelReportController::class, 'stockMovements'])->name('reports.stock-movements');
         Route::get('reports/purchases', [HotelReportController::class, 'purchases'])->name('reports.purchases');
         Route::get('reports/food-sales', [HotelReportController::class, 'foodSales'])->name('reports.food-sales');
+        Route::get('reports/accounting', [HotelReportController::class, 'accounting'])->name('reports.accounting');
         Route::get('reports/payments', [HotelReportController::class, 'payments'])->name('reports.payments');
         Route::get('reports/unpaid-bills', [HotelReportController::class, 'unpaidBills'])->name('reports.unpaid-bills');
     });
