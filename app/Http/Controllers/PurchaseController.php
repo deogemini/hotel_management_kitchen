@@ -42,6 +42,7 @@ class PurchaseController extends Controller
                 'total_cost' => $total,
                 'created_by' => auth()->id(),
             ]);
+            $item->update(['buying_price' => $data['unit_cost']]);
             $item->increment('stock_quantity', $data['quantity']);
             AuditService::log('purchase.created', $purchase, ['item' => $item->name, 'quantity' => $data['quantity']]);
         });
