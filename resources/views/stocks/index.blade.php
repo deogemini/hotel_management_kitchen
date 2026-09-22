@@ -39,7 +39,6 @@
                     <th>Current Stock</th>
                     <th>Low Alert</th>
                     <th>Status</th>
-                    <th>Update</th>
                 </tr>
             </thead>
             <tbody>
@@ -59,18 +58,9 @@
                                 <span class="badge bg-success">In stock</span>
                             @endif
                         </td>
-                        <td>
-                            <form method="POST" action="{{ route('stocks.update', $item) }}" class="row g-2 align-items-center">
-                                @csrf
-                                @method('PATCH')
-                                <div class="col-auto"><input type="number" min="0" name="stock_quantity" class="form-control form-control-sm" value="{{ $item->stock_quantity }}" style="width: 110px;"></div>
-                                <div class="col-auto"><input type="number" min="0" name="low_stock_quantity" class="form-control form-control-sm" value="{{ $item->low_stock_quantity }}" style="width: 110px;"></div>
-                                <div class="col-auto"><button class="btn btn-sm btn-primary">Save</button></div>
-                            </form>
-                        </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="text-muted">No menu items found.</td></tr>
+                    <tr><td colspan="6" class="text-muted">No menu items found.</td></tr>
                 @endforelse
             </tbody>
         </table>
