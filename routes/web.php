@@ -51,7 +51,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('service-charges', ServiceChargeController::class)->parameters(['service-charges' => 'serviceCharge'])->only(['index', 'create', 'store', 'show']);
         Route::get('stocks', [StockController::class, 'index'])->name('stocks.index');
         Route::get('stocks/drinks', [StockController::class, 'drinks'])->name('stocks.drinks');
-        Route::resource('purchases', PurchaseController::class)->only(['index', 'create', 'store']);
+        Route::resource('purchases', PurchaseController::class)->only(['index', 'create', 'store', 'destroy']);
         Route::resource('expenses', ExpenseController::class)->only(['index', 'create', 'store']);
         Route::resource('payments', PaymentController::class)->except(['edit', 'update', 'destroy']);
         Route::delete('payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');

@@ -58,6 +58,18 @@ class PurchaseController extends Controller
         return redirect()->route('purchases.index')->with('success', 'Purchase recorded and stock updated successfully.');
     }
 
+    public function destroy(Purchase $purchase)
+    {
+        abort_unless(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner', 403);
+        DB::transaction(function () use ($purchase) {
+            $item = $this->lodgeQuery(MenuItem::query())->lockForUpdate()->findOrFail($purchase->menu_item_id);
+            $item->update(['stock_quantity' => max(0, $item->stock_quantity - $purchase->quantity)]);
+            StockMovement::where('reference_type', Purchase::class)->where('reference_id', $purchase->id)->delete();
+            $purchase->delete();
+        });
+        return redirect()->route('purchases.index')->with('success', 'Purchase deleted and stock adjusted successfully.');
+    }
+
     private function lodgeQuery($query)
     {
         if (! (auth()->user()?->hasRole('hotel_manager') ?? false)) {
