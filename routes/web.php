@@ -17,6 +17,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ServiceChargeController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SmsSettingController;
 use App\Http\Middleware\AdminMiddleware;
@@ -49,6 +50,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('service-charges', ServiceChargeController::class)->parameters(['service-charges' => 'serviceCharge'])->only(['index', 'create', 'store', 'show']);
         Route::get('stocks', [StockController::class, 'index'])->name('stocks.index');
         Route::patch('stocks/{menuItem}', [StockController::class, 'update'])->name('stocks.update');
+        Route::resource('purchases', PurchaseController::class)->only(['index', 'create', 'store']);
         Route::resource('payments', PaymentController::class)->except(['edit', 'update', 'destroy']);
         Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
         Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');

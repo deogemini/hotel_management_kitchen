@@ -48,7 +48,7 @@ class ServiceChargeController extends Controller
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'paid_amount' => ['nullable', 'numeric', 'min:0'],
-            'payment_method' => ['required', 'in:Cash,Mobile money,Card,Room charge'],
+            'payment_method' => ['required', 'in:Cash,LIPA NAMBA,Mobile money,Card,Room charge'],
         ]);
 
         $booking = $this->lodgeQuery(Booking::where('guest_id', $data['guest_id']))->findOrFail($data['booking_id']);

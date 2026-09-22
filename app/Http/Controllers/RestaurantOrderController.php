@@ -44,7 +44,7 @@ class RestaurantOrderController extends Controller
             'customer_type' => ['required', 'in:Room guest,Walk-in customer'],
             'booking_id' => ['nullable', 'exists:bookings,id'],
             'guest_id' => ['nullable', 'exists:guests,id'],
-            'payment_method' => ['required', 'in:Cash,Mobile money,Card,Room charge'],
+            'payment_method' => ['required', 'in:Cash,LIPA NAMBA,Mobile money,Card,Room charge'],
             'paid_amount' => ['nullable', 'numeric', 'min:0'],
             'menu_item_id' => ['required', 'array'],
             'menu_item_id.*' => ['nullable', 'exists:menu_items,id'],

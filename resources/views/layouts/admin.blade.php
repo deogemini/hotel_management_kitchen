@@ -85,6 +85,11 @@
                             <i class="align-middle" data-feather="package"></i> <span class="align-middle">Stock Management</span>
                         </a>
                     </li>
+                    <li class="sidebar-item {{ request()->routeIs('purchases.*') ? 'active' : '' }}">
+                        <a class="sidebar-link" href="{{ route('purchases.index') }}">
+                            <i class="align-middle" data-feather="shopping-cart"></i> <span class="align-middle">Purchase Management</span>
+                        </a>
+                    </li>
                     @endif
 
                     <li class="sidebar-item {{ request()->routeIs('kitchen-orders.*') ? 'active' : '' }}">

@@ -165,7 +165,7 @@ class HotelReportController extends Controller
             $roomPayments = $paymentsByRoom->get($room->id, collect());
             $roomBalances = $balancesByRoom->get($room->id, collect());
             $cash = (float) $roomPayments->where('payment_method', 'Cash')->sum('amount');
-            $lipaNamba = (float) $roomPayments->whereIn('payment_method', ['Mobile money', 'Card'])->sum('amount');
+            $lipaNamba = (float) $roomPayments->whereIn('payment_method', ['LIPA NAMBA', 'Mobile money', 'Card'])->sum('amount');
             $debtor = (float) $roomBalances->sum('balance_amount');
 
             $collectionRows[] = [

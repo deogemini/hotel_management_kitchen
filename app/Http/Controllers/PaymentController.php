@@ -51,7 +51,7 @@ class PaymentController extends Controller
             'target_type' => ['required', 'in:booking,restaurant_order,invoice,service_charge'],
             'target_id' => ['required', 'integer'],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'payment_method' => ['required', 'in:Cash,Mobile money,Card,Room charge'],
+            'payment_method' => ['required', 'in:Cash,LIPA NAMBA,Mobile money,Card,Room charge'],
             'reference_number' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
         ]);

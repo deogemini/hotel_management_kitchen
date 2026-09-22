@@ -7,7 +7,7 @@
     <div class="col-md-3 mb-3"><label class="form-label">Guests</label><input type="number" min="1" name="number_of_guests" class="form-control" value="{{ old('number_of_guests', $booking->number_of_guests ?: 1) }}" required></div>
     <div class="col-md-3 mb-3"><label class="form-label">Status</label><select name="status" class="form-select">@foreach(\App\Models\Booking::STATUSES as $status)<option value="{{ $status }}" @selected(old('status', $booking->status ?: 'Pending')===$status)>{{ $status }}</option>@endforeach</select></div>
     <div class="col-md-3 mb-3"><label class="form-label">Deposit</label><input type="number" step="0.01" min="0" name="deposit_amount" id="deposit_amount" class="form-control" value="{{ old('deposit_amount', $booking->deposit_amount ?: 0) }}"><small class="text-muted" id="deposit_limit"></small></div>
-    <div class="col-md-3 mb-3"><label class="form-label">Deposit Method</label><select name="payment_method" class="form-select"><option>Cash</option><option>Mobile money</option><option>Card</option></select></div>
+    <div class="col-md-3 mb-3"><label class="form-label">Deposit Method</label><select name="payment_method" class="form-select"><option>Cash</option><option>LIPA NAMBA</option><option>Card</option></select></div>
 </div>
 <button class="btn btn-primary">Save Booking</button>
 <a href="{{ route('bookings.index') }}" class="btn btn-secondary">Back</a>

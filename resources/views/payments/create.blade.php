@@ -53,7 +53,7 @@
                         <label class="form-label">Method</label>
                         <select name="payment_method" class="form-select">
                             <option>Cash</option>
-                            <option>Mobile money</option>
+                            <option>LIPA NAMBA</option>
                             <option>Card</option>
                             <option>Room charge</option>
                         </select>
