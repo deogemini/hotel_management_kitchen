@@ -28,6 +28,7 @@ class MenuItemController extends Controller
         $data['lodge_id'] = auth()->user()?->lodge_id;
         $data['is_available'] = $request->boolean('is_available');
         $data['price'] = $data['selling_price'];
+        $data['stock_quantity'] = 0;
         $data['created_by'] = auth()->id();
         $menuItem = MenuItem::create($data);
         AuditService::log('menu_item.create', $menuItem, $menuItem->getAttributes());
@@ -65,7 +66,6 @@ class MenuItemController extends Controller
             'description' => ['nullable', 'string'],
             'buying_price' => ['required', 'numeric', 'min:0'],
             'selling_price' => ['required', 'numeric', 'min:0'],
-            'stock_quantity' => ['nullable', 'integer', 'min:0'],
             'low_stock_quantity' => ['nullable', 'integer', 'min:0'],
             'is_available' => ['nullable', 'boolean'],
         ]);
