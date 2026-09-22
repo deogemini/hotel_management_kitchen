@@ -18,9 +18,16 @@
 @endpush
 
 @section('content')
-<h1 class="h3 mb-3"><strong>Stock</strong> Management</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0"><strong>Stock</strong> Management{{ !empty($isDrinksPage) ? ' — Drinks' : '' }}</h1>
+    @if(empty($isDrinksPage))
+        <a href="{{ route('stocks.drinks') }}" class="btn btn-primary">Drinks Stock</a>
+    @else
+        <a href="{{ route('stocks.index') }}" class="btn btn-outline-secondary">All Stock</a>
+    @endif
+</div>
 <div class="card">
-    <div class="card-header"><h5 class="card-title mb-0">Restaurant Item Stock</h5></div>
+    <div class="card-header"><h5 class="card-title mb-0">{{ !empty($isDrinksPage) ? 'Drinks Stock' : 'Restaurant Item Stock' }}</h5></div>
     <div class="card-body">
         <div class="table-responsive">
         <table id="stockTable" class="table table-hover w-100">

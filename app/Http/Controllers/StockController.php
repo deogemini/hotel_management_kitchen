@@ -15,6 +15,16 @@ class StockController extends Controller
         return view('stocks.index', compact('menuItems'));
     }
 
+    public function drinks()
+    {
+        $menuItems = $this->lodgeQuery(MenuItem::query())
+            ->where('category', 'Drinks')
+            ->orderBy('name')
+            ->get();
+
+        return view('stocks.index', compact('menuItems'))->with('isDrinksPage', true);
+    }
+
     public function update(Request $request, MenuItem $menuItem)
     {
         $data = $request->validate([
