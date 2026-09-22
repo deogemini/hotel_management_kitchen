@@ -16,7 +16,7 @@
                     <th>For</th>
                     <th>Method</th>
                     <th>Amount</th>
-                    <th>Date</th>
+                    <th>Timeline</th>
                     <th></th>
                 </tr>
             </thead>
