@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'ZAKA MANAGEMENT SYSTEM'),
+    'name' => env('APP_NAME', 'HOTEL MANAGEMENT SYSTEM'),
 
     /*
     |--------------------------------------------------------------------------

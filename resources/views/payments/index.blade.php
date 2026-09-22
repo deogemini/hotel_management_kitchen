@@ -34,6 +34,13 @@
                     </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr class="fw-bold">
+                    <td colspan="5" class="text-end">Total</td>
+                    <td>{{ number_format($payments->sum('amount'), 2) }}</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
         </table>
     </div>
 </div>

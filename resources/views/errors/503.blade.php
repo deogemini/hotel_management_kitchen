@@ -13,7 +13,7 @@
                     <a href="mailto:eportsolution@gmail.com" class="btn btn-outline-secondary">Tutumie Barua Pepe: eportsolution@gmail.com</a>
                 </div>
                 <div class="text-muted">
-                    ZAKA MANAGEMENT SYSTEM - BOMBAMBILI PARISH
+                    HOTEL MANAGEMENT SYSTEM
                 </div>
             </div>
         </div>
