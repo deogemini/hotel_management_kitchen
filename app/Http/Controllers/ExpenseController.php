@@ -19,5 +19,10 @@ class ExpenseController extends Controller {
         Expense::create($data);
         return redirect()->route('expenses.index')->with('success','Expense recorded successfully.');
     }
+    public function destroy(Expense $expense) {
+        abort_unless(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner', 403);
+        $expense->delete();
+        return redirect()->route('expenses.index')->with('success', 'Expense deleted successfully.');
+    }
     private function query() { return (auth()->user()?->hasRole('hotel_manager') ?? false) ? Expense::query() : Expense::where('lodge_id', auth()->user()?->lodge_id); }
 }

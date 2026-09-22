@@ -52,7 +52,7 @@ Route::middleware('auth')->group(function () {
         Route::get('stocks', [StockController::class, 'index'])->name('stocks.index');
         Route::get('stocks/drinks', [StockController::class, 'drinks'])->name('stocks.drinks');
         Route::resource('purchases', PurchaseController::class)->only(['index', 'create', 'store', 'destroy']);
-        Route::resource('expenses', ExpenseController::class)->only(['index', 'create', 'store']);
+        Route::resource('expenses', ExpenseController::class)->only(['index', 'create', 'store', 'destroy']);
         Route::resource('payments', PaymentController::class)->except(['edit', 'update', 'destroy']);
         Route::delete('payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
         Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
