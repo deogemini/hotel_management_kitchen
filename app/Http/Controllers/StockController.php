@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MenuItem;
+use App\Models\StockMovement;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
 
@@ -34,6 +35,14 @@ class StockController extends Controller
 
         $original = $menuItem->only(['stock_quantity', 'low_stock_quantity']);
         $menuItem->update($data);
+        if ((int) $original['stock_quantity'] !== (int) $data['stock_quantity']) {
+            StockMovement::create([
+                'lodge_id' => $menuItem->lodge_id, 'menu_item_id' => $menuItem->id, 'type' => 'adjustment',
+                'quantity' => abs((int) $data['stock_quantity'] - (int) $original['stock_quantity']),
+                'stock_before' => $original['stock_quantity'], 'stock_after' => $data['stock_quantity'],
+                'movement_date' => today(), 'created_by' => auth()->id(), 'notes' => 'Manual stock update',
+            ]);
+        }
         AuditService::log('stock.update', $menuItem, ['from' => $original, 'to' => $data]);
 
         return back()->with('success', 'Stock updated successfully.');

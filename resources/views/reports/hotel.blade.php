@@ -173,6 +173,9 @@
 @if($type === 'rooms')<th>Room</th><th>Type</th><th>Status</th><th>Price</th>@endif
 @if($type === 'guests')<th>Name</th><th>Phone</th><th>Email</th><th>Bookings</th>@endif
 @if($type === 'orders')<th>Order</th><th>Customer</th><th>Status</th><th>Total</th><th>Payment</th>@endif
+@if($type === 'movements')<th>Date</th><th>Item</th><th>Type</th><th>Quantity</th><th>Before</th><th>After</th><th>Unit Price</th>@endif
+@if($type === 'purchases')<th>Date</th><th>Item</th><th>Quantity</th><th>Unit Cost</th><th>Total Cost</th><th>Supplier</th>@endif
+@if($type === 'food_sales')<th>Date</th><th>Item</th><th>Category</th><th>Quantity Sold</th><th>Unit Price</th><th>Total Sales</th>@endif
 </tr></thead><tbody>
 @foreach($rows as $row)<tr>
 @if($type === 'payments')<td>{{ $row->payment_number }}</td><td>{{ $row->guest?->full_name }}</td><td>{{ $row->payment_method }}</td><td>{{ number_format($row->amount, 2) }}</td><td>{{ $row->paid_at?->format('Y-m-d') }}</td>@endif
@@ -180,6 +183,9 @@
 @if($type === 'rooms')<td>{{ $row->room_number }}</td><td>{{ $row->room_type }}</td><td>{{ $row->status }}</td><td>{{ number_format($row->price_per_night, 2) }}</td>@endif
 @if($type === 'guests')<td>{{ $row->full_name }}</td><td>{{ $row->phone_number }}</td><td>{{ $row->email }}</td><td>{{ $row->bookings_count }}</td>@endif
 @if($type === 'orders')<td>{{ $row->order_number }}</td><td>{{ $row->guest?->full_name ?? $row->walk_in_customer_name }}</td><td>{{ $row->status }}</td><td>{{ number_format($row->subtotal, 2) }}</td><td>{{ $row->payment_status }}</td>@endif
+@if($type === 'movements')<td>{{ $row->movement_date?->format('Y-m-d') }}</td><td>{{ $row->menuItem?->name }}</td><td>{{ ucfirst($row->type) }}</td><td>{{ $row->quantity }}</td><td>{{ $row->stock_before }}</td><td>{{ $row->stock_after }}</td><td>{{ $row->unit_price !== null ? number_format($row->unit_price, 2) : '-' }}</td>@endif
+@if($type === 'purchases')<td>{{ $row->purchased_at?->format('Y-m-d') }}</td><td>{{ $row->menuItem?->name }}</td><td>{{ $row->quantity }}</td><td>{{ number_format($row->unit_cost, 2) }}</td><td>{{ number_format($row->total_cost, 2) }}</td><td>{{ $row->supplier ?: '-' }}</td>@endif
+@if($type === 'food_sales')<td>{{ $row->movement_date?->format('Y-m-d') }}</td><td>{{ $row->menuItem?->name }}</td><td>{{ $row->menuItem?->category }}</td><td>{{ $row->quantity }}</td><td>{{ number_format($row->unit_price, 2) }}</td><td>{{ number_format($row->quantity * $row->unit_price, 2) }}</td>@endif
 </tr>@endforeach
 </tbody>
 @if(isset($moneyTotals[$type]))

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MenuItem;
 use App\Models\Purchase;
+use App\Models\StockMovement;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -43,6 +44,13 @@ class PurchaseController extends Controller
                 'created_by' => auth()->id(),
             ]);
             $item->update(['buying_price' => $data['unit_cost']]);
+            StockMovement::create([
+                'lodge_id' => $item->lodge_id, 'menu_item_id' => $item->id, 'type' => 'purchase',
+                'quantity' => $data['quantity'], 'stock_before' => $item->stock_quantity,
+                'stock_after' => $item->stock_quantity + $data['quantity'], 'unit_price' => $data['unit_cost'],
+                'reference_type' => Purchase::class, 'reference_id' => $purchase->id,
+                'movement_date' => $data['purchased_at'], 'created_by' => auth()->id(),
+            ]);
             $item->increment('stock_quantity', $data['quantity']);
             AuditService::log('purchase.created', $purchase, ['item' => $item->name, 'quantity' => $data['quantity']]);
         });

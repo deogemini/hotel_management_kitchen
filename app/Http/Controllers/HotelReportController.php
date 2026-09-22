@@ -7,6 +7,8 @@ use App\Models\Guest;
 use App\Models\Lodge;
 use App\Models\Payment;
 use App\Models\RestaurantOrder;
+use App\Models\Purchase;
+use App\Models\StockMovement;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -97,6 +99,32 @@ class HotelReportController extends Controller
             ->get();
 
         return $this->reportView($request, 'Restaurant Sales Report', $rows, 'orders', $startDate, $endDate);
+    }
+
+    public function stockMovements(Request $request)
+    {
+        [$startDate, $endDate] = $this->dateRange($request);
+        $rows = $this->lodgeQuery(StockMovement::with('menuItem'), $request)
+            ->whereBetween('movement_date', [$startDate, $endDate])->latest('movement_date')->latest()->get();
+        return $this->reportView($request, 'Stock Movement Report', $rows, 'movements', $startDate, $endDate);
+    }
+
+    public function purchases(Request $request)
+    {
+        [$startDate, $endDate] = $this->dateRange($request);
+        $rows = $this->lodgeQuery(Purchase::with('menuItem'), $request)
+            ->whereBetween('purchased_at', [$startDate, $endDate])->latest('purchased_at')->get();
+        return $this->reportView($request, 'Purchase Report', $rows, 'purchases', $startDate, $endDate);
+    }
+
+    public function foodSales(Request $request)
+    {
+        [$startDate, $endDate] = $this->dateRange($request);
+        $rows = $this->lodgeQuery(StockMovement::with('menuItem'), $request)
+            ->where('type', 'sale')->whereBetween('movement_date', [$startDate, $endDate])
+            ->when($request->filled('category'), fn ($query) => $query->whereHas('menuItem', fn ($item) => $item->where('category', $request->category)))
+            ->latest('movement_date')->get();
+        return $this->reportView($request, 'Food & Drinks Sales Report', $rows, 'food_sales', $startDate, $endDate);
     }
 
     public function payments(Request $request)

@@ -8,6 +8,7 @@ use App\Models\MenuItem;
 use App\Models\Payment;
 use App\Models\RestaurantOrder;
 use App\Models\RestaurantOrderItem;
+use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -113,7 +114,15 @@ class RestaurantOrderController extends Controller
                 $quantity = (int) $data['quantity'][$index];
                 $lineTotal = $quantity * $menuItem->price;
                 $subtotal += $lineTotal;
+                $stockBefore = $menuItem->stock_quantity;
                 $menuItem->decrement('stock_quantity', $quantity);
+                StockMovement::create([
+                    'lodge_id' => $order->lodge_id, 'menu_item_id' => $menuItem->id, 'type' => 'sale',
+                    'quantity' => $quantity, 'stock_before' => $stockBefore,
+                    'stock_after' => $stockBefore - $quantity, 'unit_price' => $menuItem->price,
+                    'reference_type' => RestaurantOrder::class, 'reference_id' => $order->id,
+                    'movement_date' => today(), 'created_by' => auth()->id(),
+                ]);
 
                 RestaurantOrderItem::create([
                     'restaurant_order_id' => $order->id,

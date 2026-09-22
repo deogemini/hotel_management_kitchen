@@ -110,6 +110,9 @@
                             <li><a class="sidebar-link" href="{{ route('reports.available-rooms') }}">Available Rooms</a></li>
                             <li><a class="sidebar-link" href="{{ route('reports.guests') }}">Guests</a></li>
                             <li><a class="sidebar-link" href="{{ route('reports.restaurant-sales') }}">Restaurant Sales</a></li>
+                            <li><a class="sidebar-link" href="{{ route('reports.food-sales') }}">Food & Drinks Sales</a></li>
+                            <li><a class="sidebar-link" href="{{ route('reports.purchases') }}">Purchases</a></li>
+                            <li><a class="sidebar-link" href="{{ route('reports.stock-movements') }}">Stock Movements</a></li>
                             <li><a class="sidebar-link" href="{{ route('reports.payments') }}">Payments</a></li>
                             <li><a class="sidebar-link" href="{{ route('reports.unpaid-bills') }}">Unpaid Bills</a></li>
                         </ul>

@@ -74,6 +74,9 @@ Route::middleware('auth')->group(function () {
         Route::get('reports/available-rooms', [HotelReportController::class, 'availableRooms'])->name('reports.available-rooms');
         Route::get('reports/guests', [HotelReportController::class, 'guests'])->name('reports.guests');
         Route::get('reports/restaurant-sales', [HotelReportController::class, 'restaurantSales'])->name('reports.restaurant-sales');
+        Route::get('reports/stock-movements', [HotelReportController::class, 'stockMovements'])->name('reports.stock-movements');
+        Route::get('reports/purchases', [HotelReportController::class, 'purchases'])->name('reports.purchases');
+        Route::get('reports/food-sales', [HotelReportController::class, 'foodSales'])->name('reports.food-sales');
         Route::get('reports/payments', [HotelReportController::class, 'payments'])->name('reports.payments');
         Route::get('reports/unpaid-bills', [HotelReportController::class, 'unpaidBills'])->name('reports.unpaid-bills');
     });
