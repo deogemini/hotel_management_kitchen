@@ -1,10 +1,29 @@
 @extends('layouts.admin')
+
+@push('styles')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<style>
+    .dataTables_wrapper .dataTables_paginate .pagination {
+        justify-content: flex-end;
+        margin-top: 1rem;
+    }
+    .dataTables_wrapper .dataTables_paginate .page-item {
+        margin: 0 2px;
+    }
+    .dataTables_wrapper .dataTables_paginate .page-link {
+        border-radius: 4px;
+        padding: 6px 12px;
+    }
+</style>
+@endpush
+
 @section('content')
 <h1 class="h3 mb-3"><strong>Stock</strong> Management</h1>
 <div class="card">
     <div class="card-header"><h5 class="card-title mb-0">Restaurant Item Stock</h5></div>
     <div class="card-body">
-        <table class="table table-hover">
+        <div class="table-responsive">
+        <table id="stockTable" class="table table-hover w-100">
             <thead>
                 <tr>
                     <th>#</th>
@@ -48,6 +67,29 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    $(function () {
+        $('#stockTable').DataTable({
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+            order: [[1, 'asc']],
+            columnDefs: [{ orderable: false, targets: [5, 6] }],
+            language: {
+                search: 'Search stock:',
+                lengthMenu: 'Show _MENU_ entries',
+                info: 'Showing _START_ to _END_ of _TOTAL_ items',
+                paginate: { first: 'First', last: 'Last', next: 'Next', previous: 'Previous' }
+            }
+        });
+    });
+</script>
+@endpush
