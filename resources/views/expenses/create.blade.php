@@ -1,5 +1,6 @@
 @extends('layouts.admin')
 @section('content')<h1 class="h3 mb-3">Record Other Money Usage</h1><div class="card"><div class="card-body"><form method="POST" action="{{ route('expenses.store') }}">@csrf<div class="row g-3">
+@if(auth()->user()?->hasRole('hotel_manager') || auth()->user()?->hasRole('Owner') || auth()->user()?->hasRole('owner'))<div class="col-md-4"><label class="form-label">Lodge</label><select name="lodge_id" class="form-select" required><option value="">Select lodge</option>@foreach($lodges as $lodge)<option value="{{ $lodge->id }}">{{ $lodge->name }}</option>@endforeach</select></div>@endif
 <div class="col-md-4"><label class="form-label">Category</label><input name="category" class="form-control" placeholder="Transport, utilities, repairs..." required></div>
 <div class="col-md-4"><label class="form-label">Amount</label><input type="number" name="amount" step="0.01" min="0.01" class="form-control" required></div>
 <div class="col-md-4"><label class="form-label">Date</label><input type="date" name="spent_at" value="{{ today()->toDateString() }}" class="form-control" required></div>
