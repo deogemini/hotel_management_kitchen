@@ -197,9 +197,20 @@ class RestaurantOrderController extends Controller
 
     public function destroy(RestaurantOrder $restaurantOrder)
     {
-        $restaurantOrder->delete();
+        abort_unless(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner', 403);
 
-        return redirect()->route('restaurant-orders.index')->with('success', 'Restaurant order deleted successfully.');
+        DB::transaction(function () use ($restaurantOrder) {
+            $restaurantOrder->load('items');
+            foreach ($restaurantOrder->items as $item) {
+                MenuItem::whereKey($item->menu_item_id)->lockForUpdate()->first()?->increment('stock_quantity', $item->quantity);
+            }
+            StockMovement::where('reference_type', RestaurantOrder::class)
+                ->where('reference_id', $restaurantOrder->id)
+                ->delete();
+            $restaurantOrder->delete();
+        });
+
+        return redirect()->route('restaurant-orders.index')->with('success', 'Restaurant order deleted and stock restored successfully.');
     }
 
     private function canSeeAllLodges(): bool
