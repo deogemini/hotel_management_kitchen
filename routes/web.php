@@ -86,6 +86,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:hotel_manager,chef')->group(function () {
         Route::get('kitchen-orders', [KitchenOrderController::class, 'index'])->name('kitchen-orders.index');
+        Route::get('kitchen-orders/notifications', [KitchenOrderController::class, 'notifications'])->name('kitchen-orders.notifications');
         Route::patch('kitchen-orders/{restaurantOrder}/status', [KitchenOrderController::class, 'updateStatus'])->name('kitchen-orders.update-status');
     });
 });

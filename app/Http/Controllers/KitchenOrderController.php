@@ -20,6 +20,27 @@ class KitchenOrderController extends Controller
         return view('kitchen_orders.index', compact('restaurantOrders'));
     }
 
+    public function notifications(Request $request)
+    {
+        $afterId = $request->integer('after_id', 0);
+
+        $orders = RestaurantOrder::with('items.menuItem', 'room')
+            ->where('id', '>', $afterId)
+            ->whereHas('items.menuItem', fn ($query) => $query->where('category', 'Food'))
+            ->whereIn('status', ['Pending', 'Preparing', 'Ready'])
+            ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
+            ->oldest('id')
+            ->get();
+
+        return response()->json([
+            'orders' => $orders->map(fn ($order) => [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'room' => $order->room?->room_number ?? 'Walk-in',
+            ])->values(),
+        ]);
+    }
+
     public function updateStatus(Request $request, RestaurantOrder $restaurantOrder)
     {
         if (! $this->canSeeAllLodges() && $restaurantOrder->lodge_id !== auth()->user()?->lodge_id) {
