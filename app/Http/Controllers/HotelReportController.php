@@ -18,6 +18,11 @@ use Illuminate\Support\Carbon;
 
 class HotelReportController extends Controller
 {
+    public function index()
+    {
+        return view('reports.index');
+    }
+
     public function dailyCollections(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request, today()->toDateString(), today()->toDateString());

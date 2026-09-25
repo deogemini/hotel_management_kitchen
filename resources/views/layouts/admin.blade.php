@@ -110,23 +110,9 @@
 
                     @if($isManager)
                     <li class="sidebar-item {{ request()->routeIs('reports.*') ? 'active' : '' }}">
-                        <a data-bs-target="#reports" data-bs-toggle="collapse" class="sidebar-link collapsed">
+                        <a class="sidebar-link" href="{{ route('reports.index') }}">
                             <i class="align-middle" data-feather="bar-chart-2"></i> <span class="align-middle">Reports</span>
                         </a>
-                        <ul id="reports" class="sidebar-dropdown list-unstyled collapse {{ request()->routeIs('reports.*') ? 'show' : '' }}" data-bs-parent="#sidebar">
-                            <li><a class="sidebar-link" href="{{ route('reports.daily-collections') }}">Daily Collection</a></li>
-                            <li><a class="sidebar-link" href="{{ route('reports.room-bookings') }}">Room Bookings</a></li>
-                            <li><a class="sidebar-link" href="{{ route('reports.occupied-rooms') }}">Occupied Rooms</a></li>
-                            <li><a class="sidebar-link" href="{{ route('reports.available-rooms') }}">Available Rooms</a></li>
-                            <li><a class="sidebar-link" href="{{ route('reports.guests') }}">Guests</a></li>
-                            <li><a class="sidebar-link" href="{{ route('reports.restaurant-sales') }}">Restaurant Sales</a></li>
-                            <li><a class="sidebar-link" href="{{ route('reports.food-sales') }}">Food & Drinks Sales</a></li>
-                            <li><a class="sidebar-link" href="{{ route('reports.purchases') }}">Purchases</a></li>
-                            <li><a class="sidebar-link" href="{{ route('reports.stock-movements') }}">Stock Movements</a></li>
-                            <li><a class="sidebar-link" href="{{ route('reports.accounting') }}">Accounting</a></li>
-                            <li><a class="sidebar-link" href="{{ route('reports.payments') }}">Payments</a></li>
-                            <li><a class="sidebar-link" href="{{ route('reports.unpaid-bills') }}">Unpaid Bills</a></li>
-                        </ul>
                     </li>
 
                     <li class="sidebar-header">Administration</li>

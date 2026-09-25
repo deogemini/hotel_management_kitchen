@@ -75,6 +75,7 @@ Route::middleware('auth')->group(function () {
         Route::put('settings/sms', [SmsSettingController::class, 'update'])->name('settings.sms.update');
 
         Route::get('reports/daily-collections', [HotelReportController::class, 'dailyCollections'])->name('reports.daily-collections');
+        Route::get('reports', [HotelReportController::class, 'index'])->name('reports.index');
         Route::get('reports/room-bookings', [HotelReportController::class, 'roomBookings'])->name('reports.room-bookings');
         Route::get('reports/occupied-rooms', [HotelReportController::class, 'occupiedRooms'])->name('reports.occupied-rooms');
         Route::get('reports/available-rooms', [HotelReportController::class, 'availableRooms'])->name('reports.available-rooms');

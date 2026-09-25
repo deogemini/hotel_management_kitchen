@@ -12,9 +12,13 @@ use Illuminate\Support\Facades\DB;
 
 class PurchaseController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $purchases = $this->lodgeQuery(Purchase::with('menuItem'))->latest('purchased_at')->latest()->get();
+        $request->validate(['from_date' => ['nullable', 'date'], 'to_date' => ['nullable', 'date', 'after_or_equal:from_date']]);
+        $purchases = $this->lodgeQuery(Purchase::with('menuItem'))
+            ->when($request->filled('from_date'), fn ($query) => $query->whereDate('purchased_at', '>=', $request->from_date))
+            ->when($request->filled('to_date'), fn ($query) => $query->whereDate('purchased_at', '<=', $request->to_date))
+            ->latest('purchased_at')->latest()->get();
         $totalCost = $purchases->sum('total_cost');
         return view('purchases.index', compact('purchases', 'totalCost'));
     }
