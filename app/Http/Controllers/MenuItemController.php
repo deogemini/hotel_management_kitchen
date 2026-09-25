@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MenuItem;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MenuItemController extends Controller
 {
@@ -24,6 +25,7 @@ class MenuItemController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge(['name' => mb_strtoupper(trim((string) $request->input('name')), 'UTF-8')]);
         $data = $this->validated($request);
         $data['lodge_id'] = auth()->user()?->lodge_id;
         $data['is_available'] = $request->boolean('is_available');
@@ -43,7 +45,8 @@ class MenuItemController extends Controller
 
     public function update(Request $request, MenuItem $menuItem)
     {
-        $data = $this->validated($request);
+        $request->merge(['name' => mb_strtoupper(trim((string) $request->input('name')), 'UTF-8')]);
+        $data = $this->validated($request, $menuItem);
         $data['is_available'] = $request->boolean('is_available');
         $data['price'] = $data['selling_price'];
         $menuItem->update($data);
@@ -58,10 +61,17 @@ class MenuItemController extends Controller
         return redirect()->route('menu-items.index')->with('success', 'Menu item deleted successfully.');
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, ?MenuItem $menuItem = null): array
     {
         return $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('menu_items', 'name')
+                    ->where(fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
+                    ->ignore($menuItem?->id),
+            ],
             'category' => ['required', 'in:Food,Drinks'],
             'description' => ['nullable', 'string'],
             'buying_price' => ['required', 'numeric', 'min:0'],

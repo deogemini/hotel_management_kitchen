@@ -18,6 +18,7 @@ use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ServiceChargeController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SmsSettingController;
@@ -62,6 +63,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('role:hotel_manager')->group(function () {
+        Route::resource('suppliers', SupplierController::class)->except(['show']);
         Route::resource('menu-items', MenuItemController::class)->except(['show']);
         Route::resource('lodges', LodgeController::class)->except(['show']);
         Route::resource('users', UserController::class);

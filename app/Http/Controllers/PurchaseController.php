@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MenuItem;
 use App\Models\Purchase;
 use App\Models\StockMovement;
+use App\Models\Supplier;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,8 @@ class PurchaseController extends Controller
     public function create()
     {
         $menuItems = $this->lodgeQuery(MenuItem::query())->orderBy('name')->get();
-        return view('purchases.create', compact('menuItems'));
+        $suppliers = $this->lodgeQuery(Supplier::query())->orderBy('name')->get();
+        return view('purchases.create', compact('menuItems', 'suppliers'));
     }
 
     public function store(Request $request)

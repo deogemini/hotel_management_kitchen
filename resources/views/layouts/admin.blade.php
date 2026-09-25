@@ -64,6 +64,7 @@
                             <li class="sidebar-item"><a class="sidebar-link" href="{{ route('restaurant-orders.create') }}">New Order</a></li>
                             @if($isManager)
                             <li class="sidebar-item"><a class="sidebar-link" href="{{ route('menu-items.index') }}">Menu Items</a></li>
+                            <li class="sidebar-item"><a class="sidebar-link" href="{{ route('suppliers.index') }}">Suppliers</a></li>
                             @endif
                         </ul>
                     </li>
