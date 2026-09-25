@@ -44,8 +44,11 @@ class PurchaseController extends Controller
 
         DB::transaction(function () use ($data, $request) {
             $item = $this->lodgeQuery(MenuItem::query())->lockForUpdate()->findOrFail($data['menu_item_id']);
-            $total = $data['quantity'] * $data['unit_cost'];
             $affectsStock = $request->boolean('affects_stock');
+            if (! $affectsStock) {
+                $data['quantity'] = $item->stock_quantity;
+            }
+            $total = $data['quantity'] * $data['unit_cost'];
             $purchase = Purchase::create([
                 ...$data,
                 'lodge_id' => $item->lodge_id,
