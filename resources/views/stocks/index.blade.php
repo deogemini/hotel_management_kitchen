@@ -26,6 +26,9 @@
         <a href="{{ route('stocks.index') }}" class="btn btn-outline-secondary">All Stock</a>
     @endif
     <div class="ms-2">
+        @if(auth()->user()?->hasRole('hotel_manager'))
+            <a href="{{ route('menu-items.create') }}" class="btn btn-primary">Add Item</a>
+        @endif
         <a href="{{ route('purchases.create') }}" class="btn btn-primary">Record Purchase</a>
         <a href="{{ route('stocks.export.pdf', ['drinks' => !empty($isDrinksPage) ? 1 : 0]) }}" target="_blank" class="btn btn-outline-danger">Print / PDF</a>
         <a href="{{ route('stocks.export.excel', ['drinks' => !empty($isDrinksPage) ? 1 : 0]) }}" class="btn btn-outline-success">Excel</a>
