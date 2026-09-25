@@ -15,7 +15,8 @@ class PurchaseController extends Controller
     public function index()
     {
         $purchases = $this->lodgeQuery(Purchase::with('menuItem'))->latest('purchased_at')->latest()->get();
-        return view('purchases.index', compact('purchases'));
+        $totalCost = $purchases->sum('total_cost');
+        return view('purchases.index', compact('purchases', 'totalCost'));
     }
 
     public function create()
