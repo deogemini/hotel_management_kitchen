@@ -25,6 +25,10 @@
     @else
         <a href="{{ route('stocks.index') }}" class="btn btn-outline-secondary">All Stock</a>
     @endif
+    <div class="ms-2">
+        <a href="{{ route('stocks.export.pdf', ['drinks' => !empty($isDrinksPage) ? 1 : 0]) }}" target="_blank" class="btn btn-outline-danger">Print / PDF</a>
+        <a href="{{ route('stocks.export.excel', ['drinks' => !empty($isDrinksPage) ? 1 : 0]) }}" class="btn btn-outline-success">Excel</a>
+    </div>
 </div>
 <div class="card">
     <div class="card-header"><h5 class="card-title mb-0">{{ !empty($isDrinksPage) ? 'Drinks Stock' : 'Restaurant Item Stock' }}</h5></div>
