@@ -34,7 +34,7 @@ class PurchaseController extends Controller
     {
         $data = $request->validate([
             'menu_item_id' => ['required', 'exists:menu_items,id'],
-            'quantity' => ['required', 'integer', 'min:1'],
+            'quantity' => ['required', 'integer', 'min:0'],
             'unit_cost' => ['required', 'numeric', 'min:0'],
             'supplier' => ['nullable', 'string', 'max:255'],
             'purchased_at' => ['required', 'date'],
