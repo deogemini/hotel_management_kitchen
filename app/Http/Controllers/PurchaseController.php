@@ -39,26 +39,31 @@ class PurchaseController extends Controller
             'supplier' => ['nullable', 'string', 'max:255'],
             'purchased_at' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'affects_stock' => ['nullable', 'boolean'],
         ]);
 
         DB::transaction(function () use ($data, $request) {
             $item = $this->lodgeQuery(MenuItem::query())->lockForUpdate()->findOrFail($data['menu_item_id']);
             $total = $data['quantity'] * $data['unit_cost'];
+            $affectsStock = $request->boolean('affects_stock');
             $purchase = Purchase::create([
                 ...$data,
                 'lodge_id' => $item->lodge_id,
+                'affects_stock' => $affectsStock,
                 'total_cost' => $total,
                 'created_by' => auth()->id(),
             ]);
             $item->update(['buying_price' => $data['unit_cost']]);
-            StockMovement::create([
+            if ($affectsStock) {
+                StockMovement::create([
                 'lodge_id' => $item->lodge_id, 'menu_item_id' => $item->id, 'type' => 'purchase',
                 'quantity' => $data['quantity'], 'stock_before' => $item->stock_quantity,
                 'stock_after' => $item->stock_quantity + $data['quantity'], 'unit_price' => $data['unit_cost'],
                 'reference_type' => Purchase::class, 'reference_id' => $purchase->id,
                 'movement_date' => $data['purchased_at'], 'created_by' => auth()->id(),
-            ]);
-            $item->increment('stock_quantity', $data['quantity']);
+                ]);
+                $item->increment('stock_quantity', $data['quantity']);
+            }
             AuditService::log('purchase.created', $purchase, ['item' => $item->name, 'quantity' => $data['quantity']]);
         });
 
@@ -70,8 +75,10 @@ class PurchaseController extends Controller
         abort_unless(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner', 403);
         DB::transaction(function () use ($purchase) {
             $item = $this->lodgeQuery(MenuItem::query())->lockForUpdate()->findOrFail($purchase->menu_item_id);
-            $item->update(['stock_quantity' => max(0, $item->stock_quantity - $purchase->quantity)]);
-            StockMovement::where('reference_type', Purchase::class)->where('reference_id', $purchase->id)->delete();
+            if ($purchase->affects_stock) {
+                $item->update(['stock_quantity' => max(0, $item->stock_quantity - $purchase->quantity)]);
+                StockMovement::where('reference_type', Purchase::class)->where('reference_id', $purchase->id)->delete();
+            }
             $purchase->delete();
         });
         return redirect()->route('purchases.index')->with('success', 'Purchase deleted and stock adjusted successfully.');

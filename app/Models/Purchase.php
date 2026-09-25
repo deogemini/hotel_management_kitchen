@@ -9,12 +9,12 @@ class Purchase extends Model
 {
     protected $fillable = [
         'lodge_id', 'menu_item_id', 'quantity', 'unit_cost', 'total_cost',
-        'supplier', 'purchased_at', 'notes', 'created_by',
+        'supplier', 'purchased_at', 'notes', 'affects_stock', 'created_by',
     ];
 
     protected function casts(): array
     {
-        return ['unit_cost' => 'decimal:2', 'total_cost' => 'decimal:2', 'purchased_at' => 'date'];
+        return ['unit_cost' => 'decimal:2', 'total_cost' => 'decimal:2', 'purchased_at' => 'date', 'affects_stock' => 'boolean'];
     }
 
     public function menuItem(): BelongsTo { return $this->belongsTo(MenuItem::class); }
