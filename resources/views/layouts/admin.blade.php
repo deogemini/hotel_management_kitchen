@@ -64,7 +64,6 @@
                             <li class="sidebar-item"><a class="sidebar-link" href="{{ route('restaurant-orders.create') }}">New Order</a></li>
                             @if($isManager)
                             <li class="sidebar-item"><a class="sidebar-link" href="{{ route('menu-items.index') }}">Menu Items</a></li>
-                            <li class="sidebar-item"><a class="sidebar-link" href="{{ route('suppliers.index') }}">Suppliers</a></li>
                             @endif
                         </ul>
                     </li>
@@ -91,6 +90,13 @@
                             <i class="align-middle" data-feather="shopping-cart"></i> <span class="align-middle">Purchase Management</span>
                         </a>
                     </li>
+                    @if($isManager)
+                    <li class="sidebar-item {{ request()->routeIs('suppliers.*') ? 'active' : '' }}">
+                        <a class="sidebar-link" href="{{ route('suppliers.index') }}">
+                            <i class="align-middle" data-feather="truck"></i> <span class="align-middle">Suppliers</span>
+                        </a>
+                    </li>
+                    @endif
                     <li class="sidebar-item {{ request()->routeIs('expenses.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('expenses.index') }}"><i class="align-middle" data-feather="minus-circle"></i> <span class="align-middle">Other Money Usage</span></a>
                     </li>
