@@ -20,9 +20,12 @@
 </div></div>
 @endsection
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
 <script>
-    $('.selectpicker').selectpicker();
+    $(function () {
+        $('.selectpicker').selectpicker();
+    });
     document.getElementById('menu_item_id').addEventListener('change', function () {
         const selected = this.options[this.selectedIndex];
         document.getElementById('unit_cost').value = selected.dataset.buyingPrice ?? '';
