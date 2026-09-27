@@ -48,6 +48,7 @@ class RestaurantOrderController extends Controller
             'guest_id' => ['nullable', 'exists:guests,id'],
             'payment_method' => ['required', 'in:Cash,LIPA NAMBA,Mobile money,Card,Room charge'],
             'paid_amount' => ['nullable', 'numeric', 'min:0'],
+            'not_paid' => ['nullable', 'boolean'],
             'menu_item_id' => ['required', 'array'],
             'menu_item_id.*' => ['nullable', 'exists:menu_items,id'],
             'quantity' => ['required', 'array'],
@@ -137,13 +138,9 @@ class RestaurantOrderController extends Controller
                 ]);
             }
 
-            $paid = $data['payment_method'] === 'Room charge' ? 0 : (float) ($data['paid_amount'] ?? 0);
-
-            if ($paid > $subtotal) {
-                throw ValidationException::withMessages([
-                    'paid_amount' => 'Paid amount cannot exceed the order total of '.number_format($subtotal, 2).'.',
-                ]);
-            }
+            // Selecting a payment method means the order was paid in full.
+            // Room charge is the exception because it is billed to the room/guest account.
+            $paid = ! empty($data['not_paid']) || $data['payment_method'] === 'Room charge' ? 0 : $subtotal;
 
             $order->update([
                 'subtotal' => $subtotal,

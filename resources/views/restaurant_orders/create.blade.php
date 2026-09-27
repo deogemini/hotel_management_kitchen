@@ -45,8 +45,10 @@
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Paid Amount</label>
-                    <input type="number" step="0.01" name="paid_amount" class="form-control" value="0">
+                    <input type="number" step="0.01" name="paid_amount" class="form-control" value="0" readonly>
+                    <small class="text-muted">The selected payment method marks the order as fully paid. Room charge remains unpaid.</small>
                 </div>
+                <div class="col-md-4 mb-3 d-flex align-items-end"><div class="form-check mb-2"><input type="hidden" name="not_paid" value="0"><input type="checkbox" name="not_paid" value="1" id="not_paid" class="form-check-input"><label for="not_paid" class="form-check-label">Not paid</label></div></div>
             </div>
             <h5>Items</h5>
             @for($i = 0; $i < 5; $i++)
