@@ -3,21 +3,6 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 <style>.dataTables_wrapper .dataTables_paginate .pagination{justify-content:flex-end;margin-top:1rem}.dataTables_wrapper .dataTables_paginate .page-item{margin:0 2px}</style>
 @endpush
-@if(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner')
-<script>
-document.addEventListener('DOMContentLoaded', function () { document.querySelectorAll('#menuItemsTable a.btn-info').forEach(function (editLink) {
-    const itemId = editLink.getAttribute('href').split('/').pop();
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '{{ url('menu-items') }}/' + itemId;
-    form.className = 'd-inline';
-    form.onsubmit = () => confirm('Delete this menu item?');
-    form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="_method" value="DELETE"><button class="btn btn-sm btn-danger">Delete</button>';
-    editLink.parentElement.appendChild(document.createTextNode(' '));
-    editLink.parentElement.appendChild(form);
-}); });
-</script>
-@endif
 @section('content')
 @php($canDeleteMenuItems = strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner')
 <div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3 mb-0"><strong>Menu</strong> Items</h1><a class="btn btn-primary" href="{{ route('menu-items.create') }}">Add Item</a></div>
