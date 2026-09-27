@@ -61,4 +61,9 @@ class RestaurantOrder extends Model
     {
         return $this->hasMany(RestaurantOrderItem::class);
     }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class, 'restaurant_order_id');
+    }
 }
