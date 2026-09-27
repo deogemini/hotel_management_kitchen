@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('content')<h1 class="h3 mb-3">Record Other Money Usage</h1><div class="card"><div class="card-body"><form method="POST" action="{{ route('expenses.store') }}">@csrf<div class="row g-3">
 @if(auth()->user()?->hasRole('hotel_manager') || auth()->user()?->hasRole('Owner') || auth()->user()?->hasRole('owner'))<div class="col-md-4"><label class="form-label">Lodge</label><select name="lodge_id" class="form-select" required><option value="">Select lodge</option>@foreach($lodges as $lodge)<option value="{{ $lodge->id }}">{{ $lodge->name }}</option>@endforeach</select></div>@endif
-<div class="col-md-4"><label class="form-label">Category</label><select name="category" class="form-select" required><option value="">Select category</option><option value="UMEME">UMEME</option><option value="UFUNDI">UFUNDI</option><option value="STATIONARY">STATIONARY</option></select></div>
+<div class="col-md-4"><label class="form-label">Category</label><select name="category" class="form-select" required><option value="">Select category</option><option value="UMEME">UMEME</option><option value="UFUNDI">UFUNDI</option><option value="STATIONARY">STATIONARY</option><option value="MATUMIZI YA JIKONI">MATUMIZI YA JIKONI</option></select></div>
 <div class="col-md-4"><label class="form-label">Amount</label><input type="number" name="amount" step="0.01" min="0.01" class="form-control" required></div>
 <div class="col-md-4"><label class="form-label">Date</label><input type="date" name="spent_at" value="{{ today()->toDateString() }}" class="form-control" required></div>
 <div class="col-md-6"><label class="form-label">Description</label><input name="description" class="form-control" required></div>
