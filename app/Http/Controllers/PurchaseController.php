@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MenuItem;
+use App\Models\Lodge;
 use App\Models\Purchase;
 use App\Models\StockMovement;
 use App\Models\Supplier;
@@ -44,11 +45,12 @@ class PurchaseController extends Controller
 
         DB::transaction(function () use ($data, $request) {
             $item = $this->lodgeQuery(MenuItem::query())->lockForUpdate()->findOrFail($data['menu_item_id']);
+            $lodgeId = $item->lodge_id ?: auth()->user()?->lodge_id ?: Lodge::query()->orderBy('id')->value('id');
             $affectsStock = $request->boolean('affects_stock');
             $total = $data['quantity'] * $data['unit_cost'];
             $purchase = Purchase::create([
                 ...$data,
-                'lodge_id' => $item->lodge_id,
+                'lodge_id' => $lodgeId,
                 'affects_stock' => $affectsStock,
                 'total_cost' => $total,
                 'created_by' => auth()->id(),
@@ -59,7 +61,7 @@ class PurchaseController extends Controller
             ]);
             if ($affectsStock) {
                 StockMovement::create([
-                'lodge_id' => $item->lodge_id, 'menu_item_id' => $item->id, 'type' => 'purchase',
+                    'lodge_id' => $lodgeId, 'menu_item_id' => $item->id, 'type' => 'purchase',
                 'quantity' => $data['quantity'], 'stock_before' => $item->stock_quantity,
                 'stock_after' => $item->stock_quantity + $data['quantity'], 'unit_price' => $data['unit_cost'],
                 'reference_type' => Purchase::class, 'reference_id' => $purchase->id,
