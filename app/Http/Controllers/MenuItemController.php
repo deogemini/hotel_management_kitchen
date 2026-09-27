@@ -56,6 +56,7 @@ class MenuItemController extends Controller
 
     public function destroy(MenuItem $menuItem)
     {
+        abort_unless(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner', 403);
         $menuItem->delete();
 
         return redirect()->route('menu-items.index')->with('success', 'Menu item deleted successfully.');

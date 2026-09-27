@@ -3,7 +3,23 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 <style>.dataTables_wrapper .dataTables_paginate .pagination{justify-content:flex-end;margin-top:1rem}.dataTables_wrapper .dataTables_paginate .page-item{margin:0 2px}</style>
 @endpush
+@if(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner')
+<script>
+document.addEventListener('DOMContentLoaded', function () { document.querySelectorAll('#menuItemsTable a.btn-info').forEach(function (editLink) {
+    const itemId = editLink.getAttribute('href').split('/').pop();
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ url('menu-items') }}/' + itemId;
+    form.className = 'd-inline';
+    form.onsubmit = () => confirm('Delete this menu item?');
+    form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="_method" value="DELETE"><button class="btn btn-sm btn-danger">Delete</button>';
+    editLink.parentElement.appendChild(document.createTextNode(' '));
+    editLink.parentElement.appendChild(form);
+}); });
+</script>
+@endif
 @section('content')
+@php($canDeleteMenuItems = strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner')
 <div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3 mb-0"><strong>Menu</strong> Items</h1><a class="btn btn-primary" href="{{ route('menu-items.create') }}">Add Item</a></div>
 <div class="card"><div class="card-header"><h5 class="card-title mb-0">Food and Drinks</h5></div><div class="card-body">
 <form method="GET" class="row g-2 mb-3 align-items-end"><div class="col-md-4"><label class="form-label">Filter by Category</label><select name="category" class="form-select"><option value="">All Categories</option><option value="Food" @selected(request('category') === 'Food')>Food</option><option value="Drinks" @selected(request('category') === 'Drinks')>Drinks</option></select></div><div class="col-auto"><button class="btn btn-primary">Filter</button> <a href="{{ route('menu-items.index') }}" class="btn btn-outline-secondary">Clear</a></div></form>
