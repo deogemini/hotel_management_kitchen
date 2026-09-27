@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Guest;
+use App\Models\Lodge;
 use App\Models\MenuItem;
 use App\Models\Payment;
 use App\Models\RestaurantOrder;
@@ -73,9 +74,9 @@ class RestaurantOrderController extends Controller
             $booking = ! empty($data['booking_id']) ? $this->lodgeQuery(Booking::with('guest', 'room'))->find($data['booking_id']) : null;
             $guest = ! empty($data['guest_id']) ? $this->lodgeQuery(Guest::query())->find($data['guest_id']) : null;
             $guestId = $booking?->guest_id ?: ($data['guest_id'] ?? null);
-            $lodgeId = $booking?->lodge_id ?: $guest?->lodge_id ?: auth()->user()?->lodge_id;
+            $lodgeId = $booking?->lodge_id ?: $guest?->lodge_id ?: auth()->user()?->lodge_id ?: Lodge::query()->orderBy('id')->value('id');
             $subtotal = 0;
-            $menuItems = $this->lodgeQuery(MenuItem::whereKey(array_keys($requestedItems))->where('lodge_id', $lodgeId))->lockForUpdate()->get()->keyBy('id');
+            $menuItems = $this->lodgeQuery(MenuItem::whereKey(array_keys($requestedItems))->where(fn ($query) => $query->where('lodge_id', $lodgeId)->orWhereNull('lodge_id')))->lockForUpdate()->get()->keyBy('id');
 
             foreach ($requestedItems as $menuItemId => $quantity) {
                 $menuItem = $menuItems->get($menuItemId);
