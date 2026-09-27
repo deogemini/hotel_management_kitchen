@@ -18,12 +18,19 @@ class DashboardController extends Controller
         $orders = $this->lodgeQuery(RestaurantOrder::query());
         $payments = $this->lodgeQuery(Payment::query());
         $invoices = $this->lodgeQuery(Invoice::query());
+        $occupiedRoomIds = (clone $bookings)->where('status', 'Checked In')->whereNotNull('room_id')->pluck('room_id');
+        $reservedRoomIds = (clone $bookings)
+            ->whereIn('status', ['Pending', 'Confirmed'])
+            ->whereDate('check_out_date', '>=', today())
+            ->whereNotNull('room_id')
+            ->pluck('room_id');
+        $unavailableRoomIds = $occupiedRoomIds->merge($reservedRoomIds)->unique();
 
         $stats = [
             'totalRooms' => (clone $rooms)->count(),
-            'availableRooms' => (clone $rooms)->where('status', 'Available')->count(),
-            'occupiedRooms' => (clone $rooms)->where('status', 'Occupied')->count(),
-            'reservedRooms' => (clone $rooms)->where('status', 'Reserved')->count(),
+            'availableRooms' => (clone $rooms)->where('status', '!=', 'Maintenance')->whereNotIn('id', $unavailableRoomIds)->count(),
+            'occupiedRooms' => $occupiedRoomIds->count(),
+            'reservedRooms' => $reservedRoomIds->diff($occupiedRoomIds)->count(),
             'maintenanceRooms' => (clone $rooms)->where('status', 'Maintenance')->count(),
             'currentGuests' => (clone $bookings)->where('status', 'Checked In')->count(),
             'todayBookings' => (clone $bookings)->whereDate('created_at', today())->count(),

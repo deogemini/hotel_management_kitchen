@@ -1,4 +1,8 @@
 @extends('layouts.admin')
+@push('styles')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<style>.dataTables_wrapper .dataTables_paginate .pagination{justify-content:flex-end;margin-top:1rem}.dataTables_wrapper .dataTables_paginate .page-item{margin:0 2px}.dataTables_wrapper .dataTables_length,.dataTables_wrapper .dataTables_filter{margin-bottom:1rem}</style>
+@endpush
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3 mb-0">Purchase Management</h1><a href="{{ route('purchases.create') }}" class="btn btn-primary">Record Purchase</a></div>
 <div class="card"><div class="card-body">
@@ -8,3 +12,19 @@
 @if($purchases->isNotEmpty())<tr class="fw-bold table-light"><td colspan="5" class="text-end">Total Purchase Cost:</td><td>{{ number_format($totalCost, 2) }}</td><td colspan="2"></td></tr>@endif
 </tbody></table></div></div></div>
 @endsection
+@push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(function () {
+    $('.table.table-hover').DataTable({
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+        order: [[0, 'desc'], [1, 'desc']],
+        columnDefs: [{ orderable: false, targets: [7] }],
+        language: { search: 'Search purchases:', lengthMenu: 'Show _MENU_ entries', info: 'Showing _START_ to _END_ of _TOTAL_ purchases' }
+    });
+});
+</script>
+@endpush
