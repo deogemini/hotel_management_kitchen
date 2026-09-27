@@ -47,6 +47,7 @@
                     <th>Current Stock</th>
                     <th>Low Alert</th>
                     <th>Status</th>
+                    <th>Purchase Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -66,10 +67,11 @@
                                 <span class="badge bg-success">In stock</span>
                             @endif
                         </td>
+                        <td>@if($item->purchases_exists)<span class="badge bg-info">Purchased</span>@else<span class="badge bg-secondary">Not purchased</span>@endif</td>
                     </tr>
                 @empty
                     <tr>
-                        <td></td><td class="text-muted">No menu items found.</td><td></td><td></td><td></td><td></td>
+                        <td></td><td class="text-muted">No menu items found.</td><td></td><td></td><td></td><td></td><td></td>
                     </tr>
                 @endforelse
             </tbody>
@@ -89,7 +91,7 @@
             pageLength: 10,
             lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
             order: [[1, 'asc']],
-            columnDefs: [{ orderable: false, targets: [5] }],
+            columnDefs: [{ orderable: false, targets: [5, 6] }],
             language: {
                 search: 'Search stock:',
                 lengthMenu: 'Show _MENU_ entries',

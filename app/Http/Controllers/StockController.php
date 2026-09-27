@@ -11,14 +11,14 @@ class StockController extends Controller
 {
     public function index()
     {
-        $menuItems = $this->lodgeQuery(MenuItem::query())->orderBy('category')->orderBy('name')->get();
+        $menuItems = $this->lodgeQuery(MenuItem::withExists('purchases'))->orderBy('category')->orderBy('name')->get();
 
         return view('stocks.index', compact('menuItems'));
     }
 
     public function drinks()
     {
-        $menuItems = $this->lodgeQuery(MenuItem::query())
+        $menuItems = $this->lodgeQuery(MenuItem::withExists('purchases'))
             ->where('category', 'Drinks')
             ->orderBy('name')
             ->get();

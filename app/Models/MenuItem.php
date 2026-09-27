@@ -39,6 +39,11 @@ class MenuItem extends Model
         return $this->hasMany(RestaurantOrderItem::class);
     }
 
+    public function purchases(): HasMany
+    {
+        return $this->hasMany(Purchase::class);
+    }
+
     public function lodge(): BelongsTo
     {
         return $this->belongsTo(Lodge::class);
