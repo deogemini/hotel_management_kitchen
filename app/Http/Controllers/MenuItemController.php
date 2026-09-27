@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\MenuItem;
+use App\Models\Purchase;
+use App\Models\StockMovement;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class MenuItemController extends Controller
@@ -57,7 +60,15 @@ class MenuItemController extends Controller
     public function destroy(MenuItem $menuItem)
     {
         abort_unless(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner', 403);
-        $menuItem->delete();
+        try {
+            DB::transaction(function () use ($menuItem) {
+                StockMovement::where('menu_item_id', $menuItem->id)->delete();
+                Purchase::where('menu_item_id', $menuItem->id)->delete();
+                $menuItem->delete();
+            });
+        } catch (\Illuminate\Database\QueryException $exception) {
+            return back()->withErrors(['menu_item' => 'This item cannot be deleted because it is already used in restaurant sales. You can edit it and mark it unavailable instead.']);
+        }
 
         return redirect()->route('menu-items.index')->with('success', 'Menu item deleted successfully.');
     }
