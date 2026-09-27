@@ -83,7 +83,7 @@
 <script>$(function () { $('.selectpicker').selectpicker(); });</script>
 @endpush
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+window.addEventListener('load', function () {
     const rows = document.querySelectorAll('.order-item-row');
     const orderTotal = document.getElementById('order_total');
 
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const item = row.querySelector('.menu-item-select');
             const quantity = row.querySelector('.quantity-input');
             const lineTotal = row.querySelector('.line-total');
-            const selectedOption = Array.from(item.options).find(option => option.value === item.value);
+            const selectedOption = item.querySelector('option:checked') || item.selectedOptions[0];
             const price = Number(selectedOption?.dataset.price || 0);
             const stock = Number(selectedOption?.dataset.stock || 0);
             const qty = Number(quantity.value || 0);
@@ -124,6 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     updateTotal();
+    setTimeout(updateTotal, 100);
 });
 </script>
 @endsection
