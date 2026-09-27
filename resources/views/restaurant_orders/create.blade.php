@@ -78,6 +78,7 @@
     </div>
 </div>
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
 <script>$(function () { $('.selectpicker').selectpicker(); });</script>
 @endpush
