@@ -34,7 +34,7 @@ class RestaurantOrderController extends Controller
             'restaurantOrder' => new RestaurantOrder(),
             'bookings' => $this->lodgeQuery(Booking::with('guest', 'room')->where('status', 'Checked In'))->get(),
             'guests' => $this->lodgeQuery(Guest::query())->orderBy('full_name')->get(),
-            'menuItems' => $this->lodgeQuery(MenuItem::where('is_available', true)->where('stock_quantity', '>', 0))->orderBy('category')->orderBy('name')->get(),
+            'menuItems' => $this->lodgeQuery(MenuItem::where('is_available', true)->where(fn ($query) => $query->where('category', 'Food')->orWhere('stock_quantity', '>', 0)))->orderBy('category')->orderBy('name')->get(),
             'guestId' => $guestId,
         ]);
     }
@@ -86,7 +86,7 @@ class RestaurantOrderController extends Controller
                     ]);
                 }
 
-                if ($quantity > $menuItem->stock_quantity) {
+                if ($menuItem->category !== 'Food' && $quantity > $menuItem->stock_quantity) {
                     throw ValidationException::withMessages([
                         'quantity' => $menuItem->name.' has only '.$menuItem->stock_quantity.' item(s) in stock.',
                     ]);
@@ -115,14 +115,16 @@ class RestaurantOrderController extends Controller
                 $lineTotal = $quantity * $menuItem->price;
                 $subtotal += $lineTotal;
                 $stockBefore = $menuItem->stock_quantity;
-                $menuItem->decrement('stock_quantity', $quantity);
-                StockMovement::create([
+                if ($menuItem->category !== 'Food') {
+                    $menuItem->decrement('stock_quantity', $quantity);
+                    StockMovement::create([
                     'lodge_id' => $order->lodge_id, 'menu_item_id' => $menuItem->id, 'type' => 'sale',
                     'quantity' => $quantity, 'stock_before' => $stockBefore,
                     'stock_after' => $stockBefore - $quantity, 'unit_price' => $menuItem->price,
                     'reference_type' => RestaurantOrder::class, 'reference_id' => $order->id,
                     'movement_date' => today(), 'created_by' => auth()->id(),
-                ]);
+                    ]);
+                }
 
                 RestaurantOrderItem::create([
                     'restaurant_order_id' => $order->id,
@@ -202,7 +204,10 @@ class RestaurantOrderController extends Controller
         DB::transaction(function () use ($restaurantOrder) {
             $restaurantOrder->load('items');
             foreach ($restaurantOrder->items as $item) {
-                MenuItem::whereKey($item->menu_item_id)->lockForUpdate()->first()?->increment('stock_quantity', $item->quantity);
+                $menuItem = MenuItem::whereKey($item->menu_item_id)->lockForUpdate()->first();
+                if ($menuItem && $menuItem->category !== 'Food') {
+                    $menuItem->increment('stock_quantity', $item->quantity);
+                }
             }
             StockMovement::where('reference_type', RestaurantOrder::class)
                 ->where('reference_id', $restaurantOrder->id)

@@ -55,7 +55,7 @@
                         <select name="menu_item_id[]" class="selectpicker menu-item-select" data-live-search="true" data-size="8" data-width="100%" title="Search or select item">
                             <option value="" data-price="0">Select item</option>
                             @foreach($menuItems as $item)
-                                <option value="{{ $item->id }}" data-price="{{ $item->price }}" data-stock="{{ $item->stock_quantity }}">{{ $item->name }} - {{ number_format($item->price, 2) }} - Stock {{ $item->stock_quantity }}</option>
+                                <option value="{{ $item->id }}" data-price="{{ $item->price }}" data-stock="{{ $item->stock_quantity }}" data-category="{{ $item->category }}">{{ $item->name }} - {{ number_format($item->price, 2) }} - {{ $item->category === 'Food' ? 'Food item' : 'Stock '.$item->stock_quantity }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -101,10 +101,11 @@ window.addEventListener('load', function () {
             const selectedOption = item.querySelector('option:checked') || item.selectedOptions[0];
             const price = Number(selectedOption?.dataset.price || 0);
             const stock = Number(selectedOption?.dataset.stock || 0);
+            const isFood = selectedOption?.dataset.category === 'Food';
             const qty = Number(quantity.value || 0);
             const amount = price * qty;
 
-            if (stock > 0) {
+            if (!isFood && stock > 0) {
                 quantity.max = stock;
             } else {
                 quantity.removeAttribute('max');
