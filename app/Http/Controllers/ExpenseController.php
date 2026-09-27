@@ -24,5 +24,11 @@ class ExpenseController extends Controller {
         $expense->delete();
         return redirect()->route('expenses.index')->with('success', 'Expense deleted successfully.');
     }
+    public function edit(Expense $expense) { abort_unless(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner', 403); return view('expenses.edit', compact('expense')); }
+    public function update(Request $request, Expense $expense) {
+        abort_unless(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner', 403);
+        $data = $request->validate(['category'=>'required|in:UMEME,UFUNDI,STATIONARY,MATUMIZI YA JIKONI','description'=>'required|string|max:255','amount'=>'required|numeric|min:0.01','payment_method'=>'required|in:Cash,Mobile money,Card','spent_at'=>'required|date']);
+        $expense->update($data); return redirect()->route('expenses.index')->with('success','Expense updated successfully.');
+    }
     private function query() { return (auth()->user()?->hasRole('hotel_manager') ?? false) ? Expense::query() : Expense::where('lodge_id', auth()->user()?->lodge_id); }
 }

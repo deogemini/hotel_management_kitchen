@@ -57,7 +57,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('purchases', PurchaseController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
         Route::get('purchases/export/excel', [PurchaseController::class, 'excel'])->name('purchases.export.excel');
         Route::get('purchases/export/pdf', [PurchaseController::class, 'pdf'])->name('purchases.export.pdf');
-        Route::resource('expenses', ExpenseController::class)->only(['index', 'create', 'store', 'destroy']);
+        Route::resource('expenses', ExpenseController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
         Route::resource('payments', PaymentController::class)->except(['edit', 'update', 'destroy']);
         Route::delete('payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
         Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
