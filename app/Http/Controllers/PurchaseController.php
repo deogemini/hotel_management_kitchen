@@ -33,6 +33,32 @@ class PurchaseController extends Controller
         return view('purchases.create', compact('menuItems', 'suppliers'));
     }
 
+    public function edit(Purchase $purchase)
+    {
+        abort_unless(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner', 403);
+        return view('purchases.edit', compact('purchase'));
+    }
+
+    public function update(Request $request, Purchase $purchase)
+    {
+        abort_unless(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner', 403);
+        $data = $request->validate(['quantity' => ['required', 'integer', 'min:0'], 'unit_cost' => ['required', 'numeric', 'min:0'], 'supplier' => ['nullable', 'string', 'max:255'], 'purchased_at' => ['required', 'date'], 'notes' => ['nullable', 'string', 'max:1000'], 'affects_stock' => ['nullable', 'boolean']]);
+        DB::transaction(function () use ($data, $request, $purchase) {
+            $item = $this->lodgeQuery(MenuItem::query())->lockForUpdate()->findOrFail($purchase->menu_item_id);
+            if ($purchase->affects_stock) $item->decrement('stock_quantity', $purchase->quantity);
+            $affectsStock = $request->boolean('affects_stock');
+            $purchase->update([...$data, 'affects_stock' => $affectsStock, 'total_cost' => $data['quantity'] * $data['unit_cost']]);
+            StockMovement::where('reference_type', Purchase::class)->where('reference_id', $purchase->id)->delete();
+            if ($affectsStock) {
+                $before = $item->stock_quantity;
+                $item->increment('stock_quantity', $data['quantity']);
+                StockMovement::create(['lodge_id' => $purchase->lodge_id, 'menu_item_id' => $item->id, 'type' => 'purchase', 'quantity' => $data['quantity'], 'stock_before' => $before, 'stock_after' => $before + $data['quantity'], 'unit_price' => $data['unit_cost'], 'reference_type' => Purchase::class, 'reference_id' => $purchase->id, 'movement_date' => $data['purchased_at'], 'created_by' => auth()->id()]);
+            } else $item->update(['stock_quantity' => $data['quantity']]);
+            $item->update(['buying_price' => $data['unit_cost']]);
+        });
+        return redirect()->route('purchases.index')->with('success', 'Purchase updated and stock adjusted successfully.');
+    }
+
     public function excel(Request $request)
     {
         $this->validateDates($request);

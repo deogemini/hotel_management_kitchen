@@ -54,7 +54,7 @@ Route::middleware('auth')->group(function () {
         Route::get('stocks/drinks', [StockController::class, 'drinks'])->name('stocks.drinks');
         Route::get('stocks/export/excel', [StockController::class, 'excel'])->name('stocks.export.excel');
         Route::get('stocks/export/pdf', [StockController::class, 'pdf'])->name('stocks.export.pdf');
-        Route::resource('purchases', PurchaseController::class)->only(['index', 'create', 'store', 'destroy']);
+        Route::resource('purchases', PurchaseController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
         Route::get('purchases/export/excel', [PurchaseController::class, 'excel'])->name('purchases.export.excel');
         Route::get('purchases/export/pdf', [PurchaseController::class, 'pdf'])->name('purchases.export.pdf');
         Route::resource('expenses', ExpenseController::class)->only(['index', 'create', 'store', 'destroy']);

@@ -3,6 +3,20 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 <style>.dataTables_wrapper .dataTables_paginate .pagination{justify-content:flex-end;margin-top:1rem}.dataTables_wrapper .dataTables_paginate .page-item{margin:0 2px}.dataTables_wrapper .dataTables_length,.dataTables_wrapper .dataTables_filter{margin-bottom:1rem}</style>
 @endpush
+@if(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner')
+@push('scripts')
+<script>
+document.querySelectorAll('form[action*="/purchases/"]').forEach(function (form) {
+    const id = form.action.split('/').pop();
+    const link = document.createElement('a');
+    link.href = '{{ url('purchases') }}/' + id + '/edit';
+    link.className = 'btn btn-sm btn-info me-1';
+    link.textContent = 'Edit';
+    form.parentElement.insertBefore(link, form);
+});
+</script>
+@endpush
+@endif
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3 mb-0">Purchase Management</h1><a href="{{ route('purchases.create') }}" class="btn btn-primary">Record Purchase</a></div>
 <div class="card"><div class="card-body">
