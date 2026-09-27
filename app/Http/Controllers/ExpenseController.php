@@ -6,7 +6,8 @@ use Illuminate\Http\Request;
 class ExpenseController extends Controller {
     public function index() {
         $expenses = $this->query()->latest('spent_at')->get();
-        return view('expenses.index', compact('expenses'));
+        $totalExpenses = $expenses->sum('amount');
+        return view('expenses.index', compact('expenses', 'totalExpenses'));
     }
     public function create() { return view('expenses.create', ['lodges' => Lodge::orderBy('name')->get()]); }
     public function store(Request $request) {
