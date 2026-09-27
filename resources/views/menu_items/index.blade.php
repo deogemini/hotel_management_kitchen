@@ -31,3 +31,21 @@ document.addEventListener('DOMContentLoaded', function () { document.querySelect
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script><script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script><script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script>$(function(){ $('#menuItemsTable').DataTable({pageLength:10,lengthMenu:[[10,25,50,-1],[10,25,50,'All']],order:[[1,'asc']],columnDefs:[{orderable:false,targets:[7]}],language:{search:'Search items:',lengthMenu:'Show _MENU_ entries',info:'Showing _START_ to _END_ of _TOTAL_ items',paginate:{first:'First',last:'Last',next:'Next',previous:'Previous'}}}); });</script>
 @endpush
+@if(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner')
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('#menuItemsTable a.btn-info').forEach(function (editLink) {
+        const itemId = editLink.getAttribute('href').split('/').pop();
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url('menu-items') }}/' + itemId;
+        form.className = 'd-inline';
+        form.onsubmit = () => confirm('Delete this menu item?');
+        form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="_method" value="DELETE"><button class="btn btn-sm btn-danger">Delete</button>';
+        editLink.parentElement.append(' ', form);
+    });
+});
+</script>
+@endpush
+@endif
