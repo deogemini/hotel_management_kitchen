@@ -98,8 +98,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const item = row.querySelector('.menu-item-select');
             const quantity = row.querySelector('.quantity-input');
             const lineTotal = row.querySelector('.line-total');
-            const price = Number(item.options[item.selectedIndex]?.dataset.price || 0);
-            const stock = Number(item.options[item.selectedIndex]?.dataset.stock || 0);
+            const selectedOption = Array.from(item.options).find(option => option.value === item.value);
+            const price = Number(selectedOption?.dataset.price || 0);
+            const stock = Number(selectedOption?.dataset.stock || 0);
             const qty = Number(quantity.value || 0);
             const amount = price * qty;
 
@@ -118,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     rows.forEach(function (row) {
         row.querySelector('.menu-item-select').addEventListener('change', updateTotal);
+        row.querySelector('.menu-item-select').addEventListener('changed.bs.select', updateTotal);
         row.querySelector('.quantity-input').addEventListener('input', updateTotal);
     });
 
