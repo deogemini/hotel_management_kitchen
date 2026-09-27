@@ -7,9 +7,11 @@ use App\Models\Lodge;
 use App\Models\Purchase;
 use App\Models\StockMovement;
 use App\Models\Supplier;
+use App\Exports\PurchaseExport;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PurchaseController extends Controller
 {
@@ -29,6 +31,19 @@ class PurchaseController extends Controller
         $menuItems = $this->lodgeQuery(MenuItem::query())->orderBy('name')->get();
         $suppliers = $this->lodgeQuery(Supplier::query())->orderBy('name')->get();
         return view('purchases.create', compact('menuItems', 'suppliers'));
+    }
+
+    public function excel(Request $request)
+    {
+        $this->validateDates($request);
+        return Excel::download(new PurchaseExport($request->from_date, $request->to_date), 'purchases.xlsx');
+    }
+
+    public function pdf(Request $request)
+    {
+        $this->validateDates($request);
+        $purchases = $this->filteredPurchases($request)->get();
+        return view('purchases.print', ['purchases' => $purchases, 'totalCost' => $purchases->sum('total_cost'), 'fromDate' => $request->from_date, 'toDate' => $request->to_date]);
     }
 
     public function store(Request $request)
@@ -95,5 +110,18 @@ class PurchaseController extends Controller
             $query->where('lodge_id', auth()->user()?->lodge_id);
         }
         return $query;
+    }
+
+    private function filteredPurchases(Request $request)
+    {
+        return $this->lodgeQuery(Purchase::with('menuItem'))
+            ->when($request->filled('from_date'), fn ($query) => $query->whereDate('purchased_at', '>=', $request->from_date))
+            ->when($request->filled('to_date'), fn ($query) => $query->whereDate('purchased_at', '<=', $request->to_date))
+            ->latest('purchased_at')->latest();
+    }
+
+    private function validateDates(Request $request): void
+    {
+        $request->validate(['from_date' => ['nullable', 'date'], 'to_date' => ['nullable', 'date', 'after_or_equal:from_date']]);
     }
 }
