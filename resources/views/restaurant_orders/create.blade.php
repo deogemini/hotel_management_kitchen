@@ -1,4 +1,7 @@
 @extends('layouts.admin')
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+@endpush
 @section('content')
 <h1 class="h3 mb-3">New Restaurant Order</h1>
 <div class="card">
@@ -49,7 +52,7 @@
             @for($i = 0; $i < 5; $i++)
                 <div class="row g-2 mb-2 order-item-row">
                     <div class="col-md-7">
-                        <select name="menu_item_id[]" class="form-select menu-item-select">
+                        <select name="menu_item_id[]" class="selectpicker menu-item-select" data-live-search="true" data-size="8" data-width="100%" title="Search or select item">
                             <option value="" data-price="0">Select item</option>
                             @foreach($menuItems as $item)
                                 <option value="{{ $item->id }}" data-price="{{ $item->price }}" data-stock="{{ $item->stock_quantity }}">{{ $item->name }} - {{ number_format($item->price, 2) }} - Stock {{ $item->stock_quantity }}</option>
@@ -74,6 +77,10 @@
         </form>
     </div>
 </div>
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
+<script>$(function () { $('.selectpicker').selectpicker(); });</script>
+@endpush
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const rows = document.querySelectorAll('.order-item-row');
