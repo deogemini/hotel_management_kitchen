@@ -9,7 +9,7 @@ class CompanyController extends Controller
 {
     public function index()
     {
-        $companies = Company::query()->when(! auth()->user()->hasRole('hotel_manager'), fn ($q) => $q->where('lodge_id', auth()->user()->lodge_id))->orderBy('name')->get();
+        $companies = Company::visibleTo(auth()->user())->orderBy('name')->get();
 
         return view('companies.index', compact('companies'));
     }

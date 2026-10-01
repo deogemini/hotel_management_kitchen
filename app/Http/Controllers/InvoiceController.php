@@ -22,7 +22,7 @@ class InvoiceController extends Controller
     public function create(Guest $guest)
     {
         $this->authorizeLodge($guest);
-        $companies = Company::where('lodge_id', $guest->lodge_id)->orderBy('name')->get();
+        $companies = Company::visibleTo(auth()->user())->orderBy('name')->get();
 
         return view('invoices.create', compact('guest', 'companies'));
     }
@@ -48,9 +48,9 @@ class InvoiceController extends Controller
         ]);
         $company = null;
         if ($data['billing_type'] === 'company') {
-            $company = Company::where('lodge_id', $guest->lodge_id)->find($data['company_id']);
+            $company = Company::visibleTo(auth()->user())->find($data['company_id']);
             if (! $company) {
-                throw ValidationException::withMessages(['company_id' => 'Choose a registered company for this lodge.']);
+                throw ValidationException::withMessages(['company_id' => 'Choose an available registered company from the list.']);
             }
         }
         $items = collect($data['items'])->map(function ($item) {

@@ -14,6 +14,48 @@ class GuestInvoiceTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_managers_and_owners_can_invoice_using_companies_registered_outside_the_guests_lodge(): void
+    {
+        $lodge = \App\Models\Lodge::create(['name' => 'Guest Lodge']);
+        $otherLodge = \App\Models\Lodge::create(['name' => 'Company Lodge']);
+        $guest = Guest::create(['full_name' => 'Company Guest', 'lodge_id' => $lodge->id]);
+        foreach (['hotel_manager', 'Owner'] as $role) {
+            $this->actingAs(User::factory()->create(['role' => $role, 'lodge_id' => null]));
+            $this->post(route('companies.store'), ['name' => $role.' Registered Company'])->assertSessionHasNoErrors();
+            $unassigned = Company::where('name', $role.' Registered Company')->firstOrFail();
+            $assigned = Company::create(['name' => $role.' Other Lodge Company', 'lodge_id' => $otherLodge->id]);
+            foreach ([$unassigned, $assigned] as $company) {
+                $this->get(route('companies.index'))->assertOk()->assertSee($company->name);
+                $this->get(route('invoices.create', $guest))->assertOk()->assertSee($company->name);
+                $payload = $this->payload();
+                $payload['billing_type'] = 'company';
+                $payload['company_id'] = $company->id;
+                $this->post(route('invoices.store', $guest), $payload)->assertSessionHasNoErrors()->assertRedirect();
+                $invoice = Invoice::latest('id')->firstOrFail();
+                $this->assertSame($company->id, $invoice->company_id);
+                $this->assertSame($company->name, $invoice->bill_to['name']);
+            }
+        }
+    }
+
+    public function test_cashier_company_selection_remains_limited_to_their_lodge(): void
+    {
+        $lodge = \App\Models\Lodge::create(['name' => 'Cashier Lodge']);
+        $otherLodge = \App\Models\Lodge::create(['name' => 'Other Company Lodge']);
+        $guest = Guest::create(['full_name' => 'Cashier Guest', 'lodge_id' => $lodge->id]);
+        $own = Company::create(['name' => 'Available Company', 'lodge_id' => $lodge->id]);
+        $other = Company::create(['name' => 'Restricted Company', 'lodge_id' => $otherLodge->id]);
+        $this->actingAs(User::factory()->create(['role' => 'cashier', 'lodge_id' => $lodge->id]));
+        $this->get(route('invoices.create', $guest))->assertOk()->assertSee($own->name)->assertDontSee($other->name);
+        $payload = $this->payload();
+        $payload['billing_type'] = 'company';
+        $payload['company_id'] = $other->id;
+        $this->post(route('invoices.store', $guest), $payload)->assertSessionHasErrors('company_id');
+        $this->assertDatabaseCount('invoices', 0);
+        $payload['company_id'] = $own->id;
+        $this->post(route('invoices.store', $guest), $payload)->assertSessionHasNoErrors()->assertRedirect();
+    }
+
     public function test_logo_upload_is_preserved_on_issued_invoices(): void
     {
         \Illuminate\Support\Facades\Storage::fake('local');
