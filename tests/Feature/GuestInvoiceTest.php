@@ -14,6 +14,40 @@ class GuestInvoiceTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_logo_upload_is_preserved_on_issued_invoices(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        $this->actingAs(User::factory()->create(['role' => 'hotel_manager']));
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=');
+        $upload = \Illuminate\Http\UploadedFile::fake()->createWithContent('logo.png', $png);
+        $this->put(route('settings.invoice.update'), array_replace(InvoiceSetting::details(), ['logo' => $upload]))->assertSessionHasNoErrors();
+        $path = InvoiceSetting::details()['logo_path'];
+        \Illuminate\Support\Facades\Storage::disk('local')->assertExists($path);
+        $this->get(route('settings.invoice.edit'))->assertOk()->assertSee('data:image/png;base64,', false);
+
+        $guest = Guest::create(['full_name' => 'Logo Guest']);
+        $this->post(route('invoices.store', $guest), $this->payload())->assertSessionHasNoErrors();
+        $invoice = Invoice::firstOrFail();
+        $this->assertSame($path, $invoice->issuer_details['logo_path']);
+
+        $this->put(route('settings.invoice.update'), InvoiceSetting::details())->assertSessionHasNoErrors();
+        $this->assertSame($path, InvoiceSetting::details()['logo_path']);
+        $this->put(route('settings.invoice.update'), array_replace(InvoiceSetting::details(), ['remove_logo' => 1]))->assertSessionHasNoErrors();
+        $this->assertNull(InvoiceSetting::details()['logo_path']);
+        $this->get(route('invoices.print', $invoice))->assertOk()->assertSee('data:image/png;base64,', false);
+        \Illuminate\Support\Facades\Storage::disk('local')->assertExists($path);
+    }
+
+    public function test_logo_upload_rejects_non_images_and_untrusted_paths(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'hotel_manager']));
+        $this->put(route('settings.invoice.update'), array_replace(InvoiceSetting::details(), [
+            'logo' => \Illuminate\Http\UploadedFile::fake()->createWithContent('logo.php', '<?php echo 1;'),
+        ]))->assertSessionHasErrors('logo');
+        $this->put(route('settings.invoice.update'), array_replace(InvoiceSetting::details(), ['logo_path' => 'arbitrary.png']))->assertSessionHasNoErrors();
+        $this->assertNull(InvoiceSetting::details()['logo_path']);
+    }
+
     private function payload(): array
     {
         return ['billing_type' => 'guest', 'bill_to' => ['name' => 'Customer Name', 'tin' => '123-456'],
