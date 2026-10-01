@@ -11,8 +11,11 @@
         'id_number' => 'ID Number',
     ] as $field => $label)
     <div class="col-md-6 mb-3">
-        <label class="form-label">{{ $label }}</label>
-        <input name="{{ $field }}" class="form-control" value="{{ old($field, $guest->$field) }}" {{ $field === 'full_name' ? 'required' : '' }}>
+        <label for="{{ $field }}" class="form-label">{{ $label }}</label>
+        <input id="{{ $field }}" name="{{ $field }}" class="form-control @error($field) is-invalid @enderror" value="{{ old($field, $guest->$field) }}" {{ $field === 'full_name' ? 'required' : '' }} @error($field) aria-invalid="true" aria-describedby="{{ $field }}-error" @enderror>
+        @error($field)
+            <div id="{{ $field }}-error" class="invalid-feedback">{{ $message }}</div>
+        @enderror
     </div>
     @endforeach
     <div class="col-md-6 mb-3">

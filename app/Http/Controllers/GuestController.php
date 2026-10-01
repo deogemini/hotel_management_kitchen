@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Guest;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class GuestController extends Controller
 {
@@ -55,7 +56,7 @@ class GuestController extends Controller
     public function update(Request $request, Guest $guest)
     {
         $original = $guest->getOriginal();
-        $guest->update($this->validated($request));
+        $guest->update($this->validated($request, $guest));
         AuditService::log('guest.update', $guest, ['from' => $original, 'to' => $guest->getAttributes()]);
 
         return redirect()->route('guests.index')->with('success', 'Guest updated successfully.');
@@ -73,16 +74,20 @@ class GuestController extends Controller
         return redirect()->route('guests.index')->with('success', 'Guest deleted successfully.');
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request, ?Guest $guest = null): array
     {
         return $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
-            'phone_number' => ['nullable', 'string', 'max:50'],
-            'email' => ['nullable', 'email', 'max:255'],
+            'phone_number' => ['nullable', 'string', 'max:50', Rule::unique('guests', 'phone_number')->ignore($guest)],
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('guests', 'email')->ignore($guest)],
             'address' => ['nullable', 'string'],
             'id_type' => ['nullable', 'in:NIDA,Driving Licence,Passport,Others'],
-            'id_number' => ['nullable', 'string', 'max:100'],
+            'id_number' => ['nullable', 'string', 'max:100', Rule::unique('guests', 'id_number')->ignore($guest)],
             'nationality' => ['nullable', 'in:Tanzanian,Kenyan,Ugandan'],
+        ], [
+            'phone_number.unique' => 'This phone number is already registered to another guest.',
+            'email.unique' => 'This email is already registered to another guest.',
+            'id_number.unique' => 'This ID number is already registered to another guest.',
         ]);
     }
 
