@@ -1,24 +1,31 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement("ALTER TABLE restaurant_orders MODIFY payment_method ENUM('Cash', 'Mobile money', 'LIPA NAMBA', 'Card', 'Room charge') NULL");
-        DB::statement("ALTER TABLE payments MODIFY payment_method ENUM('Cash', 'Mobile money', 'LIPA NAMBA', 'Card', 'Room charge') NOT NULL");
-        DB::statement("ALTER TABLE other_charges MODIFY payment_method ENUM('Cash', 'Mobile money', 'LIPA NAMBA', 'Card', 'Room charge') NULL");
+        $this->changeMethods(['Cash', 'Mobile money', 'LIPA NAMBA', 'Card', 'Room charge']);
     }
 
     public function down(): void
     {
-        DB::table('restaurant_orders')->where('payment_method', 'LIPA NAMBA')->update(['payment_method' => 'Mobile money']);
-        DB::table('payments')->where('payment_method', 'LIPA NAMBA')->update(['payment_method' => 'Mobile money']);
-        DB::table('other_charges')->where('payment_method', 'LIPA NAMBA')->update(['payment_method' => 'Mobile money']);
-        DB::statement("ALTER TABLE restaurant_orders MODIFY payment_method ENUM('Cash', 'Mobile money', 'Card', 'Room charge') NULL");
-        DB::statement("ALTER TABLE payments MODIFY payment_method ENUM('Cash', 'Mobile money', 'Card', 'Room charge') NOT NULL");
-        DB::statement("ALTER TABLE other_charges MODIFY payment_method ENUM('Cash', 'Mobile money', 'Card', 'Room charge') NULL");
+        foreach (['restaurant_orders', 'payments', 'other_charges'] as $table) {
+            DB::table($table)->where('payment_method', 'LIPA NAMBA')->update(['payment_method' => 'Mobile money']);
+        }
+        $this->changeMethods(['Cash', 'Mobile money', 'Card', 'Room charge']);
+    }
+
+    private function changeMethods(array $methods): void
+    {
+        foreach (['restaurant_orders', 'payments', 'other_charges'] as $name) {
+            Schema::table($name, function (Blueprint $table) use ($name, $methods) {
+                $table->enum('payment_method', $methods)->nullable($name !== 'payments')->change();
+            });
+        }
     }
 };

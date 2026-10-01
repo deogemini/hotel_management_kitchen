@@ -20,7 +20,7 @@ class GuestController extends Controller
 
     public function create()
     {
-        return view('guests.create', ['guest' => new Guest()]);
+        return view('guests.create', ['guest' => new Guest]);
     }
 
     public function store(Request $request)
@@ -41,6 +41,7 @@ class GuestController extends Controller
             'restaurantOrders.items.menuItem',
             'otherCharges.booking.room',
             'payments',
+            'invoices',
         ]);
 
         return view('guests.show', compact('guest'));

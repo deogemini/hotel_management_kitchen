@@ -1,10 +1,9 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CheckInOutController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\HotelReportController;
 use App\Http\Controllers\InvoiceController;
@@ -12,17 +11,17 @@ use App\Http\Controllers\KitchenOrderController;
 use App\Http\Controllers\LodgeController;
 use App\Http\Controllers\MenuItemController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\RestaurantOrderController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ServiceChargeController;
-use App\Http\Controllers\StockController;
-use App\Http\Controllers\PurchaseController;
-use App\Http\Controllers\SupplierController;
-use App\Http\Controllers\ExpenseController;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\SmsSettingController;
-use App\Http\Middleware\AdminMiddleware;
+use App\Http\Controllers\StockController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -42,6 +41,9 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:hotel_manager,cashier,Owner,owner')->group(function () {
         Route::resource('rooms', RoomController::class);
         Route::resource('guests', GuestController::class);
+        Route::resource('companies', \App\Http\Controllers\CompanyController::class)->except(['show', 'destroy']);
+        Route::get('guests/{guest}/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+        Route::post('guests/{guest}/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
         Route::resource('bookings', BookingController::class);
         Route::get('bookings/{booking}/receipt', [BookingController::class, 'receipt'])->name('bookings.receipt');
         Route::get('bookings/{booking}/invoice', [BookingController::class, 'invoice'])->name('bookings.invoice');
@@ -74,6 +76,8 @@ Route::middleware('auth')->group(function () {
         Route::post('users/{user}/unlock-login-lock', [UserController::class, 'unlockLoginLock'])->name('users.unlock-login-lock');
         Route::get('audit-trails', [App\Http\Controllers\AuditTrailController::class, 'index'])->name('audit_trails.index');
         Route::get('settings/sms', [SmsSettingController::class, 'index'])->name('settings.sms.index');
+        Route::get('settings/invoice', [\App\Http\Controllers\InvoiceSettingController::class, 'edit'])->name('settings.invoice.edit');
+        Route::put('settings/invoice', [\App\Http\Controllers\InvoiceSettingController::class, 'update'])->name('settings.invoice.update');
         Route::put('settings/sms', [SmsSettingController::class, 'update'])->name('settings.sms.update');
 
         Route::get('reports/daily-collections', [HotelReportController::class, 'dailyCollections'])->name('reports.daily-collections');

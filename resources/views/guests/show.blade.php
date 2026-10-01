@@ -8,6 +8,9 @@
     $serviceTotal = $guest->otherCharges->sum('amount');
     $serviceBalance = $guest->otherCharges->sum('balance_amount');
     $paidTotal = $guest->payments->whereIn('status', ['Paid', 'Partial'])->sum('amount');
+    $standaloneInvoices = $guest->invoices->whereNull('booking_id')->where('status', '!=', 'Cancelled');
+    $bookingTotal += $standaloneInvoices->sum('subtotal');
+    $bookingBalance += $standaloneInvoices->sum('balance_amount');
 @endphp
 <h1 class="h3 mb-3">{{ $guest->full_name }}</h1>
 <div class="row">
@@ -21,6 +24,7 @@
                 <a href="{{ route('bookings.create', ['guest_id' => $guest->id]) }}" class="btn btn-primary">Create Booking</a>
                 <a href="{{ route('restaurant-orders.create', ['guest_id' => $guest->id]) }}" class="btn btn-secondary">Food / Drinks Order</a>
                 <a href="{{ route('service-charges.create', ['guest_id' => $guest->id]) }}" class="btn btn-info">Add Service</a>
+                <a href="{{ route('invoices.create', $guest) }}" class="btn btn-success">Create Invoice</a>
             </div>
         </div></div>
     </div>
@@ -34,6 +38,9 @@
     </div>
 </div>
 
+<div class="card"><div class="card-header"><h5 class="card-title mb-0">Invoices</h5></div><div class="card-body table-responsive"><table class="table"><thead><tr><th>Invoice</th><th>Bill to</th><th>Date</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>
+@forelse($guest->invoices as $invoice)<tr><td>{{ $invoice->invoice_number }}</td><td>{{ $invoice->bill_to['name'] ?? $guest->full_name }}</td><td>{{ $invoice->issued_at?->format('Y-m-d') }}</td><td>{{ number_format($invoice->subtotal, 2) }}</td><td>{{ $invoice->status }}</td><td><a class="btn btn-sm btn-secondary" href="{{ route('invoices.print', $invoice) }}">View / Print</a></td></tr>@empty<tr><td colspan="6">No invoices created.</td></tr>@endforelse
+</tbody></table></div></div>
 <div class="card">
     <div class="card-header"><h5 class="card-title mb-0">Booking History</h5></div>
     <div class="card-body">

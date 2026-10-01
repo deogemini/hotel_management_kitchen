@@ -1,17 +1,22 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement("ALTER TABLE rooms MODIFY room_type ENUM('Single', 'Executive', 'Deluxe', 'Suite') NOT NULL");
+        Schema::table('rooms', function (Blueprint $table) {
+            $table->enum('room_type', ['Single', 'Executive', 'Deluxe', 'Suite'])->change();
+        });
     }
 
     public function down(): void
     {
-        DB::statement("ALTER TABLE rooms MODIFY room_type ENUM('Single', 'Double', 'Twin', 'Deluxe', 'Suite') NOT NULL");
+        Schema::table('rooms', function (Blueprint $table) {
+            $table->enum('room_type', ['Single', 'Double', 'Twin', 'Deluxe', 'Suite'])->change();
+        });
     }
 };

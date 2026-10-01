@@ -19,11 +19,15 @@ class Invoice extends Model
         'status',
         'issued_by',
         'issued_at',
+        'company_id', 'bill_to', 'issuer_details', 'due_date', 'notes',
     ];
 
     protected function casts(): array
     {
         return [
+            'bill_to' => 'array',
+            'issuer_details' => 'array',
+            'due_date' => 'date',
             'subtotal' => 'decimal:2',
             'paid_amount' => 'decimal:2',
             'balance_amount' => 'decimal:2',

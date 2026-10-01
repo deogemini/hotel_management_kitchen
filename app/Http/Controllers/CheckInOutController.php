@@ -52,6 +52,10 @@ class CheckInOutController extends Controller
             'status' => $paid >= $subtotal ? 'Paid' : ($paid > 0 ? 'Partial' : 'Unpaid'),
             'issued_by' => auth()->id(),
             'issued_at' => now(),
+            'issuer_details' => \App\Models\InvoiceSetting::details(),
+            'bill_to' => ['name' => $booking->guest?->full_name, 'phone' => $booking->guest?->phone_number,
+                'email' => $booking->guest?->email, 'address' => $booking->guest?->address],
+            'due_date' => now()->addDays(7),
         ]);
 
         if (! $invoice->items()->exists()) {
