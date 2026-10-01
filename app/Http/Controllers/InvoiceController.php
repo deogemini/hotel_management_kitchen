@@ -27,9 +27,8 @@ class InvoiceController extends Controller
         return view('invoices.create', compact('guest', 'companies'));
     }
 
-    public function store(Request $request, Guest $guest)
+    private function invoiceData(Request $request): array
     {
-        $this->authorizeLodge($guest);
         $data = $request->validate([
             'billing_type' => 'required|in:guest,company',
             'company_id' => 'required_if:billing_type,company|nullable|integer',
@@ -63,6 +62,14 @@ class InvoiceController extends Controller
         if ($total > 9999999999.99) {
             throw ValidationException::withMessages(['items' => 'Invoice total exceeds the maximum allowed amount.']);
         }
+
+        return [$data, $company, $items, $total];
+    }
+
+    public function store(Request $request, Guest $guest)
+    {
+        $this->authorizeLodge($guest);
+        [$data, $company, $items, $total] = $this->invoiceData($request);
         $invoice = DB::transaction(function () use ($data, $guest, $company, $items, $total) {
             $invoice = Invoice::create([
                 'invoice_number' => 'INV-'.now()->format('Ymd').'-'.Str::upper((string) Str::ulid()),
@@ -80,7 +87,75 @@ class InvoiceController extends Controller
             return $invoice;
         });
 
-        return redirect()->route('invoices.print', $invoice)->with('success', 'Invoice created.');
+        return redirect()->route('invoices.show', $invoice)->with('success', 'Invoice saved. You can confirm payment now or reopen it later from Payments.');
+    }
+
+    public function show(Invoice $invoice)
+    {
+        $this->authorizeLodge($invoice);
+        $invoice->load('guest', 'items', 'payments');
+
+        return view('invoices.show', compact('invoice'));
+    }
+
+    private function authorizeOwner(): void
+    {
+        abort_unless(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner', 403);
+    }
+
+    public function edit(Invoice $invoice)
+    {
+        $this->authorizeOwner();
+        $invoice->load('guest', 'items');
+        $guest = $invoice->guest;
+        $companies = Company::visibleTo(auth()->user())->orderBy('name')->get();
+
+        return view('invoices.create', compact('invoice', 'guest', 'companies'));
+    }
+
+    public function update(Request $request, Invoice $invoice)
+    {
+        $this->authorizeOwner();
+        [$data, $company, $items, $total] = $this->invoiceData($request);
+        DB::transaction(function () use ($invoice, $data, $company, $items, $total) {
+            $invoice = Invoice::whereKey($invoice->id)->lockForUpdate()->firstOrFail();
+            if ($total < (float) $invoice->paid_amount) {
+                throw ValidationException::withMessages(['items' => 'The invoice total cannot be less than the amount already paid.']);
+            }
+            $before = $invoice->toArray();
+            $before['items'] = $invoice->items->toArray();
+            $billTo = $company
+                ? ($invoice->company_id === $company->id && $invoice->bill_to ? $invoice->bill_to : $company->only(['name', 'tin', 'phone', 'email', 'address']))
+                : $data['bill_to'];
+            $invoice->update([
+                'company_id' => $company?->id, 'bill_to' => $billTo,
+                'issued_at' => $data['issued_at'], 'due_date' => $data['due_date'] ?? null,
+                'notes' => $data['notes'] ?? null, 'subtotal' => $total,
+                'balance_amount' => round($total - (float) $invoice->paid_amount, 2),
+                'status' => $invoice->status === 'Cancelled' ? 'Cancelled' : ($invoice->paid_amount >= $total ? 'Paid' : ($invoice->paid_amount > 0 ? 'Partial' : 'Unpaid')),
+            ]);
+            $invoice->items()->delete();
+            $invoice->items()->createMany($items->all());
+            AuditService::log('invoice.update', $invoice, ['from' => $before, 'to' => $invoice->fresh('items')->toArray()]);
+        });
+
+        return redirect()->route('invoices.show', $invoice)->with('success', 'Invoice updated.');
+    }
+
+    public function destroy(Invoice $invoice)
+    {
+        $this->authorizeOwner();
+        $guestId = $invoice->guest_id;
+        DB::transaction(function () use ($invoice) {
+            $invoice = Invoice::whereKey($invoice->id)->lockForUpdate()->firstOrFail();
+            if ($invoice->paid_amount > 0 || $invoice->payments()->exists()) {
+                throw ValidationException::withMessages(['invoice' => 'This invoice has recorded payments. Remove incorrect payments from Payments before deleting the invoice.']);
+            }
+            AuditService::log('invoice.delete', $invoice, $invoice->load('items')->toArray());
+            $invoice->delete();
+        });
+
+        return redirect()->route('guests.show', $guestId)->with('success', 'Invoice deleted.');
     }
 
     public function print(Invoice $invoice)

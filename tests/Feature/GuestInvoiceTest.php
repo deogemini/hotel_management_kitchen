@@ -14,6 +14,91 @@ class GuestInvoiceTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_owner_can_edit_and_delete_an_unpaid_invoice(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'Owner']));
+        $guest = Guest::create(['full_name' => 'Owner Invoice Guest']);
+        $this->post(route('invoices.store', $guest), $this->payload())->assertSessionHasNoErrors();
+        $invoice = Invoice::firstOrFail();
+        $number = $invoice->invoice_number;
+        $issuer = $invoice->issuer_details;
+        $this->get(route('guests.show', $guest))->assertOk()->assertSee(route('invoices.edit', $invoice));
+        $this->get(route('payments.index'))->assertOk()->assertSee(route('invoices.destroy', $invoice));
+        $this->get(route('invoices.edit', $invoice))->assertOk()->assertSee('Save Changes')->assertSee('50000.25')->assertSee('Customer Name');
+        $data = $this->payload();
+        $data['items'] = [['description' => 'Updated accommodation', 'quantity' => 2, 'unit_price' => '60000']];
+        $data['bill_to']['name'] = 'Corrected Customer';
+        $this->put(route('invoices.update', $invoice), $data)->assertSessionHasNoErrors()->assertRedirect(route('invoices.show', $invoice));
+        $invoice->refresh();
+        $this->assertSame($number, $invoice->invoice_number);
+        $this->assertSame($issuer, $invoice->issuer_details);
+        $this->assertSame('120000.00', $invoice->balance_amount);
+        $this->assertSame('Corrected Customer', $invoice->bill_to['name']);
+        $this->assertCount(1, $invoice->items);
+        $this->assertDatabaseHas('audit_trails', ['action' => 'invoice.update', 'auditable_id' => $invoice->id]);
+        $this->delete(route('invoices.destroy', $invoice))->assertRedirect(route('guests.show', $guest));
+        $this->assertDatabaseMissing('invoices', ['id' => $invoice->id]);
+        $this->assertDatabaseMissing('invoice_items', ['invoice_id' => $invoice->id]);
+        $this->assertDatabaseHas('audit_trails', ['action' => 'invoice.delete', 'auditable_id' => $invoice->id]);
+    }
+
+    public function test_paid_invoice_edits_preserve_payments_and_deletion_is_blocked(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'owner']));
+        $guest = Guest::create(['full_name' => 'Paid Invoice Guest']);
+        $this->post(route('invoices.store', $guest), $this->payload());
+        $invoice = Invoice::firstOrFail();
+        $this->post(route('payments.store'), ['target_type' => 'invoice', 'target_id' => $invoice->id, 'amount' => 50000, 'payment_method' => 'Cash'])->assertSessionHasNoErrors();
+        $data = $this->payload();
+        $data['items'] = [['description' => 'Reduced charge', 'quantity' => 1, 'unit_price' => '40000']];
+        $this->put(route('invoices.update', $invoice), $data)->assertSessionHasErrors('items');
+        $this->assertSame('151000.85', $invoice->fresh()->subtotal);
+        $data['items'][0]['unit_price'] = '50000';
+        $this->put(route('invoices.update', $invoice), $data)->assertSessionHasNoErrors();
+        $this->assertSame('Paid', $invoice->fresh()->status);
+        $this->assertSame('0.00', $invoice->fresh()->balance_amount);
+        $this->delete(route('invoices.destroy', $invoice))->assertSessionHasErrors('invoice');
+        $this->assertDatabaseHas('invoices', ['id' => $invoice->id]);
+        $this->assertDatabaseHas('payments', ['invoice_id' => $invoice->id, 'amount' => 50000]);
+    }
+
+    public function test_non_owners_cannot_edit_or_delete_invoices(): void
+    {
+        $guest = Guest::create(['full_name' => 'Protected Invoice Guest']);
+        $invoice = Invoice::create(['invoice_number' => 'PROTECTED-1', 'guest_id' => $guest->id]);
+        foreach (['cashier', 'hotel_manager'] as $role) {
+            $this->actingAs(User::factory()->create(['role' => $role]));
+            $this->get(route('invoices.edit', $invoice))->assertForbidden();
+            $this->put(route('invoices.update', $invoice), $this->payload())->assertForbidden();
+            $this->delete(route('invoices.destroy', $invoice))->assertForbidden();
+            $this->get(route('invoices.show', $invoice))->assertOk()->assertDontSee(route('invoices.edit', $invoice));
+        }
+        $this->assertDatabaseHas('invoices', ['id' => $invoice->id]);
+    }
+
+    public function test_saved_invoice_can_be_reopened_from_payments_and_paid_in_stages(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'cashier']));
+        $guest = Guest::create(['full_name' => 'Saved Invoice Guest']);
+        $response = $this->post(route('invoices.store', $guest), $this->payload());
+        $invoice = Invoice::firstOrFail();
+        $response->assertRedirect(route('invoices.show', $invoice));
+        $this->get(route('invoices.show', $invoice))->assertOk()->assertSee('Confirm Payment')->assertSee('No payments confirmed');
+        $this->get(route('payments.index'))->assertOk()->assertSee($invoice->invoice_number)->assertSee('Customer Name')->assertSee('Open Invoice');
+        $this->get(route('payments.create', ['target_type' => 'invoice', 'target_id' => $invoice->id]))->assertOk()->assertSee('Customer Name');
+        $payment = ['target_type' => 'invoice', 'target_id' => $invoice->id, 'amount' => 1000, 'payment_method' => 'Cash'];
+        $this->post(route('payments.store'), $payment)->assertSessionHasNoErrors()->assertRedirect(route('invoices.show', $invoice));
+        $this->assertSame('Partial', $invoice->fresh()->status);
+        $this->get(route('invoices.show', $invoice))->assertOk()->assertSee('Partial')->assertSee('150,000.85')->assertSee('Receipt');
+        $payment['amount'] = '150000.85';
+        $this->post(route('payments.store'), $payment)->assertSessionHasNoErrors()->assertRedirect(route('invoices.show', $invoice));
+        $this->assertSame('Paid', $invoice->fresh()->status);
+        $this->get(route('invoices.show', $invoice))->assertOk()->assertSee('Paid')->assertDontSee('Confirm Payment');
+        $this->get(route('payments.index'))->assertOk()->assertSee($invoice->invoice_number)->assertSee('Paid');
+        $this->post(route('payments.store'), $payment)->assertSessionHasErrors('amount');
+        $this->assertCount(2, $invoice->payments);
+    }
+
     public function test_managers_and_owners_can_invoice_using_companies_registered_outside_the_guests_lodge(): void
     {
         $lodge = \App\Models\Lodge::create(['name' => 'Guest Lodge']);
@@ -157,5 +242,7 @@ class GuestInvoiceTest extends TestCase
         $this->get(route('invoices.create', $guest))->assertForbidden();
         $this->post(route('invoices.store', $guest), $this->payload())->assertForbidden();
         $this->get(route('invoices.print', $invoice))->assertForbidden();
+        $this->get(route('invoices.show', $invoice))->assertForbidden();
+        $this->get(route('payments.index'))->assertOk()->assertDontSee($invoice->invoice_number);
     }
 }

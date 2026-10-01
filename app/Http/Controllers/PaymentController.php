@@ -19,7 +19,9 @@ class PaymentController extends Controller
             ->latest('paid_at')
             ->get();
 
-        return view('payments.index', compact('payments'));
+        $invoices = $this->lodgeQuery(Invoice::with('guest'))->latest('id')->get();
+
+        return view('payments.index', compact('payments', 'invoices'));
     }
 
     public function create(Request $request)
@@ -91,6 +93,10 @@ class PaymentController extends Controller
         ]);
 
         $this->refreshBalances($target);
+
+        if ($target instanceof Invoice) {
+            return redirect()->route('invoices.show', $target)->with('success', 'Payment confirmed and invoice balance updated.');
+        }
 
         return redirect()->route('payments.receipt', $payment)->with('success', 'Payment received successfully.');
     }
@@ -178,7 +184,7 @@ class PaymentController extends Controller
         }
 
         if ($target instanceof Invoice) {
-            return $target->invoice_number.' - '.$target->guest?->full_name;
+            return $target->invoice_number.' - '.($target->bill_to['name'] ?? $target->guest?->full_name);
         }
 
         if ($target instanceof OtherCharge) {

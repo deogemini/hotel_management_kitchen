@@ -22,7 +22,7 @@
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Amount</label>
-                            <input type="number" step="0.01" min="0.01" max="{{ $remainingBalance }}" name="amount" class="form-control" value="{{ $remainingBalance }}" readonly required>
+                            <input type="number" step="0.01" min="0.01" max="{{ $remainingBalance }}" name="amount" class="form-control" value="{{ old('amount', $remainingBalance) }}" {{ $targetType === 'invoice' ? '' : 'readonly' }} required>
                         </div>
                     @else
                         <div class="col-md-4 mb-3">
@@ -67,7 +67,7 @@
                         <textarea name="notes" class="form-control">{{ old('notes') }}</textarea>
                     </div>
                 </div>
-                <button class="btn btn-primary">Receive Payment</button>
+                <button class="btn btn-primary">{{ $targetType === 'invoice' ? 'Confirm Payment' : 'Receive Payment' }}</button> @if($selectedTarget && $targetType === 'invoice')<a class="btn btn-secondary" href="{{ route('invoices.show', $selectedTarget) }}">Back to Invoice</a>@endif
             </form>
         @endif
     </div>
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
             @foreach($invoices as $invoice)
                 {
                     id: '{{ $invoice->id }}',
-                    label: @json($invoice->invoice_number.' - '.$invoice->guest?->full_name.' - Balance '.number_format($invoice->balance_amount, 2)),
+                    label: @json($invoice->invoice_number.' - '.($invoice->bill_to['name'] ?? $invoice->guest?->full_name).' - Balance '.number_format($invoice->balance_amount, 2)),
                     balance: {{ (float) $invoice->balance_amount }},
                 },
             @endforeach
@@ -137,6 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
         remainingBalance.value = formatAmount(selected.balance);
         amount.value = selected.balance > 0 ? selected.balance.toFixed(2) : '';
         amount.max = selected.balance.toFixed(2);
+        amount.readOnly = targetType.value !== 'invoice';
     }
 
     function updateTargetOptions() {
