@@ -51,24 +51,17 @@
                 <div class="col-md-4 mb-3 d-flex align-items-end"><div class="form-check mb-2"><input type="hidden" name="not_paid" value="0"><input type="checkbox" name="not_paid" value="1" id="not_paid" class="form-check-input"><label for="not_paid" class="form-check-label">Not paid</label></div></div>
             </div>
             <h5>Items</h5>
-            @for($i = 0; $i < 5; $i++)
-                <div class="row g-2 mb-2 order-item-row">
-                    <div class="col-md-7">
-                        <select name="menu_item_id[]" class="selectpicker menu-item-select" data-live-search="true" data-size="8" data-width="100%" title="Search or select item">
-                            <option value="" data-price="0">Select item</option>
-                            @foreach($menuItems as $item)
-                                <option value="{{ $item->id }}" data-price="{{ $item->price }}" data-stock="{{ $item->stock_quantity }}" data-category="{{ $item->category }}">{{ $item->name }} - {{ number_format($item->price, 2) }} - {{ $item->category === 'Food' ? 'Food item' : 'Stock '.$item->stock_quantity }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <input type="number" min="1" name="quantity[]" class="form-control quantity-input" value="{{ $i === 0 ? 1 : '' }}">
-                    </div>
-                    <div class="col-md-3">
-                        <input class="form-control line-total" value="0.00" readonly>
-                    </div>
-                </div>
-            @endfor
+            <div id="order-items">
+                @for($i = 0; $i < 5; $i++)
+                    @include('restaurant_orders.partials.item-row', ['quantity' => $i === 0 ? 1 : ''])
+                @endfor
+            </div>
+            <template id="order-item-template">
+                @include('restaurant_orders.partials.item-row', ['quantity' => 1])
+            </template>
+            <button type="button" id="add-order-item" class="btn btn-outline-primary mt-2">
+                <span aria-hidden="true">+</span> Add item
+            </button>
             <div class="row mt-3">
                 <div class="col-md-4 ms-auto">
                     <label class="form-label">Total Amount</label>
@@ -86,7 +79,8 @@
 @endpush
 <script>
 window.addEventListener('load', function () {
-    const rows = document.querySelectorAll('.order-item-row');
+    const items = document.getElementById('order-items');
+    const itemTemplate = document.getElementById('order-item-template');
     const orderTotal = document.getElementById('order_total');
 
     function formatAmount(amount) {
@@ -96,7 +90,7 @@ window.addEventListener('load', function () {
     function updateTotal() {
         let total = 0;
 
-        rows.forEach(function (row) {
+        items.querySelectorAll('.order-item-row').forEach(function (row) {
             const item = row.querySelector('.menu-item-select');
             const quantity = row.querySelector('.quantity-input');
             const lineTotal = row.querySelector('.line-total');
@@ -120,10 +114,21 @@ window.addEventListener('load', function () {
         orderTotal.value = formatAmount(total);
     }
 
-    rows.forEach(function (row) {
+    function bindRow(row) {
         row.querySelector('.menu-item-select').addEventListener('change', updateTotal);
-        row.querySelector('.menu-item-select').addEventListener('changed.bs.select', updateTotal);
+        $(row.querySelector('.menu-item-select')).on('changed.bs.select', updateTotal);
         row.querySelector('.quantity-input').addEventListener('input', updateTotal);
+    }
+
+    items.querySelectorAll('.order-item-row').forEach(bindRow);
+
+    document.getElementById('add-order-item').addEventListener('click', function () {
+        const row = itemTemplate.content.firstElementChild.cloneNode(true);
+        items.appendChild(row);
+        bindRow(row);
+        $(row.querySelector('.menu-item-select')).selectpicker();
+        updateTotal();
+        row.querySelector('.bootstrap-select button, .menu-item-select').focus();
     });
 
     updateTotal();
