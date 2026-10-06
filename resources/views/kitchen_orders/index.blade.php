@@ -10,8 +10,8 @@
 </div>
 <h1 class="h3 mb-3"><strong>Kitchen</strong> Orders</h1>
 <div class="card"><div class="card-body">
-<table class="table table-hover"><thead><tr><th>Order</th><th>Room</th><th>Items</th><th>Status</th><th>Update</th></tr></thead><tbody id="kitchen-orders-body">
-@foreach($restaurantOrders as $order)<tr data-order-id="{{ $order->id }}"><td>{{ $order->order_number }}</td><td>{{ $order->room?->room_number ?? 'Walk-in' }}</td><td>@foreach($order->items->filter(fn ($item) => $item->menuItem?->category === 'Food') as $item)<div>{{ $item->quantity }} x {{ $item->menuItem->name }}</div>@endforeach</td><td>{{ $order->status }}</td><td><form method="POST" action="{{ route('kitchen-orders.update-status', $order) }}">@csrf @method('PATCH')<div class="input-group"><select name="status" class="form-select"><option>Pending</option><option>Preparing</option><option>Ready</option><option>Served</option><option>Cancelled</option></select><button class="btn btn-primary">Save</button></div></form></td></tr>@endforeach
+<table class="table table-hover"><thead><tr><th>Order</th><th>Room</th><th>Items</th><th>Status</th>@if(auth()->user()?->hasPermission('kitchen_orders.update_status'))<th>Update</th>@endif</tr></thead><tbody id="kitchen-orders-body">
+@foreach($restaurantOrders as $order)<tr data-order-id="{{ $order->id }}"><td>{{ $order->order_number }}</td><td>{{ $order->room?->room_number ?? 'Walk-in' }}</td><td>@foreach($order->items->filter(fn ($item) => $item->menuItem?->category === 'Food') as $item)<div>{{ $item->quantity }} x {{ $item->menuItem->name }}</div>@endforeach</td><td>{{ $order->status }}</td>@if(auth()->user()?->hasPermission('kitchen_orders.update_status'))<td><form method="POST" action="{{ route('kitchen-orders.update-status', $order) }}">@csrf @method('PATCH')<div class="input-group"><select name="status" class="form-select"><option>Pending</option><option>Preparing</option><option>Ready</option><option>Served</option><option>Cancelled</option></select><button class="btn btn-primary">Save</button></div></form></td>@endif</tr>@endforeach
 </tbody></table></div></div>
 @endsection
 @push('scripts')

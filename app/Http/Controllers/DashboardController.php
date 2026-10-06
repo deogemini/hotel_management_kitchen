@@ -13,6 +13,40 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
+        $user = $request->user();
+
+        if (! $user?->hasPermission('dashboard.view')) {
+            foreach ([
+                ['kitchen_orders.view', 'kitchen-orders.index'],
+                ['kitchen_orders.update_status', 'kitchen-orders.index'],
+                ['bookings.manage', 'bookings.index'],
+                ['checkin.manage', 'bookings.index'],
+                ['rooms.manage', 'rooms.index'],
+                ['guests.manage', 'guests.index'],
+                ['companies.manage', 'companies.index'],
+                ['restaurant_orders.manage', 'restaurant-orders.index'],
+                ['payments.manage', 'payments.index'],
+                ['service_charges.manage', 'service-charges.index'],
+                ['stocks.manage', 'stocks.index'],
+                ['purchases.manage', 'purchases.index'],
+                ['expenses.manage', 'expenses.index'],
+                ['suppliers.manage', 'suppliers.index'],
+                ['menu_items.manage', 'menu-items.index'],
+                ['reports.view', 'reports.index'],
+                ['lodges.manage', 'lodges.index'],
+                ['users.manage', 'users.index'],
+                ['settings.sms.manage', 'settings.sms.index'],
+                ['settings.invoice.manage', 'settings.invoice.edit'],
+                ['audit_trails.view', 'audit_trails.index'],
+            ] as [$permission, $route]) {
+                if ($user->hasPermission($permission)) {
+                    return redirect()->route($route);
+                }
+            }
+
+            return redirect()->route('profile.edit');
+        }
+
         $rooms = $this->lodgeQuery(Room::query());
         $bookings = $this->lodgeQuery(Booking::query());
         $orders = $this->lodgeQuery(RestaurantOrder::query());

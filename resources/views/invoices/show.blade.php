@@ -3,10 +3,10 @@
 <h1 class="h3 mb-3">Invoice {{ $invoice->invoice_number }}</h1>
 <div class="d-flex flex-wrap gap-2 mb-3">
 @include('invoices._owner_actions')
-<a class="btn btn-secondary" href="{{ route('payments.index') }}">Back to Payments</a>
+@if(auth()->user()?->hasPermission('payments.manage'))<a class="btn btn-secondary" href="{{ route('payments.index') }}">Back to Payments</a>@endif
 <a class="btn btn-outline-primary" href="{{ route('guests.show', $invoice->guest_id) }}">Guest History</a>
 <a class="btn btn-outline-secondary" href="{{ route('invoices.print', $invoice) }}">Print / Save PDF</a>
-@if(in_array($invoice->status, ['Unpaid', 'Partial']) && $invoice->balance_amount > 0)
+@if(in_array($invoice->status, ['Unpaid', 'Partial']) && $invoice->balance_amount > 0 && auth()->user()?->hasPermission('payments.manage'))
 <a class="btn btn-primary" href="{{ route('payments.create', ['target_type' => 'invoice', 'target_id' => $invoice->id]) }}">Confirm Payment</a>
 @endif
 </div>
@@ -20,7 +20,7 @@
 @if($invoice->notes)<p style="white-space:pre-line">{{ $invoice->notes }}</p>@endif
 </div></div>
 <div class="card"><div class="card-header"><h5 class="card-title mb-0">Invoice Payments</h5></div><div class="card-body table-responsive"><table class="table"><thead><tr><th>Receipt</th><th>Date</th><th>Method</th><th>Reference</th><th>Amount</th><th></th></tr></thead><tbody>
-@forelse($invoice->payments as $payment)<tr><td>{{ $payment->payment_number }}</td><td>{{ $payment->paid_at?->format('Y-m-d H:i') }}</td><td>{{ $payment->payment_method }}</td><td>{{ $payment->reference_number }}</td><td>{{ number_format($payment->amount, 2) }}</td><td><a href="{{ route('payments.receipt', $payment) }}" class="btn btn-sm btn-secondary">Receipt</a></td></tr>
+@forelse($invoice->payments as $payment)<tr><td>{{ $payment->payment_number }}</td><td>{{ $payment->paid_at?->format('Y-m-d H:i') }}</td><td>{{ $payment->payment_method }}</td><td>{{ $payment->reference_number }}</td><td>{{ number_format($payment->amount, 2) }}</td><td>@if(auth()->user()?->hasPermission('payments.manage'))<a href="{{ route('payments.receipt', $payment) }}" class="btn btn-sm btn-secondary">Receipt</a>@endif</td></tr>
 @empty<tr><td colspan="6">No payments confirmed for this invoice yet.</td></tr>@endforelse
 </tbody></table></div></div>
 @endsection

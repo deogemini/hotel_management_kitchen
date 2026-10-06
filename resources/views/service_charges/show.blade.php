@@ -9,9 +9,9 @@
     <p><strong>Paid:</strong> {{ number_format($serviceCharge->paid_amount, 2) }}</p>
     <p><strong>Balance:</strong> {{ number_format($serviceCharge->balance_amount, 2) }}</p>
     <p><strong>Status:</strong> {{ $serviceCharge->payment_status }}</p>
-    @if($serviceCharge->balance_amount > 0)
+    @if($serviceCharge->balance_amount > 0 && auth()->user()?->hasPermission('payments.manage'))
         <a href="{{ route('payments.create', ['target_type' => 'service_charge', 'target_id' => $serviceCharge->id]) }}" class="btn btn-primary">Receive Payment</a>
     @endif
-    <a href="{{ route('guests.show', $serviceCharge->guest_id) }}" class="btn btn-secondary">Customer Bills</a>
+    @if(auth()->user()?->hasPermission('guests.manage'))<a href="{{ route('guests.show', $serviceCharge->guest_id) }}" class="btn btn-secondary">Customer Bills</a>@endif
 </div></div>
 @endsection

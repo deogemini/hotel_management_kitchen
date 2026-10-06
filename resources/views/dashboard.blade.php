@@ -9,9 +9,9 @@
                 <h1 class="h2 mb-2">Operations Dashboard</h1>
                 <p class="text-muted mb-4">Track room availability, active guests, kitchen orders, payments, and today’s hotel activity from one workspace.</p>
                 <div class="d-flex flex-wrap gap-2">
-                    <a href="{{ route('bookings.create') }}" class="btn btn-primary">New Booking</a>
-                    <a href="{{ route('restaurant-orders.create') }}" class="btn btn-outline-primary">New Restaurant Order</a>
-                    <a href="{{ route('payments.create') }}" class="btn btn-outline-secondary">Receive Payment</a>
+                    @if(auth()->user()?->hasPermission('bookings.manage'))<a href="{{ route('bookings.create') }}" class="btn btn-primary">New Booking</a>@endif
+                    @if(auth()->user()?->hasPermission('restaurant_orders.manage'))<a href="{{ route('restaurant-orders.create') }}" class="btn btn-outline-primary">New Restaurant Order</a>@endif
+                    @if(auth()->user()?->hasPermission('payments.manage'))<a href="{{ route('payments.create') }}" class="btn btn-outline-secondary">Receive Payment</a>@endif
                 </div>
             </div>
         </div>

@@ -15,114 +15,146 @@
 
 <body>
     @php
-        $role = Auth::user()?->effectiveRoleName();
-        $isManager = Auth::user()?->hasRole('hotel_manager') ?? false;
-        $isCashier = Auth::user()?->hasRole('cashier') ?? false;
-        $isChef = $role === 'chef';
+        $user = Auth::user();
+        $can = fn (string $permission) => $user?->hasPermission($permission) ?? false;
     @endphp
     <div class="wrapper">
         <nav id="sidebar" class="sidebar js-sidebar">
             <div class="sidebar-content js-simplebar">
-                <a class="sidebar-brand" href="{{ route('dashboard') }}">
+                <a class="sidebar-brand" href="{{ $can('dashboard.view') ? route('dashboard') : route('profile.edit') }}">
                     <span class="align-middle">{{ config('app.name', 'Hotel Management System') }}</span>
                 </a>
 
                 <ul class="sidebar-nav">
                     <li class="sidebar-header">Hotel</li>
 
-                    @if(! $isChef)
+                    @if($can('dashboard.view'))
                     <li class="sidebar-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('dashboard') }}">
                             <i class="align-middle" data-feather="sliders"></i> <span class="align-middle">Dashboard</span>
                         </a>
                     </li>
+                    @endif
 
+                    @if($can('rooms.manage'))
                     <li class="sidebar-item {{ request()->routeIs('rooms.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('rooms.index') }}">
                             <i class="align-middle" data-feather="home"></i> <span class="align-middle">Rooms</span>
                         </a>
                     </li>
+                    @endif
 
+                    @if($can('guests.manage'))
                     <li class="sidebar-item {{ request()->routeIs('guests.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('guests.index') }}">
                             <i class="align-middle" data-feather="users"></i> <span class="align-middle">Guests</span>
                         </a>
                     </li>
+                    @endif
+                    @if($can('companies.manage'))
+                    <li class="sidebar-item {{ request()->routeIs('companies.*') ? 'active' : '' }}">
+                        <a class="sidebar-link" href="{{ route('companies.index') }}">
+                            <i class="align-middle" data-feather="briefcase"></i> <span class="align-middle">Companies</span>
+                        </a>
+                    </li>
+                    @endif
 
+                    @if($can('bookings.manage') || $can('checkin.manage'))
                     <li class="sidebar-item {{ request()->routeIs('bookings.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('bookings.index') }}">
                             <i class="align-middle" data-feather="calendar"></i> <span class="align-middle">Bookings</span>
                         </a>
                     </li>
+                    @endif
 
+                    @if($can('restaurant_orders.manage') || $can('menu_items.manage'))
                     <li class="sidebar-item {{ request()->routeIs('restaurant-orders.*') || request()->routeIs('menu-items.*') ? 'active' : '' }}">
                         <a data-bs-target="#restaurant-menu" data-bs-toggle="collapse" class="sidebar-link collapsed">
                             <i class="align-middle" data-feather="coffee"></i> <span class="align-middle">Restaurant</span>
                         </a>
                         <ul id="restaurant-menu" class="sidebar-dropdown list-unstyled collapse {{ request()->routeIs('restaurant-orders.*') || request()->routeIs('menu-items.*') ? 'show' : '' }}" data-bs-parent="#sidebar">
+                            @if($can('restaurant_orders.manage'))
                             <li class="sidebar-item"><a class="sidebar-link" href="{{ route('restaurant-orders.index') }}">Orders</a></li>
                             <li class="sidebar-item"><a class="sidebar-link" href="{{ route('restaurant-orders.create') }}">New Order</a></li>
-                            @if($isManager)
+                            @endif
+                            @if($can('menu_items.manage'))
                             <li class="sidebar-item"><a class="sidebar-link" href="{{ route('menu-items.index') }}">Menu Items</a></li>
                             @endif
                         </ul>
                     </li>
+                    @endif
 
+                    @if($can('payments.manage'))
                     <li class="sidebar-item {{ request()->routeIs('payments.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('payments.index') }}">
                             <i class="align-middle" data-feather="credit-card"></i> <span class="align-middle">Payments</span>
                         </a>
                     </li>
+                    @endif
 
+                    @if($can('service_charges.manage'))
                     <li class="sidebar-item {{ request()->routeIs('service-charges.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('service-charges.index') }}">
                             <i class="align-middle" data-feather="shopping-bag"></i> <span class="align-middle">Guest Services</span>
                         </a>
                     </li>
+                    @endif
 
+                    @if($can('stocks.manage'))
                     <li class="sidebar-item {{ request()->routeIs('stocks.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('stocks.index') }}">
                             <i class="align-middle" data-feather="package"></i> <span class="align-middle">Stock Management</span>
                         </a>
                     </li>
+                    @endif
+                    @if($can('purchases.manage'))
                     <li class="sidebar-item {{ request()->routeIs('purchases.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('purchases.index') }}">
                             <i class="align-middle" data-feather="shopping-cart"></i> <span class="align-middle">Purchase Management</span>
                         </a>
                     </li>
-                    @if($isManager)
+                    @endif
+                    @if($can('suppliers.manage'))
                     <li class="sidebar-item {{ request()->routeIs('suppliers.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('suppliers.index') }}">
                             <i class="align-middle" data-feather="truck"></i> <span class="align-middle">Suppliers</span>
                         </a>
                     </li>
                     @endif
+                    @if($can('expenses.manage'))
                     <li class="sidebar-item {{ request()->routeIs('expenses.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('expenses.index') }}"><i class="align-middle" data-feather="minus-circle"></i> <span class="align-middle">Other Money Usage</span></a>
                     </li>
                     @endif
 
+                    @if($can('kitchen_orders.view') || $can('kitchen_orders.update_status'))
                     <li class="sidebar-item {{ request()->routeIs('kitchen-orders.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('kitchen-orders.index') }}">
                             <i class="align-middle" data-feather="clock"></i> <span class="align-middle">Kitchen Orders</span>
                         </a>
                     </li>
+                    @endif
 
-                    @if($isManager)
+                    @if($can('reports.view'))
                     <li class="sidebar-item {{ request()->routeIs('reports.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('reports.index') }}">
                             <i class="align-middle" data-feather="bar-chart-2"></i> <span class="align-middle">Reports</span>
                         </a>
                     </li>
+                    @endif
 
+                    @if($can('lodges.manage') || $can('users.manage') || $can('settings.invoice.manage') || $can('settings.sms.manage') || $can('audit_trails.view'))
                     <li class="sidebar-header">Administration</li>
 
+                    @if($can('lodges.manage'))
                     <li class="sidebar-item {{ request()->routeIs('lodges.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('lodges.index') }}">
                             <i class="align-middle" data-feather="map-pin"></i> <span class="align-middle">Lodges</span>
                         </a>
                     </li>
+                    @endif
 
+                    @if($can('users.manage'))
                     <li class="sidebar-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('users.index') }}">
                             <i class="align-middle" data-feather="shield"></i> <span class="align-middle">Users & Roles</span>
@@ -134,19 +166,26 @@
                             <i class="align-middle" data-feather="key"></i> <span class="align-middle">Access Permissions</span>
                         </a>
                     </li>
+                    @endif
 
+                    @if($can('settings.invoice.manage'))
                     <li class="sidebar-item {{ request()->routeIs('settings.invoice.*') ? 'active' : '' }}"><a class="sidebar-link" href="{{ route('settings.invoice.edit') }}"><i class="align-middle" data-feather="file-text"></i> <span class="align-middle">Invoice Settings</span></a></li>
+                    @endif
+                    @if($can('settings.sms.manage'))
                     <li class="sidebar-item {{ request()->routeIs('settings.sms.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('settings.sms.index') }}">
                             <i class="align-middle" data-feather="message-square"></i> <span class="align-middle">SMS Settings</span>
                         </a>
                     </li>
+                    @endif
 
+                    @if($can('audit_trails.view'))
                     <li class="sidebar-item {{ request()->routeIs('audit_trails.*') ? 'active' : '' }}">
                         <a class="sidebar-link" href="{{ route('audit_trails.index') }}">
                             <i class="align-middle" data-feather="activity"></i> <span class="align-middle">Audit Trails</span>
                         </a>
                     </li>
+                    @endif
                     @endif
 
                     <li class="sidebar-item {{ request()->routeIs('profile.edit') ? 'active' : '' }}">

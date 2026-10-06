@@ -21,9 +21,9 @@
             <p><strong>ID:</strong> {{ $guest->id_type }} {{ $guest->id_number }}</p>
             <p><strong>Nationality:</strong> {{ $guest->nationality }}</p>
             <div class="d-flex flex-wrap gap-2">
-                <a href="{{ route('bookings.create', ['guest_id' => $guest->id]) }}" class="btn btn-primary">Create Booking</a>
-                <a href="{{ route('restaurant-orders.create', ['guest_id' => $guest->id]) }}" class="btn btn-secondary">Food / Drinks Order</a>
-                <a href="{{ route('service-charges.create', ['guest_id' => $guest->id]) }}" class="btn btn-info">Add Service</a>
+                @if(auth()->user()?->hasPermission('bookings.manage'))<a href="{{ route('bookings.create', ['guest_id' => $guest->id]) }}" class="btn btn-primary">Create Booking</a>@endif
+                @if(auth()->user()?->hasPermission('restaurant_orders.manage'))<a href="{{ route('restaurant-orders.create', ['guest_id' => $guest->id]) }}" class="btn btn-secondary">Food / Drinks Order</a>@endif
+                @if(auth()->user()?->hasPermission('service_charges.manage'))<a href="{{ route('service-charges.create', ['guest_id' => $guest->id]) }}" class="btn btn-info">Add Service</a>@endif
                 <a href="{{ route('invoices.create', $guest) }}" class="btn btn-success">Create Invoice</a>
             </div>
         </div></div>
@@ -46,7 +46,7 @@
     <div class="card-body">
         <table class="table"><thead><tr><th>Booking</th><th>Room</th><th>Dates</th><th>Status</th><th>Total</th><th>Balance</th><th>Action</th></tr></thead><tbody>
         @forelse($guest->bookings as $booking)
-            <tr><td>{{ $booking->booking_number }}</td><td>{{ $booking->room?->room_number }}</td><td>{{ $booking->check_in_date?->format('Y-m-d') }} to {{ $booking->check_out_date?->format('Y-m-d') }}</td><td>{{ $booking->status }}</td><td>{{ number_format($booking->room_total, 2) }}</td><td>{{ number_format($booking->balance_amount, 2) }}</td><td><a class="btn btn-sm btn-secondary" href="{{ route('bookings.invoice', $booking) }}">Print Invoice</a></td></tr>
+            <tr><td>{{ $booking->booking_number }}</td><td>{{ $booking->room?->room_number }}</td><td>{{ $booking->check_in_date?->format('Y-m-d') }} to {{ $booking->check_out_date?->format('Y-m-d') }}</td><td>{{ $booking->status }}</td><td>{{ number_format($booking->room_total, 2) }}</td><td>{{ number_format($booking->balance_amount, 2) }}</td><td>@if(auth()->user()?->hasPermission('bookings.manage'))<a class="btn btn-sm btn-secondary" href="{{ route('bookings.invoice', $booking) }}">Print Invoice</a>@endif</td></tr>
         @empty
             <tr><td colspan="7" class="text-muted">No bookings found.</td></tr>
         @endforelse
@@ -59,7 +59,7 @@
     <div class="card-body">
         <table class="table"><thead><tr><th>Order</th><th>Items</th><th>Status</th><th>Total</th><th>Balance</th><th>Action</th></tr></thead><tbody>
         @forelse($guest->restaurantOrders as $order)
-            <tr><td>{{ $order->order_number }}</td><td>@foreach($order->items as $item)<div>{{ $item->quantity }} x {{ $item->menuItem?->name }}</div>@endforeach</td><td>{{ $order->payment_status }}</td><td>{{ number_format($order->subtotal, 2) }}</td><td>{{ number_format($order->balance_amount, 2) }}</td><td><a class="btn btn-sm btn-secondary" href="{{ route('restaurant-orders.show', $order) }}">View</a></td></tr>
+            <tr><td>{{ $order->order_number }}</td><td>@foreach($order->items as $item)<div>{{ $item->quantity }} x {{ $item->menuItem?->name }}</div>@endforeach</td><td>{{ $order->payment_status }}</td><td>{{ number_format($order->subtotal, 2) }}</td><td>{{ number_format($order->balance_amount, 2) }}</td><td>@if(auth()->user()?->hasPermission('restaurant_orders.manage'))<a class="btn btn-sm btn-secondary" href="{{ route('restaurant-orders.show', $order) }}">View</a>@endif</td></tr>
         @empty
             <tr><td colspan="6" class="text-muted">No food or drinks orders found.</td></tr>
         @endforelse
@@ -72,7 +72,7 @@
     <div class="card-body">
         <table class="table"><thead><tr><th>Service</th><th>Booking</th><th>Description</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th>Action</th></tr></thead><tbody>
         @forelse($guest->otherCharges as $charge)
-            <tr><td>{{ $charge->service_type }}</td><td>{{ $charge->booking?->booking_number }}</td><td>{{ $charge->description }}</td><td>{{ number_format($charge->amount, 2) }}</td><td>{{ number_format($charge->paid_amount, 2) }}</td><td>{{ number_format($charge->balance_amount, 2) }}</td><td>{{ $charge->payment_status }}</td><td><a class="btn btn-sm btn-secondary" href="{{ route('service-charges.show', $charge) }}">View</a></td></tr>
+            <tr><td>{{ $charge->service_type }}</td><td>{{ $charge->booking?->booking_number }}</td><td>{{ $charge->description }}</td><td>{{ number_format($charge->amount, 2) }}</td><td>{{ number_format($charge->paid_amount, 2) }}</td><td>{{ number_format($charge->balance_amount, 2) }}</td><td>{{ $charge->payment_status }}</td><td>@if(auth()->user()?->hasPermission('service_charges.manage'))<a class="btn btn-sm btn-secondary" href="{{ route('service-charges.show', $charge) }}">View</a>@endif</td></tr>
         @empty
             <tr><td colspan="8" class="text-muted">No guest services found.</td></tr>
         @endforelse

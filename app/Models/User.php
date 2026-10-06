@@ -89,14 +89,18 @@ class User extends Authenticatable
 
     public function hasPermission(string $permission): bool
     {
-        if ($this->roleRecord) {
-            return $this->roleRecord()
-                ->whereHas('permissions', fn ($query) => $query->where('name', $permission))
-                ->exists();
+        // Owner access is system-wide, including permissions added later.
+        if (strtolower((string) $this->effectiveRoleName()) === 'owner') {
+            return true;
+        }
+
+        if ($role = $this->roleRecord) {
+            return $role->permissions->contains('name', $permission);
         }
 
         $fallback = [
             'hotel_manager' => ['*'],
+            'owner' => ['*'],
             'cashier' => [
                 'dashboard.view',
                 'rooms.manage',
@@ -105,6 +109,11 @@ class User extends Authenticatable
                 'checkin.manage',
                 'restaurant_orders.manage',
                 'payments.manage',
+                'companies.manage',
+                'service_charges.manage',
+                'stocks.manage',
+                'purchases.manage',
+                'expenses.manage',
             ],
             'chef' => [
                 'kitchen_orders.view',
