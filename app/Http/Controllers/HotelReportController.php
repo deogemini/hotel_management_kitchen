@@ -165,14 +165,25 @@ class HotelReportController extends Controller
             ->whereHas('menuItem', fn ($query) => $query->where('category', 'Drinks'))
             ->sum('total_price');
         $services = $this->lodgeQuery(OtherCharge::query(), $request)->whereBetween('created_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])->sum('amount');
+        $invoicePaymentsQuery = Payment::query()
+            ->whereNotNull('invoice_id')
+            ->whereIn('status', ['Paid', 'Partial'])
+            ->whereBetween('paid_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])
+            ->whereHas('invoice', function ($query) use ($request) {
+                $this->lodgeQuery($query, $request);
+            });
+        $invoicePaymentsReceived = (clone $invoicePaymentsQuery)->sum('amount');
+        $standaloneInvoicePayments = (clone $invoicePaymentsQuery)
+            ->whereHas('invoice', fn ($query) => $query->whereNull('booking_id'))
+            ->sum('amount');
         $purchases = $this->lodgeQuery(Purchase::query(), $request)->whereBetween('purchased_at', [$startDate, $endDate])->sum('total_cost');
         $expenses = $this->lodgeQuery(Expense::query(), $request)->whereBetween('spent_at', [$startDate, $endDate])->sum('amount');
         $currentStockValue = $this->lodgeQuery(MenuItem::query(), $request)
             ->whereRaw('LOWER(category) != ?', ['food'])
             ->get()
             ->sum(fn ($item) => (float) $item->stock_quantity * (float) $item->buying_price);
-        $revenue = $rooms + $foodRevenue + $drinksRevenue + $services;
-        return view('reports.accounting', compact('startDate','endDate','rooms','foodRevenue','drinksRevenue','services','purchases','expenses','revenue','currentStockValue'));
+        $revenue = $rooms + $foodRevenue + $drinksRevenue + $services + $standaloneInvoicePayments;
+        return view('reports.accounting', compact('startDate','endDate','rooms','foodRevenue','drinksRevenue','services','invoicePaymentsReceived','standaloneInvoicePayments','purchases','expenses','revenue','currentStockValue'));
     }
 
     public function payments(Request $request)
