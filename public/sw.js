@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hotel-management-pwa-v1';
+const CACHE_NAME = 'hotel-management-pwa-v2';
 const OFFLINE_URL = new URL('offline.html', self.registration.scope).href;
 const PRECACHE_URLS = [
     OFFLINE_URL,
@@ -10,7 +10,9 @@ const PRECACHE_URLS = [
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => cache.addAll(PRECACHE_URLS))
+            .then((cache) => Promise.all(PRECACHE_URLS.map((url) => cache.add(url).catch((error) => {
+                console.warn('PWA could not cache an optional startup file:', url, error);
+            }))))
             .then(() => self.skipWaiting())
     );
 });
