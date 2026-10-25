@@ -10,9 +10,12 @@
 </tbody></table></div></div>
 @endunless
 <div class="card">
-    <div class="card-header">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">{{ $roomPaymentsOnly ? 'Room Payments' : 'Payments' }}</h5>
-        <a href="{{ route('payments.create') }}" class="btn btn-primary float-end mt-n4">Receive Payment</a>
+        <div class="d-flex gap-2">
+            <a href="{{ route('payments.export.excel', $roomPaymentsOnly ? ['type' => request()->query('type')] : []) }}" class="btn btn-success">Export Excel</a>
+            <a href="{{ route('payments.create') }}" class="btn btn-primary">Receive Payment</a>
+        </div>
     </div>
     <div class="card-body">
         <table class="table">

@@ -7,23 +7,37 @@ use App\Models\Invoice;
 use App\Models\OtherCharge;
 use App\Models\Payment;
 use App\Models\RestaurantOrder;
+use App\Exports\PaymentExport;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PaymentController extends Controller
 {
     public function index(Request $request)
     {
         $roomPaymentsOnly = in_array($request->query('type'), ['room', 'booking'], true);
-        $payments = Payment::with('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice', 'payable', 'performedBy')
-            ->when($roomPaymentsOnly, fn ($query) => $query->forRoomCollection())
-            ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
-            ->latest('paid_at')
-            ->get();
+        $payments = $this->paymentsQuery($roomPaymentsOnly)->get();
 
         $invoices = $roomPaymentsOnly ? collect() : $this->lodgeQuery(Invoice::with('guest', 'performedBy'))->latest('id')->get();
 
         return view('payments.index', compact('payments', 'invoices', 'roomPaymentsOnly'));
+    }
+
+    public function excel(Request $request)
+    {
+        $roomPaymentsOnly = in_array($request->query('type'), ['room', 'booking'], true);
+        $filename = $roomPaymentsOnly ? 'room_collection_payments.xlsx' : 'payments.xlsx';
+
+        return Excel::download(new PaymentExport($this->paymentsQuery($roomPaymentsOnly)->get()), $filename);
+    }
+
+    private function paymentsQuery(bool $roomPaymentsOnly)
+    {
+        return Payment::with('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice', 'payable', 'performedBy')
+            ->when($roomPaymentsOnly, fn ($query) => $query->forRoomCollection())
+            ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
+            ->latest('paid_at');
     }
 
     public function create(Request $request)

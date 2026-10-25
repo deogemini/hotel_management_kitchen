@@ -99,6 +99,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('permission:payments.manage')->group(function () {
+        Route::get('payments/export/excel', [PaymentController::class, 'excel'])->name('payments.export.excel');
         Route::resource('payments', PaymentController::class)->except(['edit', 'update', 'destroy']);
         Route::delete('payments/{payment}', [PaymentController::class, 'destroy'])->name('payments.destroy');
         Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
