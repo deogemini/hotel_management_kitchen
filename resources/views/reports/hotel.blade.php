@@ -188,6 +188,7 @@
 @if($type === 'purchases')<th>Date</th><th>Item</th><th>Quantity</th><th>Unit Cost</th><th>Total Cost</th><th>Supplier</th><th>Last action by</th>@endif
 @if($type === 'food_sales')<th>Date</th><th>Item</th><th>Category</th><th>Quantity Sold</th><th>Unit Price</th><th>Total Sales</th><th>Last action by</th>@endif
 </tr></thead><tbody>
+@if($type === 'orders' && $rows->isEmpty())<tr><td colspan="6" class="text-center text-muted py-4">No restaurant orders have an order date between {{ $startDate }} and {{ $endDate }}. This report filters by the order date.</td></tr>@endif
 @foreach($rows as $row)<tr>
 @if($type === 'payments')<td>{{ $row->payment_number }}</td><td>{{ $row->guest?->full_name }}</td><td>{{ $row->payment_method }}</td><td>{{ number_format($row->amount, 2) }}</td><td>{{ $row->paid_at?->format('Y-m-d') }}</td><td>{{ $row->performedBy?->name ?? 'Not recorded' }}</td>@endif
 @if($type === 'bookings')<td>{{ $row->booking_number }}</td><td>{{ $row->guest?->full_name }}</td><td>{{ $row->room?->room_number }}</td><td>{{ $row->status }}</td><td>{{ number_format($row->room_total, 2) }}</td><td>{{ number_format($row->balance_amount, 2) }}</td><td>{{ $row->performedBy?->name ?? 'Not recorded' }}</td>@endif

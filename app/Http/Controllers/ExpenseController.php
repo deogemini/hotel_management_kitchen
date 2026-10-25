@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 use App\Models\Expense;
 use App\Models\Lodge;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 class ExpenseController extends Controller {
     public function index() {
         $expenses = $this->query()->with('performedBy')->latest('spent_at')->get();
@@ -11,7 +12,7 @@ class ExpenseController extends Controller {
     }
     public function create() { return view('expenses.create', ['lodges' => Lodge::orderBy('name')->get()]); }
     public function store(Request $request) {
-        $data = $request->validate(['category'=>'required|in:UMEME,UFUNDI,STATIONARY,MATUMIZI YA JIKONI','description'=>'required|string|max:255','amount'=>'required|numeric|min:0.01','payment_method'=>'required|in:Cash,Mobile money,Card','spent_at'=>'required|date','lodge_id'=>'nullable|exists:lodges,id']);
+        $data = $request->validate(['category'=>['required', Rule::in(Expense::CATEGORIES)],'description'=>'required|string|max:255','amount'=>'required|numeric|min:0.01','payment_method'=>'required|in:Cash,Mobile money,Card','spent_at'=>'required|date','lodge_id'=>'nullable|exists:lodges,id']);
         $data['lodge_id'] = auth()->user()->lodge_id ?: ($data['lodge_id'] ?? null);
         if (! $data['lodge_id']) {
             return back()->withErrors(['lodge_id' => 'Select a lodge for this expense.'])->withInput();
@@ -28,7 +29,7 @@ class ExpenseController extends Controller {
     public function edit(Expense $expense) { abort_unless(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner', 403); return view('expenses.edit', compact('expense')); }
     public function update(Request $request, Expense $expense) {
         abort_unless(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner', 403);
-        $data = $request->validate(['category'=>'required|in:UMEME,UFUNDI,STATIONARY,MATUMIZI YA JIKONI','description'=>'required|string|max:255','amount'=>'required|numeric|min:0.01','payment_method'=>'required|in:Cash,Mobile money,Card','spent_at'=>'required|date']);
+        $data = $request->validate(['category'=>['required', Rule::in(Expense::CATEGORIES)],'description'=>'required|string|max:255','amount'=>'required|numeric|min:0.01','payment_method'=>'required|in:Cash,Mobile money,Card','spent_at'=>'required|date']);
         $expense->update($data); return redirect()->route('expenses.index')->with('success','Expense updated successfully.');
     }
     private function query() { return (auth()->user()?->hasRole('hotel_manager') ?? false) ? Expense::query() : Expense::where('lodge_id', auth()->user()?->lodge_id); }
