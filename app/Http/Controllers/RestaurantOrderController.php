@@ -208,7 +208,17 @@ class RestaurantOrderController extends Controller
     {
         abort_unless(auth()->user()?->hasRole('hotel_manager'), 403);
 
-        return view('restaurant_orders.edit', compact('restaurantOrder'));
+        $restaurantOrder->load('items.menuItem', 'payments');
+        $existingMenuItemIds = $restaurantOrder->items->pluck('menu_item_id')->all();
+        $menuItems = $this->lodgeQuery(MenuItem::query())
+            ->where(fn ($query) => $query
+                ->whereIn('id', $existingMenuItemIds ?: [0])
+                ->orWhere(fn ($available) => $available->where('is_available', true)
+                    ->where(fn ($stock) => $stock->where('category', 'Food')->orWhere('stock_quantity', '>', 0))))
+            ->where(fn ($query) => $query->where('lodge_id', $restaurantOrder->lodge_id)->orWhereNull('lodge_id'))
+            ->orderBy('category')->orderBy('name')->get();
+
+        return view('restaurant_orders.edit', compact('restaurantOrder', 'menuItems'));
     }
 
     public function update(Request $request, RestaurantOrder $restaurantOrder)
@@ -217,10 +227,172 @@ class RestaurantOrderController extends Controller
 
         $data = $request->validate([
             'status' => ['required', 'in:'.implode(',', RestaurantOrder::STATUSES)],
-            'payment_status' => ['required', 'in:Unpaid,Partial,Paid'],
+            'menu_item_id' => ['required', 'array', 'min:1'],
+            'menu_item_id.*' => ['nullable', 'integer', 'exists:menu_items,id'],
+            'quantity' => ['required', 'array'],
+            'quantity.*' => ['nullable', 'integer', 'min:1'],
+            'unit_price' => ['required', 'array'],
+            'unit_price.*' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            'order_item_id' => ['nullable', 'array'],
+            'order_item_id.*' => ['nullable', 'integer', 'distinct', 'exists:restaurant_order_items,id'],
         ]);
 
-        $restaurantOrder->update($data);
+        $lines = [];
+        foreach ($data['menu_item_id'] as $index => $menuItemId) {
+            $quantity = $data['quantity'][$index] ?? null;
+            $unitPrice = $data['unit_price'][$index] ?? null;
+            $orderItemId = $data['order_item_id'][$index] ?? null;
+
+            if (empty($menuItemId) && empty($quantity) && empty($orderItemId)) {
+                continue;
+            }
+
+            if (empty($menuItemId) || empty($quantity) || $unitPrice === null || $unitPrice === '') {
+                throw ValidationException::withMessages([
+                    'menu_item_id' => 'Choose an item and enter a quantity for every order line.',
+                ]);
+            }
+
+            $lines[] = [
+                'menu_item_id' => (int) $menuItemId,
+                'quantity' => (int) $quantity,
+                'unit_price' => (float) $unitPrice,
+                'order_item_id' => $orderItemId ? (int) $orderItemId : null,
+            ];
+        }
+
+        if ($lines === []) {
+            throw ValidationException::withMessages([
+                'menu_item_id' => 'Keep at least one item in the order.',
+            ]);
+        }
+
+        DB::transaction(function () use ($restaurantOrder, $data, $lines) {
+            $order = RestaurantOrder::query()->whereKey($restaurantOrder->id)->lockForUpdate()->firstOrFail();
+            $oldItems = $order->items()->with('menuItem')->lockForUpdate()->get();
+            $oldItemIds = $oldItems->pluck('id')->all();
+
+            foreach ($lines as $line) {
+                if ($line['order_item_id'] && ! in_array($line['order_item_id'], $oldItemIds, true)) {
+                    throw ValidationException::withMessages([
+                        'menu_item_id' => 'An order line does not belong to this order. Refresh and try again.',
+                    ]);
+                }
+            }
+
+            $itemIds = array_values(array_unique(array_merge(
+                $oldItems->pluck('menu_item_id')->all(),
+                array_column($lines, 'menu_item_id'),
+            )));
+            $menuItems = MenuItem::query()->whereKey($itemIds)->lockForUpdate()->get()->keyBy('id');
+            $saleMovements = StockMovement::query()
+                ->where('reference_type', RestaurantOrder::class)
+                ->where('reference_id', $order->id)
+                ->where('type', 'sale')
+                ->lockForUpdate()->get();
+
+            // Restore exactly the stock this order previously consumed. If a legacy order
+            // has incomplete movement history, restore its non-food lines that have no movement.
+            $restoredMenuItemIds = [];
+            foreach ($saleMovements->groupBy('menu_item_id') as $menuItemId => $movements) {
+                $menuItem = $menuItems->get((int) $menuItemId);
+                if ($menuItem) {
+                    $menuItem->stock_quantity += (int) $movements->sum('quantity');
+                    $menuItem->save();
+                    $restoredMenuItemIds[] = (int) $menuItemId;
+                }
+            }
+            foreach ($oldItems->groupBy('menu_item_id') as $menuItemId => $items) {
+                $menuItem = $menuItems->get((int) $menuItemId);
+                if ($menuItem && $menuItem->category !== 'Food' && ! in_array((int) $menuItemId, $restoredMenuItemIds, true)) {
+                    $menuItem->stock_quantity += (int) $items->sum('quantity');
+                    $menuItem->save();
+                }
+            }
+
+            if ($oldItemIds !== []) {
+                RestaurantOrderItem::query()->whereIn('id', $oldItemIds)->delete();
+            }
+            StockMovement::query()
+                ->where('reference_type', RestaurantOrder::class)
+                ->where('reference_id', $order->id)
+                ->where('type', 'sale')
+                ->delete();
+
+            $newSubtotal = 0;
+            foreach ($lines as $line) {
+                $menuItem = $menuItems->get($line['menu_item_id']);
+                if (! $menuItem
+                    || ($menuItem->lodge_id !== null && (int) $menuItem->lodge_id !== (int) $order->lodge_id)
+                    || (! $menuItem->is_available && ! in_array($menuItem->id, $oldItems->pluck('menu_item_id')->all(), true))) {
+                    throw ValidationException::withMessages([
+                        'menu_item_id' => 'One of the selected items is unavailable for this lodge.',
+                    ]);
+                }
+
+                $unitPrice = $line['unit_price'];
+                $lineTotal = round($unitPrice * $line['quantity'], 2);
+                if ($lineTotal > 9999999999.99 || $newSubtotal + $lineTotal > 9999999999.99) {
+                    throw ValidationException::withMessages([
+                        'unit_price' => 'The updated order total exceeds the maximum supported amount.',
+                    ]);
+                }
+                $newSubtotal = round($newSubtotal + $lineTotal, 2);
+
+                if ($menuItem->category !== 'Food') {
+                    if ($line['quantity'] > $menuItem->stock_quantity) {
+                        throw ValidationException::withMessages([
+                            'quantity' => $menuItem->name.' has only '.$menuItem->stock_quantity.' item(s) in stock.',
+                        ]);
+                    }
+
+                    $stockBefore = $menuItem->stock_quantity;
+                    $menuItem->stock_quantity -= $line['quantity'];
+                    $menuItem->save();
+                    StockMovement::create([
+                        'lodge_id' => $order->lodge_id,
+                        'menu_item_id' => $menuItem->id,
+                        'type' => 'sale',
+                        'quantity' => $line['quantity'],
+                        'stock_before' => $stockBefore,
+                        'stock_after' => $menuItem->stock_quantity,
+                        'unit_price' => $unitPrice,
+                        'reference_type' => RestaurantOrder::class,
+                        'reference_id' => $order->id,
+                        'movement_date' => today(),
+                        'created_by' => auth()->id(),
+                        'notes' => 'Updated restaurant order '.$order->order_number,
+                    ]);
+                }
+
+                RestaurantOrderItem::create([
+                    'restaurant_order_id' => $order->id,
+                    'menu_item_id' => $menuItem->id,
+                    'quantity' => $line['quantity'],
+                    'unit_price' => $unitPrice,
+                    'total_price' => $lineTotal,
+                ]);
+            }
+
+            $paymentRows = $order->payments()->lockForUpdate()->get();
+            $paid = round($paymentRows->isNotEmpty()
+                ? (float) $paymentRows->whereIn('status', ['Paid', 'Partial'])->sum('amount')
+                : (float) $order->paid_amount, 2);
+
+            if ($paid > $newSubtotal) {
+                throw ValidationException::withMessages([
+                    'menu_item_id' => 'The new order total cannot be less than payments already received ('.number_format($paid, 2).').',
+                ]);
+            }
+
+            $order->update([
+                'status' => $data['status'],
+                'subtotal' => $newSubtotal,
+                'paid_amount' => $paid,
+                'balance_amount' => round(max(0, $newSubtotal - $paid), 2),
+                'payment_status' => $paid >= $newSubtotal ? 'Paid' : ($paid > 0 ? 'Partial' : 'Unpaid'),
+            ]);
+        });
 
         return redirect()->route('restaurant-orders.index')->with('success', 'Restaurant order updated successfully.');
     }

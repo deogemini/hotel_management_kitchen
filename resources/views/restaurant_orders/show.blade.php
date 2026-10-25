@@ -6,7 +6,7 @@
 <p><strong>Order date:</strong> {{ $restaurantOrder->order_date?->format('Y-m-d') }}</p>
 <p><strong>Status:</strong> {{ $restaurantOrder->status }}</p>
 <p><strong>Last action by:</strong> {{ $restaurantOrder->performedBy?->name ?? 'Not recorded' }}</p>
-@if(auth()->user()?->hasRole('hotel_manager'))<a href="{{ route('restaurant-orders.edit', $restaurantOrder) }}" class="btn btn-info mb-3">Edit Order</a>@endif
+@if(auth()->user()?->hasRole('hotel_manager'))<a href="{{ route('restaurant-orders.edit', $restaurantOrder) }}" class="btn btn-info mb-3">Edit Order Items</a>@endif
 <table class="table"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>@foreach($restaurantOrder->items as $item)<tr><td>{{ $item->menuItem->name }}</td><td>{{ $item->quantity }}</td><td>{{ number_format($item->unit_price, 2) }}</td><td>{{ number_format($item->total_price, 2) }}</td></tr>@endforeach</tbody></table>
 <p><strong>Total:</strong> {{ number_format($restaurantOrder->subtotal, 2) }} | <strong>Balance:</strong> {{ number_format($restaurantOrder->balance_amount, 2) }}</p>
 @if($restaurantOrder->balance_amount > 0 && $restaurantOrder->payment_method !== 'Room charge' && auth()->user()?->hasPermission('payments.manage'))<a href="{{ route('payments.create', ['target_type' => 'restaurant_order', 'target_id' => $restaurantOrder->id]) }}" class="btn btn-primary">Receive Payment</a>@endif
