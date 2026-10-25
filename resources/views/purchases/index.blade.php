@@ -110,7 +110,7 @@ document.querySelectorAll('form[action*="/purchases/"]').forEach(function (form)
 <div class="card"><div class="card-body">
 <form method="GET" class="row g-2 align-items-end mb-4"><div class="col-md-3"><label class="form-label">From Date</label><input type="date" name="from_date" class="form-control" value="{{ request('from_date') }}"></div><div class="col-md-3"><label class="form-label">To Date</label><input type="date" name="to_date" class="form-control" value="{{ request('to_date') }}"></div><div class="col-auto"><button class="btn btn-primary">Filter</button> <a href="{{ route('purchases.index') }}" class="btn btn-outline-secondary">Clear</a></div><div class="col-auto ms-auto"><a target="_blank" href="{{ route('purchases.export.pdf', request()->only('from_date','to_date')) }}" class="btn btn-outline-danger">Print / PDF</a> <a href="{{ route('purchases.export.excel', request()->only('from_date','to_date')) }}" class="btn btn-outline-success">Excel</a></div></form>
 <table id="purchasesTable" class="table table-hover w-100"><thead><tr><th>Date</th><th>Timeline</th><th>Item</th><th>Quantity</th><th>Unit Cost</th><th>Total Cost</th><th>Supplier</th><th>Last action by</th><th>Actions</th></tr></thead><tbody>
-@forelse($purchases as $purchase)<tr><td>{{ $purchase->purchased_at->format('d M Y') }}</td><td>{{ $purchase->created_at?->format('Y-m-d H:i') }}</td><td>{{ $purchase->menuItem->name }}</td><td>{{ $purchase->quantity }}</td><td>{{ number_format($purchase->unit_cost, 2) }}</td><td>{{ number_format($purchase->total_cost, 2) }}</td><td>{{ $purchase->supplier ?: '-' }}</td>@include('partials.performed_by_cell', ['record' => $purchase])<td>@if(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner')<form method="POST" action="{{ route('purchases.destroy', $purchase) }}" onsubmit="return confirm('Delete this purchase? Stock will be reduced.');">@csrf @method('DELETE')<button class="btn btn-sm btn-danger">Delete</button></form>@endif</td></tr>@empty<tr><td colspan="9" class="text-muted">No purchases recorded.</td></tr>@endforelse
+@foreach($purchases as $purchase)<tr><td>{{ $purchase->purchased_at->format('d M Y') }}</td><td>{{ $purchase->created_at?->format('Y-m-d H:i') }}</td><td>{{ $purchase->menuItem->name }}</td><td>{{ $purchase->quantity }}</td><td>{{ number_format($purchase->unit_cost, 2) }}</td><td>{{ number_format($purchase->total_cost, 2) }}</td><td>{{ $purchase->supplier ?: '-' }}</td>@include('partials.performed_by_cell', ['record' => $purchase])<td>@if(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner')<form method="POST" action="{{ route('purchases.destroy', $purchase) }}" onsubmit="return confirm('Delete this purchase? Stock will be reduced.');">@csrf @method('DELETE')<button class="btn btn-sm btn-danger">Delete</button></form>@endif</td></tr>@endforeach
 @if($purchases->isNotEmpty())
 </tbody><tfoot><tr class="fw-bold table-light"><td></td><td></td><td></td><td></td><td class="text-end">Total Purchase Cost:</td><td>{{ number_format($totalCost, 2) }}</td><td></td><td></td><td></td></tr></tfoot>
 @else
@@ -131,7 +131,13 @@ $(function () {
         dom: '<"row g-3 align-items-center mb-3"<"col-12 col-md-6"l><"col-12 col-md-6"f>>' +
             '<"table-responsive"rt>' +
             '<"row g-3 align-items-center mt-3"<"col-12 col-md-6"i><"col-12 col-md-6"p>>',
-        language: { search: 'Search purchases:', lengthMenu: 'Show _MENU_ entries', info: 'Showing _START_ to _END_ of _TOTAL_ purchases' }
+        language: {
+            search: 'Search purchases:',
+            lengthMenu: 'Show _MENU_ entries',
+            info: 'Showing _START_ to _END_ of _TOTAL_ purchases',
+            emptyTable: 'No purchases recorded.',
+            zeroRecords: 'No matching purchases found.'
+        }
     });
 });
 </script>
