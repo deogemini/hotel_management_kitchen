@@ -18,7 +18,7 @@ class RestaurantOrderController extends Controller
 {
     public function index(Request $request)
     {
-        $restaurantOrders = RestaurantOrder::with('guest', 'room', 'items.menuItem')
+        $restaurantOrders = RestaurantOrder::with('guest', 'room', 'items.menuItem', 'createdBy')
             ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->when($request->status, fn ($query, $status) => $query->where('status', $status))
             ->latest()

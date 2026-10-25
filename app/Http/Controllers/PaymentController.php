@@ -12,16 +12,18 @@ use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $payments = Payment::with('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice', 'payable')
+            ->when($request->query('type') === 'booking', fn ($query) => $query->where('payable_type', Booking::class)->whereNotNull('booking_id'))
             ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->latest('paid_at')
             ->get();
 
-        $invoices = $this->lodgeQuery(Invoice::with('guest'))->latest('id')->get();
+        $bookingPaymentsOnly = $request->query('type') === 'booking';
+        $invoices = $bookingPaymentsOnly ? collect() : $this->lodgeQuery(Invoice::with('guest'))->latest('id')->get();
 
-        return view('payments.index', compact('payments', 'invoices'));
+        return view('payments.index', compact('payments', 'invoices', 'bookingPaymentsOnly'));
     }
 
     public function create(Request $request)

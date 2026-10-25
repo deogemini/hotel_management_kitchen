@@ -42,6 +42,11 @@ class RestaurantOrder extends Model
         return $this->belongsTo(Guest::class);
     }
 
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function lodge(): BelongsTo
     {
         return $this->belongsTo(Lodge::class);
