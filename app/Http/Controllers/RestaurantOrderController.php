@@ -221,6 +221,15 @@ class RestaurantOrderController extends Controller
                     $menuItem->increment('stock_quantity', $item->quantity);
                 }
             }
+            Payment::query()
+                ->where(function ($query) use ($restaurantOrder) {
+                    $query->where('restaurant_order_id', $restaurantOrder->id)
+                        ->orWhere(function ($query) use ($restaurantOrder) {
+                            $query->where('payable_type', RestaurantOrder::class)
+                                ->where('payable_id', $restaurantOrder->id);
+                        });
+                })
+                ->delete();
             StockMovement::where('reference_type', RestaurantOrder::class)
                 ->where('reference_id', $restaurantOrder->id)
                 ->delete();
