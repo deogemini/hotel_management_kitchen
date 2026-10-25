@@ -11,6 +11,7 @@ use App\Exports\PurchaseExport;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 
 class PurchaseController extends Controller
@@ -44,17 +45,35 @@ class PurchaseController extends Controller
         abort_unless(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner', 403);
         $data = $request->validate(['quantity' => ['required', 'integer', 'min:0'], 'unit_cost' => ['required', 'numeric', 'min:0'], 'supplier' => ['nullable', 'string', 'max:255'], 'purchased_at' => ['required', 'date'], 'notes' => ['nullable', 'string', 'max:1000'], 'affects_stock' => ['nullable', 'boolean']]);
         DB::transaction(function () use ($data, $request, $purchase) {
-            $item = $this->lodgeQuery(MenuItem::query())->lockForUpdate()->findOrFail($purchase->menu_item_id);
-            if ($purchase->affects_stock) $item->decrement('stock_quantity', $purchase->quantity);
+            $lockedPurchase = Purchase::query()->whereKey($purchase->id)->lockForUpdate()->firstOrFail();
+            $item = $this->lodgeQuery(MenuItem::query())->lockForUpdate()->findOrFail($lockedPurchase->menu_item_id);
             $affectsStock = $request->boolean('affects_stock');
-            $purchase->update([...$data, 'affects_stock' => $affectsStock, 'total_cost' => $data['quantity'] * $data['unit_cost']]);
+            $stockBefore = (int) $item->stock_quantity;
+
+            if ($affectsStock) {
+                // Apply only the quantity difference. Reversing the full old quantity
+                // can underflow after some units have been sold or used. This also
+                // avoids counting the old quantity twice when stock mode is changed.
+                $stockChange = (int) $data['quantity'] - (int) $lockedPurchase->quantity;
+                $stockAfter = $stockBefore + $stockChange;
+
+                if ($stockAfter < 0) {
+                    throw ValidationException::withMessages([
+                        'quantity' => 'This purchase cannot be reduced by that amount because only '.number_format($stockBefore).' item(s) remain in stock.',
+                    ]);
+                }
+            } else {
+                // The unchecked mode is an inventory count correction: set current stock
+                // to the entered quantity, as on the original purchase form.
+                $stockAfter = (int) $data['quantity'];
+            }
+
+            $lockedPurchase->update([...$data, 'affects_stock' => $affectsStock, 'total_cost' => $data['quantity'] * $data['unit_cost']]);
             StockMovement::where('reference_type', Purchase::class)->where('reference_id', $purchase->id)->delete();
             if ($affectsStock) {
-                $before = $item->stock_quantity;
-                $item->increment('stock_quantity', $data['quantity']);
-                StockMovement::create(['lodge_id' => $purchase->lodge_id, 'menu_item_id' => $item->id, 'type' => 'purchase', 'quantity' => $data['quantity'], 'stock_before' => $before, 'stock_after' => $before + $data['quantity'], 'unit_price' => $data['unit_cost'], 'reference_type' => Purchase::class, 'reference_id' => $purchase->id, 'movement_date' => $data['purchased_at'], 'created_by' => auth()->id()]);
-            } else $item->update(['stock_quantity' => $data['quantity']]);
-            $item->update(['buying_price' => $data['unit_cost']]);
+                StockMovement::create(['lodge_id' => $lockedPurchase->lodge_id, 'menu_item_id' => $item->id, 'type' => 'purchase', 'quantity' => $data['quantity'], 'stock_before' => $stockBefore, 'stock_after' => $stockAfter, 'unit_price' => $data['unit_cost'], 'reference_type' => Purchase::class, 'reference_id' => $lockedPurchase->id, 'movement_date' => $data['purchased_at'], 'created_by' => auth()->id(), 'notes' => 'Purchase updated']);
+            }
+            $item->update(['stock_quantity' => $stockAfter, 'buying_price' => $data['unit_cost']]);
         });
         return redirect()->route('purchases.index')->with('success', 'Purchase updated and stock adjusted successfully.');
     }
