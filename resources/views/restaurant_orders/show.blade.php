@@ -3,6 +3,7 @@
 <h1 class="h3 mb-3">{{ $restaurantOrder->order_number }}</h1>
 <div class="card"><div class="card-body">
 <p><strong>Customer:</strong> {{ $restaurantOrder->guest?->full_name ?? $restaurantOrder->walk_in_customer_name ?? 'Walk-in' }}</p>
+<p><strong>Order date:</strong> {{ $restaurantOrder->order_date?->format('Y-m-d') }}</p>
 <p><strong>Status:</strong> {{ $restaurantOrder->status }}</p>
 <p><strong>Last action by:</strong> {{ $restaurantOrder->performedBy?->name ?? 'Not recorded' }}</p>
 <table class="table"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>@foreach($restaurantOrder->items as $item)<tr><td>{{ $item->menuItem->name }}</td><td>{{ $item->quantity }}</td><td>{{ number_format($item->unit_price, 2) }}</td><td>{{ number_format($item->total_price, 2) }}</td></tr>@endforeach</tbody></table>

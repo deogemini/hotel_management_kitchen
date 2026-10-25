@@ -105,7 +105,7 @@ class HotelReportController extends Controller
     {
         [$startDate, $endDate] = $this->dateRange($request);
         $rows = $this->lodgeQuery(RestaurantOrder::with('guest', 'performedBy'), $request)
-            ->whereBetween('created_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])
+            ->whereBetween('order_date', [$startDate, $endDate])
             ->latest()
             ->get();
 
@@ -152,7 +152,7 @@ class HotelReportController extends Controller
     {
         [$startDate, $endDate] = $this->dateRange($request);
         $rooms = $this->lodgeQuery(Booking::query(), $request)->whereBetween('check_in_date', [$startDate, $endDate])->sum('room_total');
-        $restaurant = $this->lodgeQuery(RestaurantOrder::query(), $request)->whereBetween('created_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])->sum('subtotal');
+        $restaurant = $this->lodgeQuery(RestaurantOrder::query(), $request)->whereBetween('order_date', [$startDate, $endDate])->sum('subtotal');
         $services = $this->lodgeQuery(OtherCharge::query(), $request)->whereBetween('created_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])->sum('amount');
         $purchases = $this->lodgeQuery(Purchase::query(), $request)->whereBetween('purchased_at', [$startDate, $endDate])->sum('total_cost');
         $expenses = $this->lodgeQuery(Expense::query(), $request)->whereBetween('spent_at', [$startDate, $endDate])->sum('amount');

@@ -12,22 +12,17 @@
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Customer Type</label>
                     <select name="customer_type" class="form-select">
-                        <option>Room guest</option>
-                        <option>Walk-in customer</option>
+                        <option value="Walk-in customer" @selected(old('customer_type', 'Walk-in customer') === 'Walk-in customer')>Walk-in customer</option>
+                        <option value="Room guest" @selected(old('customer_type') === 'Room guest')>Room guest</option>
                     </select>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Active Room Booking</label>
-                    <select name="booking_id" class="form-select">
-                        <option value="">Walk-in / none</option>
-                        @foreach($bookings as $booking)
-                            <option value="{{ $booking->id }}">{{ $booking->guest->full_name }} - Room {{ $booking->room?->room_number }}</option>
-                        @endforeach
-                    </select>
+                    <label class="form-label" for="order_date">Order Date</label>
+                    <input id="order_date" type="date" name="order_date" class="form-control" value="{{ old('order_date', now()->format('Y-m-d')) }}" required>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Guest</label>
-                    <select name="guest_id" class="form-select">
+                    <label class="form-label" for="guest_id">Guest</label>
+                    <select id="guest_id" name="guest_id" class="form-select">
                         <option value="">Walk-in / none</option>
                         @foreach($guests as $guest)
                             <option value="{{ $guest->id }}" @selected((int) old('guest_id', $guestId ?? null) === $guest->id)>{{ $guest->full_name }}</option>

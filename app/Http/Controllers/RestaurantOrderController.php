@@ -21,7 +21,7 @@ class RestaurantOrderController extends Controller
         $restaurantOrders = RestaurantOrder::with('guest', 'room', 'items.menuItem', 'performedBy')
             ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->when($request->status, fn ($query, $status) => $query->where('status', $status))
-            ->latest()
+            ->latest('order_date')->latest()
             ->get();
 
         return view('restaurant_orders.index', compact('restaurantOrders'));
@@ -33,7 +33,6 @@ class RestaurantOrderController extends Controller
 
         return view('restaurant_orders.create', [
             'restaurantOrder' => new RestaurantOrder(),
-            'bookings' => $this->lodgeQuery(Booking::with('guest', 'room')->where('status', 'Checked In'))->get(),
             'guests' => $this->lodgeQuery(Guest::query())->orderBy('full_name')->get(),
             'menuItems' => $this->lodgeQuery(MenuItem::where('is_available', true)->where(fn ($query) => $query->where('category', 'Food')->orWhere('stock_quantity', '>', 0)))->orderBy('category')->orderBy('name')->get(),
             'guestId' => $guestId,
@@ -44,7 +43,7 @@ class RestaurantOrderController extends Controller
     {
         $data = $request->validate([
             'customer_type' => ['required', 'in:Room guest,Walk-in customer'],
-            'booking_id' => ['nullable', 'exists:bookings,id'],
+            'order_date' => ['required', 'date_format:Y-m-d'],
             'guest_id' => ['nullable', 'exists:guests,id'],
             'payment_method' => ['required', 'in:Cash,LIPA NAMBA,Mobile money,Card,Room charge'],
             'paid_amount' => ['nullable', 'numeric', 'min:0'],
@@ -72,8 +71,22 @@ class RestaurantOrderController extends Controller
         }
 
         $order = DB::transaction(function () use ($data, $requestedItems) {
-            $booking = ! empty($data['booking_id']) ? $this->lodgeQuery(Booking::with('guest', 'room'))->find($data['booking_id']) : null;
             $guest = ! empty($data['guest_id']) ? $this->lodgeQuery(Guest::query())->find($data['guest_id']) : null;
+            $booking = null;
+            if ($data['customer_type'] === 'Room guest' && $guest) {
+                $booking = $this->lodgeQuery(Booking::with('guest', 'room')->where('status', 'Checked In'))
+                    ->where('guest_id', $guest->id)
+                    ->latest('checked_in_at')
+                    ->lockForUpdate()
+                    ->first();
+            }
+
+            if (($data['customer_type'] === 'Room guest' || $data['payment_method'] === 'Room charge') && ! $booking) {
+                throw ValidationException::withMessages([
+                    'guest_id' => 'Select a guest with an active room booking for room guest orders or room charges.',
+                ]);
+            }
+
             $guestId = $booking?->guest_id ?: ($data['guest_id'] ?? null);
             $lodgeId = $booking?->lodge_id ?: $guest?->lodge_id ?: auth()->user()?->lodge_id ?: Lodge::query()->orderBy('id')->value('id');
             $subtotal = 0;
@@ -97,6 +110,7 @@ class RestaurantOrderController extends Controller
 
             $order = RestaurantOrder::create([
                 'order_number' => 'ORD-'.now()->format('YmdHis').'-'.random_int(100, 999),
+                'order_date' => $data['order_date'],
                 'lodge_id' => $lodgeId,
                 'customer_type' => $data['customer_type'],
                 'guest_id' => $guestId,

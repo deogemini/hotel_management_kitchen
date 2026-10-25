@@ -68,7 +68,7 @@ class DashboardController extends Controller
             'maintenanceRooms' => (clone $rooms)->where('status', 'Maintenance')->count(),
             'currentGuests' => (clone $bookings)->where('status', 'Checked In')->count(),
             'todayBookings' => (clone $bookings)->whereDate('created_at', today())->count(),
-            'todayRestaurantOrders' => (clone $orders)->whereDate('created_at', today())->count(),
+            'todayRestaurantOrders' => (clone $orders)->whereDate('order_date', today())->count(),
             'totalCollections' => (clone $payments)->whereIn('status', ['Paid', 'Partial'])->sum('amount'),
             'totalRoomRevenue' => (clone $payments)
                 ->forRoomCollection()

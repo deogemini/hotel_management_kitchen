@@ -15,6 +15,7 @@ class RestaurantOrder extends Model
 
     protected $fillable = [
         'order_number',
+        'order_date',
         'lodge_id',
         'customer_type',
         'guest_id',
@@ -34,6 +35,7 @@ class RestaurantOrder extends Model
     protected function casts(): array
     {
         return [
+            'order_date' => 'date',
             'subtotal' => 'decimal:2',
             'paid_amount' => 'decimal:2',
             'balance_amount' => 'decimal:2',
