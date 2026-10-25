@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('content')
-<h1 class="h3 mb-3">Invoice {{ $invoice->invoice_number }}</h1>
+<h1 class="h3 mb-3">Invoice {{ $invoice->invoice_number }} @if($invoice->is_room_payment)<span class="badge bg-success align-middle">Room Revenue</span>@endif</h1>
 <div class="d-flex flex-wrap gap-2 mb-3">
 @include('invoices._owner_actions')
 @if(auth()->user()?->hasPermission('payments.manage'))<a class="btn btn-secondary" href="{{ route('payments.index') }}">Back to Payments</a>@endif

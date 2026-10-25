@@ -3,6 +3,19 @@
 @php($editing = isset($invoice) && $invoice->exists)
 <h1 class="h3 mb-3">{{ $editing ? 'Edit Invoice' : 'Create Invoice' }} - {{ $guest->full_name }}</h1>
 <form method="POST" action="{{ $editing ? route('invoices.update', $invoice) : route('invoices.store', $guest) }}">@csrf @if($editing) @method('PUT') @endif
+@if($editing)
+<div class="card border-primary mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Room revenue</h5>
+        <div class="form-check form-switch">
+            <input type="hidden" name="is_room_payment" value="0">
+            <input class="form-check-input" type="checkbox" role="switch" id="is-room-payment" name="is_room_payment" value="1" @checked(old('is_room_payment', $invoice->is_room_payment))>
+            <label class="form-check-label fw-semibold" for="is-room-payment">Include this invoice's payments in Room Revenue</label>
+        </div>
+        <div class="form-text">Select this and click Save Changes to count collected payments in Room Revenue. If there is no linked room booking, the per-room report will list the payment as unassigned.</div>
+    </div>
+</div>
+@endif
 <div class="card"><div class="card-body"><h4>Bill to</h4>
 <label for="billing-type" class="form-label">Use customer or company details</label>
 <select id="billing-type" name="billing_type" class="form-select mb-3"><option value="guest" @selected(old('billing_type', ($invoice->company_id ?? null) ? 'company' : 'guest') !== 'company')>Customer details</option><option value="company" @selected(old('billing_type', ($invoice->company_id ?? null) ? 'company' : 'guest') === 'company')>Registered company / organization</option></select>
@@ -12,14 +25,6 @@
 <div class="col-md-6 mb-3"><label class="form-label" for="bill-{{ $field }}">{{ $label }}</label><input class="form-control" id="bill-{{ $field }}" name="bill_to[{{ $field }}]" value="{{ old('bill_to.'.$field, $editing ? ($invoice->bill_to[$field] ?? $value) : $value) }}" type="{{ $field === 'email' ? 'email' : 'text' }}"></div>
 @endforeach</div>
 <div class="row"><div class="col-md-6 mb-3"><label class="form-label" for="issued-at">Invoice date</label><input type="date" id="issued-at" name="issued_at" class="form-control" value="{{ old('issued_at', $editing ? $invoice->issued_at?->toDateString() : now()->toDateString()) }}" required></div><div class="col-md-6 mb-3"><label class="form-label" for="due-date">Due date</label><input type="date" id="due-date" name="due_date" class="form-control" value="{{ old('due_date', $editing ? $invoice->due_date?->toDateString() : now()->addDays(7)->toDateString()) }}"></div></div>
-@if($editing && $invoice->booking_id)
-<div class="form-check mt-2 mb-3">
-    <input type="hidden" name="is_room_payment" value="0">
-    <input class="form-check-input" type="checkbox" id="is-room-payment" name="is_room_payment" value="1" @checked(old('is_room_payment', $invoice->is_room_payment))>
-    <label class="form-check-label fw-semibold" for="is-room-payment">This invoice is a room payment</label>
-    <div class="form-text">Payments received for this invoice will be included in the room collection for its linked booking.</div>
-</div>
-@endif
 </div></div>
 <div class="card"><div class="card-body"><h4>Invoice items</h4><p>Enter the charges for this invoice. Existing bookings and service bills are not automatically added.</p>
 <div class="table-responsive"><table class="table"><thead><tr><th>Description</th><th>Price</th><th>Quantity</th><th>Amount</th><th></th></tr></thead><tbody id="invoice-items">

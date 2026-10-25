@@ -142,7 +142,7 @@
         @foreach($cashMovement['collectionRows'] as $row)
             <tr>
                 <td class="text-end">{{ $loop->iteration }}</td>
-                <td>Room No. {{ $row['room_number'] }}</td>
+                <td>{{ $row['room_label'] ?? 'Room No. '.$row['room_number'] }}</td>
                 <td class="text-end">{{ $row['debtor'] > 0 ? number_format($row['debtor'], 0) : '' }}</td>
                 <td class="text-end">{{ $row['cash'] > 0 ? number_format($row['cash'], 0) : '' }}</td>
                 <td class="text-end">{{ $row['lipa_namba'] > 0 ? number_format($row['lipa_namba'], 0) : '' }}</td>

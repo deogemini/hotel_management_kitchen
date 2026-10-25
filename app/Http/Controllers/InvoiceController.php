@@ -131,7 +131,7 @@ class InvoiceController extends Controller
             $invoice->update([
                 'company_id' => $company?->id, 'bill_to' => $billTo,
                 'issued_at' => $data['issued_at'], 'due_date' => $data['due_date'] ?? null,
-                'is_room_payment' => $invoice->booking_id !== null && (bool) ($data['is_room_payment'] ?? false),
+                'is_room_payment' => (bool) ($data['is_room_payment'] ?? false),
                 'notes' => $data['notes'] ?? null, 'subtotal' => $total,
                 'balance_amount' => round($total - (float) $invoice->paid_amount, 2),
                 'status' => $invoice->status === 'Cancelled' ? 'Cancelled' : ($invoice->paid_amount >= $total ? 'Paid' : ($invoice->paid_amount > 0 ? 'Partial' : 'Unpaid')),

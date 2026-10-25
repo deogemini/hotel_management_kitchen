@@ -223,6 +223,7 @@ class HotelReportController extends Controller
 
             $collectionRows[] = [
                 'room_number' => $room->room_number,
+                'room_label' => 'Room No. '.$room->room_number,
                 'debtor' => $debtor,
                 'cash' => $cash,
                 'lipa_namba' => $lipaNamba,
@@ -231,6 +232,20 @@ class HotelReportController extends Controller
             $outstandingRows[] = [
                 'room_number' => $room->room_number,
                 'amount' => $debtor,
+            ];
+        }
+
+        $unassignedRoomPayments = $payments->filter(fn ($payment) => ! $payment->booking?->room_id);
+        if ($unassignedRoomPayments->isNotEmpty()) {
+            $cash = (float) $unassignedRoomPayments->where('payment_method', 'Cash')->sum('amount');
+            $lipaNamba = (float) $unassignedRoomPayments->whereIn('payment_method', ['LIPA NAMBA', 'Mobile money', 'Card'])->sum('amount');
+            $collectionRows[] = [
+                'room_number' => null,
+                'room_label' => 'Unassigned room payments',
+                'debtor' => 0,
+                'cash' => $cash,
+                'lipa_namba' => $lipaNamba,
+                'amount' => $cash + $lipaNamba,
             ];
         }
 

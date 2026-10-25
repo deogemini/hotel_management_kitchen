@@ -43,11 +43,8 @@ class Payment extends Model
                     ->whereNotNull('booking_id');
             })->orWhere(function (Builder $query) {
                 $query->where('payable_type', Invoice::class)
-                    ->whereNotNull('booking_id')
                     ->whereNotNull('invoice_id')
-                    ->whereHas('invoice', fn ($invoice) => $invoice
-                        ->where('is_room_payment', true)
-                        ->whereNotNull('booking_id'));
+                    ->whereHas('invoice', fn ($invoice) => $invoice->where('is_room_payment', true));
             });
         });
     }
