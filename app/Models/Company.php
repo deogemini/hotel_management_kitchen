@@ -5,12 +5,18 @@ namespace App\Models;
 use App\Models\Concerns\TracksPerformer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Company extends Model
 {
     use TracksPerformer;
 
     protected $fillable = ['lodge_id', 'name', 'tin', 'phone', 'email', 'address'];
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
 
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
