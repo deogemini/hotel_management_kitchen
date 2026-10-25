@@ -58,3 +58,9 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 # hotel_management_kitchen
+
+## Progressive web app
+
+The hotel management system can be installed from a supported browser using the **Install app** button. On iPhone and iPad, use the browser's **Add to Home Screen** option.
+
+The service worker keeps the app icon, offline page, and static interface assets available and shows an offline message when a page cannot be reached. Hotel records, sign-in, and form submissions still require an internet connection; private pages and form data are not stored for offline use. Install and service worker features require HTTPS, except when running on localhost.

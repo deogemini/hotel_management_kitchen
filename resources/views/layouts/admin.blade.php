@@ -6,6 +6,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#0f2747">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <link rel="apple-touch-icon" href="{{ asset('icons/hotel-180.png') }}">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}" />
     <title>{{ config('app.name', 'Hotel Management System') }}</title>
     <link href="{{ asset('adminkit/css/app.css') }}" rel="stylesheet">
@@ -253,6 +259,7 @@
 
     <script src="{{ asset('adminkit/js/app.js') }}"></script>
     @stack('scripts')
+    @include('partials.pwa')
 </body>
 
 </html>

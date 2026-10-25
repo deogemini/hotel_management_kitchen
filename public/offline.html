@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0f2747">
+    <title>Offline | Hotel Management System</title>
+    <style>
+        :root { color-scheme: light; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        * { box-sizing: border-box; }
+        body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 24px; background: #f4f7fb; color: #172b45; }
+        main { width: min(100%, 440px); padding: 36px; border: 1px solid #dce5ef; border-radius: 20px; background: #fff; box-shadow: 0 18px 48px #0f274718; text-align: center; }
+        img { width: 72px; height: 72px; margin-bottom: 18px; }
+        h1 { margin: 0 0 12px; font-size: 1.65rem; }
+        p { margin: 0 0 24px; color: #53677f; line-height: 1.6; }
+        button { border: 0; border-radius: 10px; padding: 12px 18px; background: #0f2747; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+        button:focus-visible { outline: 3px solid #54d6d0; outline-offset: 3px; }
+    </style>
+</head>
+<body>
+    <main>
+        <svg aria-hidden="true" width="72" height="72" viewBox="0 0 512 512" style="margin-bottom: 18px; border-radius: 16px;">
+            <rect width="512" height="512" rx="112" fill="#0f2747"/>
+            <path d="M118 225 256 116l138 109" fill="none" stroke="#54d6d0" stroke-linecap="round" stroke-linejoin="round" stroke-width="28"/>
+            <path d="M150 220v169h212V220" fill="#fff"/>
+            <path d="M223 389v-91a33 33 0 0 1 66 0v91" fill="#0f2747"/>
+            <g fill="#0f2747"><rect x="177" y="250" width="29" height="29" rx="5"/><rect x="222" y="250" width="29" height="29" rx="5"/><rect x="261" y="250" width="29" height="29" rx="5"/><rect x="306" y="250" width="29" height="29" rx="5"/><rect x="177" y="309" width="29" height="29" rx="5"/><rect x="306" y="309" width="29" height="29" rx="5"/></g>
+            <path d="M112 397h288" stroke="#54d6d0" stroke-linecap="round" stroke-width="20"/>
+        </svg>
+        <h1>You’re offline</h1>
+        <p>Reconnect to the internet to access live hotel records and continue working. Your account data and changes are not available offline.</p>
+        <button type="button" onclick="window.location.reload()">Try again</button>
+    </main>
+</body>
+</html>
