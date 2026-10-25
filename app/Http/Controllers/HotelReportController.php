@@ -7,6 +7,7 @@ use App\Models\Guest;
 use App\Models\Lodge;
 use App\Models\Payment;
 use App\Models\RestaurantOrder;
+use App\Models\RestaurantOrderItem;
 use App\Models\StockMovement;
 use App\Models\Expense;
 use App\Models\OtherCharge;
@@ -152,7 +153,17 @@ class HotelReportController extends Controller
     {
         [$startDate, $endDate] = $this->dateRange($request);
         $rooms = $this->lodgeQuery(Booking::query(), $request)->whereBetween('check_in_date', [$startDate, $endDate])->sum('room_total');
-        $restaurant = $this->lodgeQuery(RestaurantOrder::query(), $request)->whereBetween('order_date', [$startDate, $endDate])->sum('subtotal');
+        $restaurantOrderIds = $this->lodgeQuery(RestaurantOrder::query(), $request)
+            ->whereBetween('order_date', [$startDate, $endDate])
+            ->select('id');
+        $foodRevenue = RestaurantOrderItem::query()
+            ->whereIn('restaurant_order_id', $restaurantOrderIds)
+            ->whereHas('menuItem', fn ($query) => $query->where('category', 'Food'))
+            ->sum('total_price');
+        $drinksRevenue = RestaurantOrderItem::query()
+            ->whereIn('restaurant_order_id', $restaurantOrderIds)
+            ->whereHas('menuItem', fn ($query) => $query->where('category', 'Drinks'))
+            ->sum('total_price');
         $services = $this->lodgeQuery(OtherCharge::query(), $request)->whereBetween('created_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])->sum('amount');
         $purchases = $this->lodgeQuery(Purchase::query(), $request)->whereBetween('purchased_at', [$startDate, $endDate])->sum('total_cost');
         $expenses = $this->lodgeQuery(Expense::query(), $request)->whereBetween('spent_at', [$startDate, $endDate])->sum('amount');
@@ -160,8 +171,8 @@ class HotelReportController extends Controller
             ->whereRaw('LOWER(category) != ?', ['food'])
             ->get()
             ->sum(fn ($item) => (float) $item->stock_quantity * (float) $item->buying_price);
-        $revenue = $rooms + $restaurant + $services;
-        return view('reports.accounting', compact('startDate','endDate','rooms','restaurant','services','purchases','expenses','revenue','currentStockValue'));
+        $revenue = $rooms + $foodRevenue + $drinksRevenue + $services;
+        return view('reports.accounting', compact('startDate','endDate','rooms','foodRevenue','drinksRevenue','services','purchases','expenses','revenue','currentStockValue'));
     }
 
     public function payments(Request $request)
