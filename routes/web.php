@@ -69,6 +69,8 @@ Route::middleware('auth')->group(function () {
         Route::get('bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
         Route::post('bookings/{booking}/check-in', [CheckInOutController::class, 'checkIn'])->name('bookings.check-in');
         Route::post('bookings/{booking}/check-out', [CheckInOutController::class, 'checkOut'])->name('bookings.check-out');
+        Route::post('bookings/bulk-check-in', [CheckInOutController::class, 'bulkCheckIn'])->name('bookings.bulk-check-in');
+        Route::post('bookings/bulk-check-out', [CheckInOutController::class, 'bulkCheckOut'])->name('bookings.bulk-check-out');
     });
 
     Route::middleware('permission:restaurant_orders.manage')->group(function () {

@@ -6,6 +6,7 @@
     .dataTables_wrapper .dataTables_paginate .page-item { margin: 0 2px; }
     .dataTables_wrapper .dataTables_length,
     .dataTables_wrapper .dataTables_filter { margin-bottom: 1rem; }
+    .booking-select-control { width: 1rem; height: 1rem; cursor: pointer; }
 </style>
 @endpush
 @section('content')
@@ -18,14 +19,45 @@
         @endif
     </div>
     <div class="card-body">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <button id="bulkCheckInButton" type="button" class="btn btn-success" disabled>
+                Check In Selected (<span id="checkInSelectionCount">0</span>)
+            </button>
+            <button id="bulkCheckOutButton" type="button" class="btn btn-warning" disabled>
+                Check Out Selected (<span id="checkOutSelectionCount">0</span>)
+            </button>
+            <span id="bookingSelectionSummary" class="text-muted small" aria-live="polite">Select eligible bookings to use a bulk action.</span>
+        </div>
+
+        <form id="bulkCheckInForm" method="POST" action="{{ route('bookings.bulk-check-in') }}" class="d-none">
+            @csrf
+            <div id="bulkCheckInIds"></div>
+        </form>
+        <form id="bulkCheckOutForm" method="POST" action="{{ route('bookings.bulk-check-out') }}" class="d-none">
+            @csrf
+            <div id="bulkCheckOutIds"></div>
+        </form>
+
         <div class="table-responsive">
             <table id="bookingsTable" class="table table-hover w-100">
                 <thead>
-                    <tr><th>#</th><th>Booking</th><th>Guest</th><th>Room</th><th>Dates</th><th>Status</th><th>Total</th><th>Balance</th><th>Actions</th></tr>
+                    <tr>
+                        <th><input id="selectBookingsPage" class="booking-select-control" type="checkbox" aria-label="Select eligible bookings on this page" title="Select eligible bookings on this page"></th>
+                        <th>#</th><th>Booking</th><th>Guest</th><th>Room</th><th>Dates</th><th>Status</th><th>Total</th><th>Balance</th><th>Actions</th>
+                    </tr>
                 </thead>
                 <tbody>
                     @foreach($bookings as $booking)
                         <tr>
+                            <td>
+                                @if(in_array($booking->status, ['Pending', 'Confirmed'], true) && ! $booking->check_in_date?->isFuture())
+                                    <input class="booking-select-control booking-select" type="checkbox" value="{{ $booking->id }}" data-action="check-in" aria-label="Select booking {{ $booking->booking_number }} for check-in">
+                                @elseif($booking->status === 'Checked In')
+                                    <input class="booking-select-control booking-select" type="checkbox" value="{{ $booking->id }}" data-action="check-out" aria-label="Select booking {{ $booking->booking_number }} for check-out">
+                                @else
+                                    <span class="text-muted" aria-hidden="true">—</span>
+                                @endif
+                            </td>
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $booking->booking_number }}</td>
                             <td>{{ $booking->guest->full_name }}</td>
@@ -61,11 +93,39 @@
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script>
     $(function () {
-        $('#bookingsTable').DataTable({
+        const selectedBookings = new Map();
+        const selectionAction = {
+            checkIn: 'check-in',
+            checkOut: 'check-out'
+        };
+
+        function refreshSelectionControls(api) {
+            const checkInCount = Array.from(selectedBookings.values()).filter((action) => action === selectionAction.checkIn).length;
+            const checkOutCount = Array.from(selectedBookings.values()).filter((action) => action === selectionAction.checkOut).length;
+
+            $('#checkInSelectionCount').text(checkInCount);
+            $('#checkOutSelectionCount').text(checkOutCount);
+            $('#bulkCheckInButton').prop('disabled', checkInCount === 0);
+            $('#bulkCheckOutButton').prop('disabled', checkOutCount === 0);
+            $('#bookingSelectionSummary').text(`${selectedBookings.size} booking(s) selected`);
+
+            if (!api) {
+                return;
+            }
+
+            const currentPageCheckboxes = $(api.rows({ page: 'current' }).nodes()).find('.booking-select').toArray();
+            const selectedOnPage = currentPageCheckboxes.filter((checkbox) => selectedBookings.has(checkbox.value)).length;
+            const selectPage = document.getElementById('selectBookingsPage');
+
+            selectPage.checked = currentPageCheckboxes.length > 0 && selectedOnPage === currentPageCheckboxes.length;
+            selectPage.indeterminate = selectedOnPage > 0 && selectedOnPage < currentPageCheckboxes.length;
+        }
+
+        const bookingsTable = $('#bookingsTable').DataTable({
             pageLength: 10,
             lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
             order: [],
-            columnDefs: [{ orderable: false, targets: [0, 8] }],
+            columnDefs: [{ orderable: false, targets: [0, 1, 9] }],
             language: {
                 search: 'Search bookings:',
                 lengthMenu: 'Show _MENU_ entries',
@@ -75,12 +135,72 @@
                 paginate: { first: 'First', last: 'Last', next: 'Next', previous: 'Previous' }
             },
             drawCallback: function () {
-                const page = this.api().page.info();
-                this.api().column(0, { page: 'current' }).nodes().each(function (cell, index) {
+                const api = this.api();
+                const page = api.page.info();
+
+                $(api.rows({ page: 'current' }).nodes()).find('.booking-select').each(function () {
+                    this.checked = selectedBookings.has(this.value);
+                });
+                api.column(1, { page: 'current' }).nodes().each(function (cell, index) {
                     cell.textContent = page.start + index + 1;
                 });
+
+                refreshSelectionControls(api);
             }
         });
+
+        $('#bookingsTable').on('change', '.booking-select', function () {
+            if (this.checked) {
+                selectedBookings.set(this.value, this.dataset.action);
+            } else {
+                selectedBookings.delete(this.value);
+            }
+
+            refreshSelectionControls(bookingsTable);
+        });
+
+        $('#selectBookingsPage').on('change', function () {
+            $(bookingsTable.rows({ page: 'current' }).nodes()).find('.booking-select').each((_, checkbox) => {
+                if (this.checked) {
+                    selectedBookings.set(checkbox.value, checkbox.dataset.action);
+                } else {
+                    selectedBookings.delete(checkbox.value);
+                }
+            });
+
+            refreshSelectionControls(bookingsTable);
+        });
+
+        function submitBulkAction(action) {
+            const ids = Array.from(selectedBookings.entries())
+                .filter(([, selectedAction]) => selectedAction === action)
+                .map(([id]) => id);
+
+            if (ids.length === 0) {
+                return;
+            }
+
+            const isCheckIn = action === selectionAction.checkIn;
+            const verb = isCheckIn ? 'check in' : 'check out';
+
+            if (!window.confirm(`Are you sure you want to ${verb} ${ids.length} selected booking(s)?`)) {
+                return;
+            }
+
+            const form = document.getElementById(isCheckIn ? 'bulkCheckInForm' : 'bulkCheckOutForm');
+            const inputContainer = document.getElementById(isCheckIn ? 'bulkCheckInIds' : 'bulkCheckOutIds');
+            inputContainer.replaceChildren(...ids.map((id) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'booking_ids[]';
+                input.value = id;
+                return input;
+            }));
+            form.requestSubmit();
+        }
+
+        $('#bulkCheckInButton').on('click', () => submitBulkAction(selectionAction.checkIn));
+        $('#bulkCheckOutButton').on('click', () => submitBulkAction(selectionAction.checkOut));
     });
 </script>
 @endpush
