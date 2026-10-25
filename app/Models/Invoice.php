@@ -13,6 +13,7 @@ class Invoice extends Model
         'lodge_id',
         'guest_id',
         'booking_id',
+        'is_room_payment',
         'subtotal',
         'paid_amount',
         'balance_amount',
@@ -27,6 +28,7 @@ class Invoice extends Model
         return [
             'bill_to' => 'array',
             'issuer_details' => 'array',
+            'is_room_payment' => 'boolean',
             'due_date' => 'date',
             'subtotal' => 'decimal:2',
             'paid_amount' => 'decimal:2',

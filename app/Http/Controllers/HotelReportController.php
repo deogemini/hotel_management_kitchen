@@ -29,7 +29,8 @@ class HotelReportController extends Controller
         $rooms = $this->lodgeQuery(Room::with('lodge'), $request)
             ->orderBy('room_number')
             ->get();
-        $payments = $this->lodgeQuery(Payment::with('booking.room'), $request)
+        $payments = $this->lodgeQuery(Payment::with('booking.room', 'invoice'), $request)
+            ->forRoomCollection()
             ->whereIn('status', ['Paid', 'Partial'])
             ->whereBetween('paid_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])
             ->get();

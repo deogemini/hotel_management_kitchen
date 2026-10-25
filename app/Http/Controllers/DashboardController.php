@@ -71,8 +71,7 @@ class DashboardController extends Controller
             'todayRestaurantOrders' => (clone $orders)->whereDate('created_at', today())->count(),
             'totalCollections' => (clone $payments)->whereIn('status', ['Paid', 'Partial'])->sum('amount'),
             'totalRoomRevenue' => (clone $payments)
-                ->where('payable_type', Booking::class)
-                ->whereNotNull('booking_id')
+                ->forRoomCollection()
                 ->whereIn('status', ['Paid', 'Partial'])
                 ->sum('amount'),
             'totalRestaurantRevenue' => (clone $payments)->whereNotNull('restaurant_order_id')->whereIn('status', ['Paid', 'Partial'])->sum('amount'),

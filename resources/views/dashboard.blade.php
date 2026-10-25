@@ -45,7 +45,7 @@
         ['Bookings Today', $stats['todayBookings'], 'book-open', 'primary', route('bookings.index'), ['bookings.manage', 'checkin.manage']],
         ['Orders Today', $stats['todayRestaurantOrders'], 'coffee', 'primary', route('restaurant-orders.index'), ['restaurant_orders.manage']],
         ['Collections', number_format($stats['totalCollections'], 2), 'dollar-sign', 'success', route('payments.index'), ['payments.manage']],
-        ['Room Revenue', number_format($stats['totalRoomRevenue'], 2), 'credit-card', 'success', route('payments.index', ['type' => 'booking']), ['payments.manage']],
+        ['Room Revenue', number_format($stats['totalRoomRevenue'], 2), 'credit-card', 'success', route('payments.index', ['type' => 'room']), ['payments.manage']],
         ['Restaurant Revenue', number_format($stats['totalRestaurantRevenue'], 2), 'shopping-cart', 'success', route('payments.index'), ['payments.manage']],
         ['Pending Payments', number_format($stats['pendingPayments'], 2), 'alert-circle', 'warning', route('payments.index'), ['payments.manage']],
     ] as [$label, $value, $icon, $color, $href, $permissions])

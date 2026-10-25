@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
@@ -32,6 +33,23 @@ class Payment extends Model
             'amount' => 'decimal:2',
             'paid_at' => 'datetime',
         ];
+    }
+
+    public function scopeForRoomCollection(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query) {
+            $query->where(function (Builder $query) {
+                $query->where('payable_type', Booking::class)
+                    ->whereNotNull('booking_id');
+            })->orWhere(function (Builder $query) {
+                $query->where('payable_type', Invoice::class)
+                    ->whereNotNull('booking_id')
+                    ->whereNotNull('invoice_id')
+                    ->whereHas('invoice', fn ($invoice) => $invoice
+                        ->where('is_room_payment', true)
+                        ->whereNotNull('booking_id'));
+            });
+        });
     }
 
     public function payable(): MorphTo
@@ -86,12 +104,16 @@ class Payment extends Model
             return 'Food - '.$details;
         }
 
-        if ($this->booking) {
-            return 'Room booking';
+        if ($this->invoice) {
+            if ($this->invoice->is_room_payment) {
+                return 'Room payment invoice';
+            }
+
+            return 'Invoice';
         }
 
-        if ($this->invoice) {
-            return 'Invoice';
+        if ($this->booking) {
+            return 'Room booking';
         }
 
         return '-';

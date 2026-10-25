@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('content')
-<h1 class="h3 mb-3"><strong>{{ $bookingPaymentsOnly ? 'Room Booking Payments' : 'Payment Management' }}</strong></h1>
-@unless($bookingPaymentsOnly)
+<h1 class="h3 mb-3"><strong>{{ $roomPaymentsOnly ? 'Room Collection Payments' : 'Payment Management' }}</strong></h1>
+@unless($roomPaymentsOnly)
 <div class="card"><div class="card-header"><h5 class="card-title mb-0">Saved Invoices</h5></div><div class="card-body table-responsive">
 <table class="table"><thead><tr><th>Invoice</th><th>Bill to</th><th>Date</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead><tbody>
 @forelse($invoices as $invoice)
@@ -11,7 +11,7 @@
 @endunless
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0">{{ $bookingPaymentsOnly ? 'Booking Payments' : 'Payments' }}</h5>
+        <h5 class="card-title mb-0">{{ $roomPaymentsOnly ? 'Room Payments' : 'Payments' }}</h5>
         <a href="{{ route('payments.create') }}" class="btn btn-primary float-end mt-n4">Receive Payment</a>
     </div>
     <div class="card-body">
@@ -41,7 +41,7 @@
                         <td><a class="btn btn-sm btn-secondary" href="{{ route('payments.receipt', $payment) }}">Receipt</a> @if(strtolower((string) auth()->user()?->effectiveRoleName()) === 'owner')<form method="POST" action="{{ route('payments.destroy', $payment) }}" class="d-inline" onsubmit="return confirm('Delete this payment? The related balance will be restored.');">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-danger">Delete</button></form>@endif</td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="text-muted">{{ $bookingPaymentsOnly ? 'No room booking payments found.' : 'No payments found.' }}</td></tr>
+                    <tr><td colspan="8" class="text-muted">{{ $roomPaymentsOnly ? 'No room collection payments found.' : 'No payments found.' }}</td></tr>
                 @endforelse
             </tbody>
             <tfoot>

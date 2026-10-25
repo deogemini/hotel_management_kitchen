@@ -14,16 +14,16 @@ class PaymentController extends Controller
 {
     public function index(Request $request)
     {
+        $roomPaymentsOnly = in_array($request->query('type'), ['room', 'booking'], true);
         $payments = Payment::with('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice', 'payable')
-            ->when($request->query('type') === 'booking', fn ($query) => $query->where('payable_type', Booking::class)->whereNotNull('booking_id'))
+            ->when($roomPaymentsOnly, fn ($query) => $query->forRoomCollection())
             ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->latest('paid_at')
             ->get();
 
-        $bookingPaymentsOnly = $request->query('type') === 'booking';
-        $invoices = $bookingPaymentsOnly ? collect() : $this->lodgeQuery(Invoice::with('guest'))->latest('id')->get();
+        $invoices = $roomPaymentsOnly ? collect() : $this->lodgeQuery(Invoice::with('guest'))->latest('id')->get();
 
-        return view('payments.index', compact('payments', 'invoices', 'bookingPaymentsOnly'));
+        return view('payments.index', compact('payments', 'invoices', 'roomPaymentsOnly'));
     }
 
     public function create(Request $request)
@@ -199,8 +199,7 @@ class PaymentController extends Controller
     private function refreshBalances(object $target): void
     {
         if ($target instanceof Booking) {
-            $paid = $target->payments()->whereIn('status', ['Paid', 'Partial'])->sum('amount');
-            $target->update(['balance_amount' => max(0, $target->room_total - $paid), 'deposit_amount' => $paid]);
+            $target->syncRoomPaymentBalances();
         }
 
         if ($target instanceof RestaurantOrder) {
@@ -219,6 +218,10 @@ class PaymentController extends Controller
                 'balance_amount' => max(0, $target->subtotal - $paid),
                 'status' => $paid >= $target->subtotal ? 'Paid' : ($paid > 0 ? 'Partial' : 'Unpaid'),
             ]);
+
+            if ($target->is_room_payment && $target->booking_id) {
+                $target->booking?->syncRoomPaymentBalances();
+            }
         }
 
         if ($target instanceof OtherCharge) {

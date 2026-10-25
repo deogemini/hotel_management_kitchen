@@ -65,6 +65,20 @@ class Booking extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function syncRoomPaymentBalances(): void
+    {
+        $paid = Payment::query()
+            ->forRoomCollection()
+            ->where('booking_id', $this->id)
+            ->whereIn('status', ['Paid', 'Partial'])
+            ->sum('amount');
+
+        $this->update([
+            'deposit_amount' => $paid,
+            'balance_amount' => max(0, (float) $this->room_total - (float) $paid),
+        ]);
+    }
+
     public function restaurantOrders(): HasMany
     {
         return $this->hasMany(RestaurantOrder::class);
