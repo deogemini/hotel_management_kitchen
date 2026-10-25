@@ -43,7 +43,7 @@
                 <thead>
                     <tr>
                         <th><input id="selectBookingsPage" class="booking-select-control" type="checkbox" aria-label="Select eligible bookings on this page" title="Select eligible bookings on this page"></th>
-                        <th>#</th><th>Booking</th><th>Guest</th><th>Room</th><th>Dates</th><th>Status</th><th>Total</th><th>Balance</th><th>Actions</th>
+                        <th>#</th><th>Booking</th><th>Guest</th><th>Room</th><th>Dates</th><th>Status</th><th>Total</th><th>Balance</th><th>Last action by</th><th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -66,6 +66,7 @@
                             <td><span class="badge bg-secondary">{{ $booking->status }}</span></td>
                             <td>{{ number_format($booking->room_total, 2) }}</td>
                             <td>{{ number_format($booking->balance_amount, 2) }}</td>
+                            @include('partials.performed_by_cell', ['record' => $booking])
                             <td>
                                 <a class="btn btn-sm btn-secondary" href="{{ route('bookings.show', $booking) }}">View</a>
                                 @if(auth()->user()?->hasPermission('bookings.manage'))

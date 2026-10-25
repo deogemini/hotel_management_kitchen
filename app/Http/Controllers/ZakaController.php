@@ -20,7 +20,7 @@ class ZakaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Zaka::with('mwanajumuiya.jumuiya');
+        $query = Zaka::with('mwanajumuiya.jumuiya', 'performedBy');
 
         if ($request->has('jumuiya_id') && $request->jumuiya_id) {
             $query->whereHas('mwanajumuiya', function ($q) use ($request) {

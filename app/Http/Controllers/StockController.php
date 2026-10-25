@@ -11,14 +11,14 @@ class StockController extends Controller
 {
     public function index()
     {
-        $menuItems = $this->lodgeQuery(MenuItem::withExists('purchases'))->orderBy('category')->orderBy('name')->get();
+        $menuItems = $this->lodgeQuery(MenuItem::withExists('purchases')->with('performedBy', 'latestStockMovement.performedBy'))->orderBy('category')->orderBy('name')->get();
 
         return view('stocks.index', compact('menuItems'));
     }
 
     public function drinks()
     {
-        $menuItems = $this->lodgeQuery(MenuItem::withExists('purchases'))
+        $menuItems = $this->lodgeQuery(MenuItem::withExists('purchases')->with('performedBy', 'latestStockMovement.performedBy'))
             ->where('category', 'Drinks')
             ->orderBy('name')
             ->get();
@@ -37,7 +37,7 @@ class StockController extends Controller
     public function pdf(Request $request)
     {
         $drinksOnly = $request->boolean('drinks');
-        $query = $this->lodgeQuery(MenuItem::query());
+        $query = $this->lodgeQuery(MenuItem::with('performedBy', 'latestStockMovement.performedBy'));
 
         if ($drinksOnly) {
             $query->where('category', 'Drinks');

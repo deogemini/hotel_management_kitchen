@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\TracksPerformer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
 class InvoiceSetting extends Model
 {
+    use TracksPerformer;
+
     protected $fillable = ['details'];
 
     protected function casts(): array

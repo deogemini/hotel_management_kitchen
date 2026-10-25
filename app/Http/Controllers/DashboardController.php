@@ -78,10 +78,10 @@ class DashboardController extends Controller
             'pendingPayments' => (clone $invoices)->whereIn('status', ['Unpaid', 'Partial'])->sum('balance_amount') + (clone $bookings)->where('balance_amount', '>', 0)->sum('balance_amount'),
         ];
 
-        $todayCheckIns = $this->lodgeQuery(Booking::with('guest', 'room'))->whereDate('check_in_date', today())->latest()->limit(8)->get();
-        $todayCheckOuts = $this->lodgeQuery(Booking::with('guest', 'room'))->whereDate('check_out_date', today())->latest()->limit(8)->get();
-        $recentPayments = $this->lodgeQuery(Payment::with('guest'))->latest('paid_at')->limit(8)->get();
-        $pendingKitchenOrders = $this->lodgeQuery(RestaurantOrder::with('items.menuItem', 'room'))
+        $todayCheckIns = $this->lodgeQuery(Booking::with('guest', 'room', 'performedBy'))->whereDate('check_in_date', today())->latest()->limit(8)->get();
+        $todayCheckOuts = $this->lodgeQuery(Booking::with('guest', 'room', 'performedBy'))->whereDate('check_out_date', today())->latest()->limit(8)->get();
+        $recentPayments = $this->lodgeQuery(Payment::with('guest', 'performedBy'))->latest('paid_at')->limit(8)->get();
+        $pendingKitchenOrders = $this->lodgeQuery(RestaurantOrder::with('items.menuItem', 'room', 'performedBy'))
             ->whereHas('items.menuItem', fn ($query) => $query->where('category', 'Food'))
             ->whereIn('status', ['Pending', 'Preparing'])
             ->latest()

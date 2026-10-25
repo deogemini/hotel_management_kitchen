@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\TracksPerformer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Purchase extends Model
 {
+    use TracksPerformer;
+
     protected $fillable = [
         'lodge_id', 'menu_item_id', 'quantity', 'unit_cost', 'total_cost',
         'supplier', 'purchased_at', 'notes', 'affects_stock', 'created_by',

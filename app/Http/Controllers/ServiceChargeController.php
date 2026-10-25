@@ -15,7 +15,7 @@ class ServiceChargeController extends Controller
 {
     public function index()
     {
-        $serviceCharges = OtherCharge::with('guest', 'booking.room')
+        $serviceCharges = OtherCharge::with('guest', 'booking.room', 'performedBy')
             ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->latest()
             ->get();
@@ -102,7 +102,7 @@ class ServiceChargeController extends Controller
 
     public function show(OtherCharge $serviceCharge)
     {
-        $serviceCharge->load('guest', 'booking.room', 'payments');
+        $serviceCharge->load('guest', 'booking.room', 'payments.performedBy', 'performedBy');
 
         return view('service_charges.show', compact('serviceCharge'));
     }

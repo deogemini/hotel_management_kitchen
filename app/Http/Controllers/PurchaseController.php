@@ -18,7 +18,7 @@ class PurchaseController extends Controller
     public function index(Request $request)
     {
         $request->validate(['from_date' => ['nullable', 'date'], 'to_date' => ['nullable', 'date', 'after_or_equal:from_date']]);
-        $purchases = $this->lodgeQuery(Purchase::with('menuItem'))
+        $purchases = $this->lodgeQuery(Purchase::with('menuItem', 'performedBy'))
             ->when($request->filled('from_date'), fn ($query) => $query->whereDate('purchased_at', '>=', $request->from_date))
             ->when($request->filled('to_date'), fn ($query) => $query->whereDate('purchased_at', '<=', $request->to_date))
             ->latest('purchased_at')->latest()->get();
@@ -140,7 +140,7 @@ class PurchaseController extends Controller
 
     private function filteredPurchases(Request $request)
     {
-        return $this->lodgeQuery(Purchase::with('menuItem'))
+        return $this->lodgeQuery(Purchase::with('menuItem', 'performedBy'))
             ->when($request->filled('from_date'), fn ($query) => $query->whereDate('purchased_at', '>=', $request->from_date))
             ->when($request->filled('to_date'), fn ($query) => $query->whereDate('purchased_at', '<=', $request->to_date))
             ->latest('purchased_at')->latest();

@@ -10,7 +10,7 @@ class LodgeController extends Controller
 {
     public function index()
     {
-        $lodges = Lodge::withCount(['users', 'rooms'])->orderBy('name')->get();
+        $lodges = Lodge::with('performedBy')->withCount(['users', 'rooms'])->orderBy('name')->get();
 
         return view('lodges.index', compact('lodges'));
     }

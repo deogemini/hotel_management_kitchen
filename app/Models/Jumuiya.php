@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\TracksPerformer;
 use Illuminate\Database\Eloquent\Model;
 
 class Jumuiya extends Model
 {
+    use TracksPerformer;
+
     protected $fillable = [
         'kanda_id',
         'jina_la_jumuiya',

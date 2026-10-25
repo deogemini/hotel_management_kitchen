@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\TracksPerformer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class OtherCharge extends Model
 {
+    use TracksPerformer;
+
     protected $fillable = [
         'booking_id',
         'lodge_id',

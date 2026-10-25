@@ -13,7 +13,7 @@ class KandaController extends Controller
      */
     public function index()
     {
-        $kandas = Kanda::withCount('jumuiyas')->get();
+        $kandas = Kanda::with('performedBy')->withCount('jumuiyas')->get();
         return view('kandas.index', compact('kandas'));
     }
 

@@ -29,12 +29,12 @@ class HotelReportController extends Controller
         $rooms = $this->lodgeQuery(Room::with('lodge'), $request)
             ->orderBy('room_number')
             ->get();
-        $payments = $this->lodgeQuery(Payment::with('booking.room', 'invoice'), $request)
+        $payments = $this->lodgeQuery(Payment::with('booking.room', 'invoice', 'performedBy'), $request)
             ->forRoomCollection()
             ->whereIn('status', ['Paid', 'Partial'])
             ->whereBetween('paid_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])
             ->get();
-        $balances = $this->lodgeQuery(Booking::with('room'), $request)
+        $balances = $this->lodgeQuery(Booking::with('room', 'performedBy'), $request)
             ->where('balance_amount', '>', 0)
             ->whereDate('check_in_date', '<=', $endDate)
             ->whereDate('check_out_date', '>=', $startDate)
@@ -50,7 +50,7 @@ class HotelReportController extends Controller
     public function roomBookings(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request);
-        $rows = $this->lodgeQuery(Booking::with('guest', 'room'), $request)
+        $rows = $this->lodgeQuery(Booking::with('guest', 'room', 'performedBy'), $request)
             ->whereBetween('check_in_date', [$startDate, $endDate])
             ->latest()
             ->get();
@@ -61,7 +61,7 @@ class HotelReportController extends Controller
     public function occupiedRooms(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request, today()->toDateString(), today()->toDateString());
-        $rows = $this->lodgeQuery(Room::query(), $request)
+        $rows = $this->lodgeQuery(Room::with('performedBy'), $request)
             ->whereHas('bookings', function ($query) use ($startDate, $endDate) {
                 $query->whereIn('status', ['Pending', 'Confirmed', 'Checked In', 'Checked Out'])
                     ->whereDate('check_in_date', '<=', $endDate)
@@ -76,7 +76,7 @@ class HotelReportController extends Controller
     public function availableRooms(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request, today()->toDateString(), today()->toDateString());
-        $rows = $this->lodgeQuery(Room::where('status', '!=', 'Maintenance'), $request)
+        $rows = $this->lodgeQuery(Room::with('performedBy')->where('status', '!=', 'Maintenance'), $request)
             ->whereDoesntHave('bookings', function ($query) use ($startDate, $endDate) {
                 $query->whereIn('status', ['Pending', 'Confirmed', 'Checked In', 'Checked Out'])
                     ->whereDate('check_in_date', '<=', $endDate)
@@ -91,7 +91,7 @@ class HotelReportController extends Controller
     public function guests(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request);
-        $rows = $this->lodgeQuery(Guest::withCount('bookings'), $request)
+        $rows = $this->lodgeQuery(Guest::with('performedBy')->withCount('bookings'), $request)
             ->whereBetween('created_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])
             ->latest()
             ->get();
@@ -102,7 +102,7 @@ class HotelReportController extends Controller
     public function restaurantSales(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request);
-        $rows = $this->lodgeQuery(RestaurantOrder::with('guest'), $request)
+        $rows = $this->lodgeQuery(RestaurantOrder::with('guest', 'performedBy'), $request)
             ->whereBetween('created_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])
             ->latest()
             ->get();
@@ -113,7 +113,7 @@ class HotelReportController extends Controller
     public function stockMovements(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request);
-        $rows = $this->lodgeQuery(StockMovement::with('menuItem'), $request)
+        $rows = $this->lodgeQuery(StockMovement::with('menuItem', 'performedBy'), $request)
             ->whereBetween('movement_date', [$startDate, $endDate])->latest('movement_date')->latest()->get();
         return $this->reportView($request, 'Stock Movement Report', $rows, 'movements', $startDate, $endDate);
     }
@@ -121,7 +121,7 @@ class HotelReportController extends Controller
     public function purchases(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request);
-        $rows = $this->lodgeQuery(Purchase::with('menuItem'), $request)
+        $rows = $this->lodgeQuery(Purchase::with('menuItem', 'performedBy'), $request)
             ->whereBetween('purchased_at', [$startDate, $endDate])->latest('purchased_at')->get();
         return $this->reportView($request, 'Purchase Report', $rows, 'purchases', $startDate, $endDate);
     }
@@ -129,7 +129,7 @@ class HotelReportController extends Controller
     public function foodSales(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request);
-        $rows = $this->lodgeQuery(StockMovement::with('menuItem'), $request)
+        $rows = $this->lodgeQuery(StockMovement::with('menuItem', 'performedBy'), $request)
             ->where('type', 'sale')->whereBetween('movement_date', [$startDate, $endDate])
             ->when($request->filled('category'), fn ($query) => $query->whereHas('menuItem', fn ($item) => $item->where('category', $request->category)))
             ->latest('movement_date')->get();
@@ -155,7 +155,7 @@ class HotelReportController extends Controller
     public function payments(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request);
-        $rows = $this->lodgeQuery(Payment::with('guest'), $request)
+        $rows = $this->lodgeQuery(Payment::with('guest', 'performedBy'), $request)
             ->whereIn('status', ['Paid', 'Partial'])
             ->whereBetween('paid_at', [$this->startOfDay($startDate), $this->endOfDay($endDate)])
             ->latest('paid_at')
@@ -167,7 +167,7 @@ class HotelReportController extends Controller
     public function unpaidBills(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request);
-        $rows = $this->lodgeQuery(Booking::with('guest', 'room'), $request)
+        $rows = $this->lodgeQuery(Booking::with('guest', 'room', 'performedBy'), $request)
             ->where('balance_amount', '>', 0)
             ->whereBetween('check_in_date', [$startDate, $endDate])
             ->latest()
@@ -228,10 +228,12 @@ class HotelReportController extends Controller
                 'cash' => $cash,
                 'lipa_namba' => $lipaNamba,
                 'amount' => $debtor + $cash + $lipaNamba,
+                'performed_by' => $roomPayments->pluck('performedBy.name')->filter()->unique()->implode(', ') ?: 'Not recorded',
             ];
             $outstandingRows[] = [
                 'room_number' => $room->room_number,
                 'amount' => $debtor,
+                'performed_by' => $roomBalances->pluck('performedBy.name')->filter()->unique()->implode(', ') ?: 'Not recorded',
             ];
         }
 
@@ -246,6 +248,7 @@ class HotelReportController extends Controller
                 'cash' => $cash,
                 'lipa_namba' => $lipaNamba,
                 'amount' => $cash + $lipaNamba,
+                'performed_by' => $unassignedRoomPayments->pluck('performedBy.name')->filter()->unique()->implode(', ') ?: 'Not recorded',
             ];
         }
 

@@ -134,11 +134,11 @@
 @if($type === 'cash_movement')
 <table class="table cash-movement-table">
     <tbody>
-        <tr><td colspan="6" class="report-band">{{ optional($rows->first()?->lodge)->name ?? config('app.name', 'Hotel Management System') }}</td></tr>
-        <tr><td colspan="6" class="report-band">{{ strtoupper($title) }}</td></tr>
-        <tr><td class="report-band">DATE</td><td colspan="5" class="report-band">{{ \Illuminate\Support\Carbon::parse($startDate)->format('d.m.Y') }}@if($startDate !== $endDate) to {{ \Illuminate\Support\Carbon::parse($endDate)->format('d.m.Y') }}@endif</td></tr>
-        <tr><td></td><td colspan="5" class="section-band text-center">collection</td></tr>
-        <tr class="section-band"><td>S/N</td><td>ROOM NUMBER</td><td>debtor</td><td>CASH</td><td>LIPA NAMBA</td><td>AMOUNT</td></tr>
+        <tr><td colspan="7" class="report-band">{{ optional($rows->first()?->lodge)->name ?? config('app.name', 'Hotel Management System') }}</td></tr>
+        <tr><td colspan="7" class="report-band">{{ strtoupper($title) }}</td></tr>
+        <tr><td class="report-band">DATE</td><td colspan="6" class="report-band">{{ \Illuminate\Support\Carbon::parse($startDate)->format('d.m.Y') }}@if($startDate !== $endDate) to {{ \Illuminate\Support\Carbon::parse($endDate)->format('d.m.Y') }}@endif</td></tr>
+        <tr><td></td><td colspan="6" class="section-band text-center">collection</td></tr>
+        <tr class="section-band"><td>S/N</td><td>ROOM NUMBER</td><td>debtor</td><td>CASH</td><td>LIPA NAMBA</td><td>AMOUNT</td><td>COLLECTED BY</td></tr>
         @foreach($cashMovement['collectionRows'] as $row)
             <tr>
                 <td class="text-end">{{ $loop->iteration }}</td>
@@ -147,11 +147,12 @@
                 <td class="text-end">{{ $row['cash'] > 0 ? number_format($row['cash'], 0) : '' }}</td>
                 <td class="text-end">{{ $row['lipa_namba'] > 0 ? number_format($row['lipa_namba'], 0) : '' }}</td>
                 <td class="text-end">{{ $row['amount'] > 0 ? number_format($row['amount'], 0) : '' }}</td>
+                <td>{{ $row['performed_by'] }}</td>
             </tr>
         @endforeach
-        <tr class="section-band"><td></td><td colspan="4">TOTAL COLLECTIONS</td><td class="text-end">{{ number_format($cashMovement['totalCollections'], 0) }}</td></tr>
-        <tr><td colspan="6">&nbsp;</td></tr>
-        <tr><td></td><td colspan="5" class="section-band">OUTSTANDING COLLECTIONS</td></tr>
+        <tr class="section-band"><td></td><td colspan="4">TOTAL COLLECTIONS</td><td class="text-end">{{ number_format($cashMovement['totalCollections'], 0) }}</td><td></td></tr>
+        <tr><td colspan="7">&nbsp;</td></tr>
+        <tr><td></td><td colspan="6" class="section-band">OUTSTANDING COLLECTIONS</td></tr>
         @foreach($cashMovement['outstandingRows'] as $row)
             <tr>
                 <td class="text-end">{{ $loop->iteration + count($cashMovement['collectionRows']) }}</td>
@@ -160,41 +161,42 @@
                 <td></td>
                 <td></td>
                 <td class="text-end">{{ $row['amount'] > 0 ? number_format($row['amount'], 0) : '' }}</td>
+                <td>{{ $row['performed_by'] }}</td>
             </tr>
         @endforeach
-        <tr class="section-band"><td></td><td colspan="4">TOTAL COLLECTIONS</td><td class="text-end">{{ $cashMovement['totalOutstanding'] > 0 ? number_format($cashMovement['totalOutstanding'], 0) : '-' }}</td></tr>
-        <tr class="section-band"><td></td><td colspan="4">TOTAL INCOME COLLECTIONS</td><td class="text-end">{{ number_format($cashMovement['totalIncome'], 0) }}</td></tr>
+        <tr class="section-band"><td></td><td colspan="4">TOTAL COLLECTIONS</td><td class="text-end">{{ $cashMovement['totalOutstanding'] > 0 ? number_format($cashMovement['totalOutstanding'], 0) : '-' }}</td><td></td></tr>
+        <tr class="section-band"><td></td><td colspan="4">TOTAL INCOME COLLECTIONS</td><td class="text-end">{{ number_format($cashMovement['totalIncome'], 0) }}</td><td></td></tr>
     </tbody>
 </table>
 @else
 <table class="table table-hover"><thead><tr>
-@if($type === 'payments')<th>Receipt</th><th>Guest</th><th>Method</th><th>Amount</th><th>Date</th>@endif
-@if($type === 'bookings')<th>Booking</th><th>Guest</th><th>Room</th><th>Status</th><th>Total</th><th>Balance</th>@endif
-@if($type === 'rooms')<th>Room</th><th>Type</th><th>Status</th><th>Price</th>@endif
-@if($type === 'guests')<th>Name</th><th>Phone</th><th>Email</th><th>Bookings</th>@endif
-@if($type === 'orders')<th>Order</th><th>Customer</th><th>Status</th><th>Total</th><th>Payment</th>@endif
-@if($type === 'movements')<th>Date</th><th>Item</th><th>Type</th><th>Quantity</th><th>Before</th><th>After</th><th>Unit Price</th>@endif
-@if($type === 'purchases')<th>Date</th><th>Item</th><th>Quantity</th><th>Unit Cost</th><th>Total Cost</th><th>Supplier</th>@endif
-@if($type === 'food_sales')<th>Date</th><th>Item</th><th>Category</th><th>Quantity Sold</th><th>Unit Price</th><th>Total Sales</th>@endif
+@if($type === 'payments')<th>Receipt</th><th>Guest</th><th>Method</th><th>Amount</th><th>Date</th><th>Received by</th>@endif
+@if($type === 'bookings')<th>Booking</th><th>Guest</th><th>Room</th><th>Status</th><th>Total</th><th>Balance</th><th>Last action by</th>@endif
+@if($type === 'rooms')<th>Room</th><th>Type</th><th>Status</th><th>Price</th><th>Last action by</th>@endif
+@if($type === 'guests')<th>Name</th><th>Phone</th><th>Email</th><th>Bookings</th><th>Last action by</th>@endif
+@if($type === 'orders')<th>Order</th><th>Customer</th><th>Status</th><th>Total</th><th>Payment</th><th>Last action by</th>@endif
+@if($type === 'movements')<th>Date</th><th>Item</th><th>Type</th><th>Quantity</th><th>Before</th><th>After</th><th>Unit Price</th><th>Last action by</th>@endif
+@if($type === 'purchases')<th>Date</th><th>Item</th><th>Quantity</th><th>Unit Cost</th><th>Total Cost</th><th>Supplier</th><th>Last action by</th>@endif
+@if($type === 'food_sales')<th>Date</th><th>Item</th><th>Category</th><th>Quantity Sold</th><th>Unit Price</th><th>Total Sales</th><th>Last action by</th>@endif
 </tr></thead><tbody>
 @foreach($rows as $row)<tr>
-@if($type === 'payments')<td>{{ $row->payment_number }}</td><td>{{ $row->guest?->full_name }}</td><td>{{ $row->payment_method }}</td><td>{{ number_format($row->amount, 2) }}</td><td>{{ $row->paid_at?->format('Y-m-d') }}</td>@endif
-@if($type === 'bookings')<td>{{ $row->booking_number }}</td><td>{{ $row->guest?->full_name }}</td><td>{{ $row->room?->room_number }}</td><td>{{ $row->status }}</td><td>{{ number_format($row->room_total, 2) }}</td><td>{{ number_format($row->balance_amount, 2) }}</td>@endif
-@if($type === 'rooms')<td>{{ $row->room_number }}</td><td>{{ $row->room_type }}</td><td>{{ $row->status }}</td><td>{{ number_format($row->price_per_night, 2) }}</td>@endif
-@if($type === 'guests')<td>{{ $row->full_name }}</td><td>{{ $row->phone_number }}</td><td>{{ $row->email }}</td><td>{{ $row->bookings_count }}</td>@endif
-@if($type === 'orders')<td>{{ $row->order_number }}</td><td>{{ $row->guest?->full_name ?? $row->walk_in_customer_name }}</td><td>{{ $row->status }}</td><td>{{ number_format($row->subtotal, 2) }}</td><td>{{ $row->payment_status }}</td>@endif
-@if($type === 'movements')<td>{{ $row->movement_date?->format('Y-m-d') }}</td><td>{{ $row->menuItem?->name }}</td><td>{{ ucfirst($row->type) }}</td><td>{{ $row->quantity }}</td><td>{{ $row->stock_before }}</td><td>{{ $row->stock_after }}</td><td>{{ $row->unit_price !== null ? number_format($row->unit_price, 2) : '-' }}</td>@endif
-@if($type === 'purchases')<td>{{ $row->purchased_at?->format('Y-m-d') }}</td><td>{{ $row->menuItem?->name }}</td><td>{{ $row->quantity }}</td><td>{{ number_format($row->unit_cost, 2) }}</td><td>{{ number_format($row->total_cost, 2) }}</td><td>{{ $row->supplier ?: '-' }}</td>@endif
-@if($type === 'food_sales')<td>{{ $row->movement_date?->format('Y-m-d') }}</td><td>{{ $row->menuItem?->name }}</td><td>{{ $row->menuItem?->category }}</td><td>{{ $row->quantity }}</td><td>{{ number_format($row->unit_price, 2) }}</td><td>{{ number_format($row->quantity * $row->unit_price, 2) }}</td>@endif
+@if($type === 'payments')<td>{{ $row->payment_number }}</td><td>{{ $row->guest?->full_name }}</td><td>{{ $row->payment_method }}</td><td>{{ number_format($row->amount, 2) }}</td><td>{{ $row->paid_at?->format('Y-m-d') }}</td><td>{{ $row->performedBy?->name ?? 'Not recorded' }}</td>@endif
+@if($type === 'bookings')<td>{{ $row->booking_number }}</td><td>{{ $row->guest?->full_name }}</td><td>{{ $row->room?->room_number }}</td><td>{{ $row->status }}</td><td>{{ number_format($row->room_total, 2) }}</td><td>{{ number_format($row->balance_amount, 2) }}</td><td>{{ $row->performedBy?->name ?? 'Not recorded' }}</td>@endif
+@if($type === 'rooms')<td>{{ $row->room_number }}</td><td>{{ $row->room_type }}</td><td>{{ $row->status }}</td><td>{{ number_format($row->price_per_night, 2) }}</td><td>{{ $row->performedBy?->name ?? 'Not recorded' }}</td>@endif
+@if($type === 'guests')<td>{{ $row->full_name }}</td><td>{{ $row->phone_number }}</td><td>{{ $row->email }}</td><td>{{ $row->bookings_count }}</td><td>{{ $row->performedBy?->name ?? 'Not recorded' }}</td>@endif
+@if($type === 'orders')<td>{{ $row->order_number }}</td><td>{{ $row->guest?->full_name ?? $row->walk_in_customer_name }}</td><td>{{ $row->status }}</td><td>{{ number_format($row->subtotal, 2) }}</td><td>{{ $row->payment_status }}</td><td>{{ $row->performedBy?->name ?? 'Not recorded' }}</td>@endif
+@if($type === 'movements')<td>{{ $row->movement_date?->format('Y-m-d') }}</td><td>{{ $row->menuItem?->name }}</td><td>{{ ucfirst($row->type) }}</td><td>{{ $row->quantity }}</td><td>{{ $row->stock_before }}</td><td>{{ $row->stock_after }}</td><td>{{ $row->unit_price !== null ? number_format($row->unit_price, 2) : '-' }}</td><td>{{ $row->performedBy?->name ?? 'Not recorded' }}</td>@endif
+@if($type === 'purchases')<td>{{ $row->purchased_at?->format('Y-m-d') }}</td><td>{{ $row->menuItem?->name }}</td><td>{{ $row->quantity }}</td><td>{{ number_format($row->unit_cost, 2) }}</td><td>{{ number_format($row->total_cost, 2) }}</td><td>{{ $row->supplier ?: '-' }}</td><td>{{ $row->performedBy?->name ?? 'Not recorded' }}</td>@endif
+@if($type === 'food_sales')<td>{{ $row->movement_date?->format('Y-m-d') }}</td><td>{{ $row->menuItem?->name }}</td><td>{{ $row->menuItem?->category }}</td><td>{{ $row->quantity }}</td><td>{{ number_format($row->unit_price, 2) }}</td><td>{{ number_format($row->quantity * $row->unit_price, 2) }}</td><td>{{ $row->performedBy?->name ?? 'Not recorded' }}</td>@endif
 </tr>@endforeach
 </tbody>
 @if(isset($moneyTotals[$type]))
 <tfoot>
 <tr class="fw-bold">
-@if($type === 'payments')<td colspan="3">Total</td><td>{{ number_format($moneyTotals[$type]['amount'], 2) }}</td><td></td>@endif
-@if($type === 'bookings')<td colspan="4">Total</td><td>{{ number_format($moneyTotals[$type]['room_total'], 2) }}</td><td>{{ number_format($moneyTotals[$type]['balance_amount'], 2) }}</td>@endif
-@if($type === 'rooms')<td colspan="3">Total</td><td>{{ number_format($moneyTotals[$type]['price_per_night'], 2) }}</td>@endif
-@if($type === 'orders')<td colspan="3">Total</td><td>{{ number_format($moneyTotals[$type]['subtotal'], 2) }}</td><td></td>@endif
+@if($type === 'payments')<td colspan="3">Total</td><td>{{ number_format($moneyTotals[$type]['amount'], 2) }}</td><td></td><td></td>@endif
+@if($type === 'bookings')<td colspan="4">Total</td><td>{{ number_format($moneyTotals[$type]['room_total'], 2) }}</td><td>{{ number_format($moneyTotals[$type]['balance_amount'], 2) }}</td><td></td>@endif
+@if($type === 'rooms')<td colspan="3">Total</td><td>{{ number_format($moneyTotals[$type]['price_per_night'], 2) }}</td><td></td>@endif
+@if($type === 'orders')<td colspan="3">Total</td><td>{{ number_format($moneyTotals[$type]['subtotal'], 2) }}</td><td></td><td></td>@endif
 </tr>
 </tfoot>
 @endif

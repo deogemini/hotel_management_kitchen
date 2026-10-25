@@ -82,6 +82,7 @@
                             <th>Mode</th>
                             <th>Hali</th>
                             <th>Tarehe</th>
+                            <th>Last action by</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -95,6 +96,7 @@
                                 <td>{{ $row->mode_ya_malipo ?? '-' }}</td>
                                 <td>{{ $row->hali_ya_malipo ?? '-' }}</td>
                                 <td data-sort="{{ optional($row->paid_at)?->timestamp }}">{{ optional($row->paid_at)?->format('Y-m-d') }}</td>
+                                @include('partials.performed_by_cell', ['record' => $row])
                                 <td>
                                     <a href="{{ route('shukranis.edit', $row->id) }}" class="btn btn-sm btn-info">Hariri</a>
                                     <form action="{{ route('shukranis.destroy', $row->id) }}" method="POST" class="d-inline">

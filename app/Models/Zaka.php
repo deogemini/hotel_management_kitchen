@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\TracksPerformer;
 use App\Jobs\SendZakaSmsJob;
 use Illuminate\Database\Eloquent\Model;
 
 class Zaka extends Model
 {
+    use TracksPerformer;
+
     protected static function booted()
     {
         static::created(function (Zaka $zaka) {

@@ -9,7 +9,7 @@ class KitchenOrderController extends Controller
 {
     public function index()
     {
-        $restaurantOrders = RestaurantOrder::with('items.menuItem', 'room')
+        $restaurantOrders = RestaurantOrder::with('items.menuItem', 'room', 'performedBy')
             // Drink-only orders are handled at the bar and should not appear in the kitchen queue.
             ->whereHas('items.menuItem', fn ($query) => $query->where('category', 'Food'))
             ->whereIn('status', ['Pending', 'Preparing', 'Ready'])

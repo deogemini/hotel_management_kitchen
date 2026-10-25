@@ -5,6 +5,7 @@
     <p><strong>Type:</strong> {{ $room->room_type }}</p>
     <p><strong>Price:</strong> {{ number_format($room->price_per_night, 2) }}</p>
     <p><strong>Status:</strong> {{ $room->status }}</p>
+    <p><strong>Last action by:</strong> {{ $room->performedBy?->name ?? 'Not recorded' }}</p>
     <p><strong>Features:</strong> {{ implode(', ', $room->features ?? []) }}</p>
     <p>{{ $room->description }}</p>
     <a href="{{ route('rooms.edit', $room) }}" class="btn btn-primary">Edit</a>

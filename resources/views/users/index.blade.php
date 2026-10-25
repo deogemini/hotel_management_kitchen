@@ -28,6 +28,7 @@
                             <th>Lodge</th>
                             <th>Role</th>
                             <th>Login Lock</th>
+                            <th>Last action by</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -49,6 +50,7 @@
                                     <span class="badge bg-success">Normal</span>
                                 @endif
                             </td>
+                            @include('partials.performed_by_cell', ['record' => $u])
                             <td>
                                 <a href="{{ route('users.edit', $u->id) }}" class="btn btn-sm btn-info">Hariri</a>
                                 @if(($u->account_locked_until && $u->account_locked_until->isFuture()) || $u->failed_login_attempts > 0)

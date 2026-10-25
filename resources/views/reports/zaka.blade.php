@@ -80,6 +80,7 @@
                             <th>Jumuiya</th>
                             <th>Amount (TZS)</th>
                             <th>Receipt No.</th>
+                            <th>Last action by</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -90,10 +91,11 @@
                             <td>{{ $zaka->mwanajumuiya->jumuiya->jina_la_jumuiya }}</td>
                             <td>{{ number_format($zaka->kiasi) }}</td>
                             <td>{{ $zaka->risiti_namba ?? '-' }}</td>
+                            <td>{{ $zaka->performedBy?->name ?? 'Not recorded' }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center">No records found.</td>
+                            <td colspan="6" class="text-center">No records found.</td>
                         </tr>
                         @endforelse
                     </tbody>

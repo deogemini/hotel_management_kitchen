@@ -15,7 +15,7 @@ class BookingController extends Controller
 {
     public function index(Request $request)
     {
-        $bookings = Booking::with('guest', 'room')
+        $bookings = Booking::with('guest', 'room', 'performedBy')
             ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->when($this->canSeeAllLodges() && $request->lodge_id, fn ($query, $lodgeId) => $query->where('lodge_id', $lodgeId))
             ->when($request->status, fn ($query, $status) => $query->where('status', $status))
@@ -81,7 +81,7 @@ class BookingController extends Controller
 
     public function show(Booking $booking)
     {
-        $booking->load('guest', 'room', 'payments', 'restaurantOrders.items.menuItem', 'invoice.items');
+        $booking->load('guest', 'room', 'performedBy', 'payments.performedBy', 'restaurantOrders.items.menuItem', 'restaurantOrders.performedBy', 'otherCharges.performedBy', 'invoice.items');
 
         return view('bookings.show', compact('booking'));
     }
@@ -150,6 +150,7 @@ class BookingController extends Controller
                 ->update([
                     'status' => 'Refunded',
                     'notes' => 'Refunded after booking cancellation.',
+                    'performed_by' => auth()->id(),
                 ]);
 
             $booking->update([

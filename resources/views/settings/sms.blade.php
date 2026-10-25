@@ -13,6 +13,7 @@
                 <h6 class="card-subtitle text-muted">Configure your SMS gateway credentials and status.</h6>
             </div>
             <div class="card-body">
+                <p class="small text-muted">Last action by: {{ $setting->performedBy?->name ?? 'Not recorded' }}</p>
                 @if(session('success'))
                     <div class="alert alert-success alert-dismissible" role="alert">
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>

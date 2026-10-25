@@ -11,7 +11,7 @@ class RoleController extends Controller
 {
     public function index()
     {
-        $roles = Role::with('permissions')->orderBy('display_name')->get();
+        $roles = Role::with('permissions', 'performedBy')->orderBy('display_name')->get();
         $permissions = Permission::orderBy('module')->orderBy('display_name')->get()->groupBy('module');
 
         return view('roles.index', compact('roles', 'permissions'));
@@ -31,6 +31,8 @@ class RoleController extends Controller
             'description' => $data['description'] ?? null,
         ]);
         $role->permissions()->sync($data['permissions'] ?? []);
+        $role->performed_by = auth()->id();
+        $role->save();
 
         AuditService::log('role.update', $role, [
             'display_name' => $role->display_name,

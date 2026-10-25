@@ -12,15 +12,15 @@
 </div>
 <div class="card"><div class="card-body">
 <div class="row"><div class="col-md-6"><h5>Bill to</h5><p>{{ $invoice->bill_to['name'] ?? $invoice->guest?->full_name }}</p><p>Guest: {{ $invoice->guest?->full_name }}</p></div>
-<div class="col-md-6"><p>Date: {{ $invoice->issued_at?->format('Y-m-d') }} @if($invoice->due_date) | Due: {{ $invoice->due_date->format('Y-m-d') }} @endif</p><p><strong>Status: {{ $invoice->status }}</strong></p></div></div>
+<div class="col-md-6"><p>Date: {{ $invoice->issued_at?->format('Y-m-d') }} @if($invoice->due_date) | Due: {{ $invoice->due_date->format('Y-m-d') }} @endif</p><p><strong>Status: {{ $invoice->status }}</strong></p><p><strong>Last action by:</strong> {{ $invoice->performedBy?->name ?? 'Not recorded' }}</p></div></div>
 <div class="table-responsive"><table class="table"><thead><tr><th>Description</th><th>Quantity</th><th>Price</th><th>Amount</th></tr></thead><tbody>
 @foreach($invoice->items as $item)<tr><td>{{ $item->description }}</td><td>{{ $item->quantity }}</td><td>{{ number_format($item->unit_price, 2) }}</td><td>{{ number_format($item->total_price, 2) }}</td></tr>@endforeach
 </tbody></table></div>
 <p class="text-end"><strong>Total: {{ number_format($invoice->subtotal, 2) }} | Paid: {{ number_format($invoice->paid_amount, 2) }} | Balance: {{ number_format($invoice->balance_amount, 2) }} {{ $invoice->issuer_details['currency'] ?? 'TZS' }}</strong></p>
 @if($invoice->notes)<p style="white-space:pre-line">{{ $invoice->notes }}</p>@endif
 </div></div>
-<div class="card"><div class="card-header"><h5 class="card-title mb-0">Invoice Payments</h5></div><div class="card-body table-responsive"><table class="table"><thead><tr><th>Receipt</th><th>Date</th><th>Method</th><th>Reference</th><th>Amount</th><th></th></tr></thead><tbody>
-@forelse($invoice->payments as $payment)<tr><td>{{ $payment->payment_number }}</td><td>{{ $payment->paid_at?->format('Y-m-d H:i') }}</td><td>{{ $payment->payment_method }}</td><td>{{ $payment->reference_number }}</td><td>{{ number_format($payment->amount, 2) }}</td><td>@if(auth()->user()?->hasPermission('payments.manage'))<a href="{{ route('payments.receipt', $payment) }}" class="btn btn-sm btn-secondary">Receipt</a>@endif</td></tr>
-@empty<tr><td colspan="6">No payments confirmed for this invoice yet.</td></tr>@endforelse
+<div class="card"><div class="card-header"><h5 class="card-title mb-0">Invoice Payments</h5></div><div class="card-body table-responsive"><table class="table"><thead><tr><th>Receipt</th><th>Date</th><th>Method</th><th>Reference</th><th>Amount</th><th>Received by</th><th></th></tr></thead><tbody>
+@forelse($invoice->payments as $payment)<tr><td>{{ $payment->payment_number }}</td><td>{{ $payment->paid_at?->format('Y-m-d H:i') }}</td><td>{{ $payment->payment_method }}</td><td>{{ $payment->reference_number }}</td><td>{{ number_format($payment->amount, 2) }}</td>@include('partials.performed_by_cell', ['record' => $payment])<td>@if(auth()->user()?->hasPermission('payments.manage'))<a href="{{ route('payments.receipt', $payment) }}" class="btn btn-sm btn-secondary">Receipt</a>@endif</td></tr>
+@empty<tr><td colspan="7">No payments confirmed for this invoice yet.</td></tr>@endforelse
 </tbody></table></div></div>
 @endsection

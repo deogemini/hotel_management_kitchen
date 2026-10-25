@@ -64,6 +64,7 @@
                             <th>Namba ya Mzazi</th>
                             <th>Jumuiya</th>
                             <th>Idadi ya Shukrani</th>
+                            <th>Last action by</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -76,6 +77,7 @@
                                 <td>{{ $mtoto->namba_ya_mzazi ?? '-' }}</td>
                                 <td>{{ $mtoto->jumuiya?->jina_la_jumuiya }}</td>
                                 <td><span class="badge bg-success">{{ $mtoto->shukranis_count }}</span></td>
+                                @include('partials.performed_by_cell', ['record' => $mtoto])
                                 <td>
                                     <a href="{{ route('watotos.edit', $mtoto->id) }}" class="btn btn-sm btn-info">Hariri</a>
                                     <a href="{{ route('shukranis.create', ['watoto_id' => $mtoto->id]) }}" class="btn btn-sm btn-primary">Ongeza Shukrani</a>

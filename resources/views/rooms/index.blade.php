@@ -17,7 +17,7 @@
             <div class="col-md-2"><button class="btn btn-secondary">Filter</button></div>
         </form>
         <table class="table table-hover">
-            <thead><tr><th>#</th><th>Lodge</th><th>Room</th><th>Type</th><th>Price</th><th>Status</th><th>Booking Status</th><th>Features</th><th>Actions</th></tr></thead>
+            <thead><tr><th>#</th><th>Lodge</th><th>Room</th><th>Type</th><th>Price</th><th>Status</th><th>Booking Status</th><th>Features</th><th>Last action by</th><th>Actions</th></tr></thead>
             <tbody>
             @foreach($rooms as $room)
                 <tr>
@@ -29,6 +29,7 @@
                     <td><span class="badge bg-secondary">{{ $room->status }}</span></td>
                     <td><span class="badge bg-secondary">{{ $room->bookings->first()?->status ?? 'No Booking' }}</span></td>
                     <td>{{ implode(', ', $room->features ?? []) }}</td>
+                    @include('partials.performed_by_cell', ['record' => $room])
                     <td>
                         <a href="{{ route('rooms.show', $room) }}" class="btn btn-sm btn-secondary">View</a>
                         <a href="{{ route('rooms.edit', $room) }}" class="btn btn-sm btn-info">Edit</a>

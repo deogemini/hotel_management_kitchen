@@ -9,7 +9,10 @@ class InvoiceSettingController extends Controller
 {
     public function edit()
     {
-        return view('settings.invoice', ['details' => InvoiceSetting::details()]);
+        return view('settings.invoice', [
+            'details' => InvoiceSetting::details(),
+            'setting' => InvoiceSetting::find(1),
+        ]);
     }
 
     public function update(Request $request)

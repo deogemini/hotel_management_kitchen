@@ -30,6 +30,7 @@
                             <th>Eneo la Kanda</th>
                             <th>Tarehe ya Kuundwa</th>
                             <th>Jumuiya Count</th>
+                            <th>Last action by</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -41,6 +42,7 @@
                                 <td>{{ $kanda->eneo_la_kanda }}</td>
                                 <td>{{ optional($kanda->created_at)->format('Y-m-d') }}</td>
                                 <td><span class="badge bg-primary">{{ $kanda->jumuiyas_count }}</span></td>
+                                @include('partials.performed_by_cell', ['record' => $kanda])
                                 <td>
                                     <a href="{{ route('jumuiyas.index', ['kanda_id' => $kanda->id]) }}" class="btn btn-sm btn-secondary">Ona Jumuiya</a>
                                     <a href="{{ route('jumuiyas.create', ['kanda_id' => $kanda->id]) }}" class="btn btn-sm btn-primary">Ongeza Jumuiya</a>

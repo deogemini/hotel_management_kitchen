@@ -14,7 +14,7 @@ class JumuiyaController extends Controller
      */
     public function index()
     {
-        $query = Jumuiya::with('kanda')->withCount('wanajumuiya');
+        $query = Jumuiya::with('kanda', 'performedBy')->withCount('wanajumuiya');
         if (request()->filled('kanda_id')) {
             $query->where('kanda_id', request('kanda_id'));
         }

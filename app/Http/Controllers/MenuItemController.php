@@ -14,7 +14,7 @@ class MenuItemController extends Controller
 {
     public function index(Request $request)
     {
-        $menuItems = $this->lodgeQuery(MenuItem::query())
+        $menuItems = $this->lodgeQuery(MenuItem::with('performedBy'))
             ->when($request->filled('category'), fn ($query) => $query->where('category', $request->category))
             ->orderBy('category')->orderBy('name')->get();
 

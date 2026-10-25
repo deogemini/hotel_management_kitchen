@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\TracksPerformer;
 use Illuminate\Database\Eloquent\Model;
 
 class Shukrani extends Model
 {
+    use TracksPerformer;
+
     protected $fillable = [
         'watoto_id',
         'kiasi',

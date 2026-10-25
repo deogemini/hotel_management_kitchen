@@ -5,7 +5,7 @@ use App\Models\Lodge;
 use Illuminate\Http\Request;
 class ExpenseController extends Controller {
     public function index() {
-        $expenses = $this->query()->latest('spent_at')->get();
+        $expenses = $this->query()->with('performedBy')->latest('spent_at')->get();
         $totalExpenses = $expenses->sum('amount');
         return view('expenses.index', compact('expenses', 'totalExpenses'));
     }

@@ -20,7 +20,7 @@ class MwanajumuiyaController extends Controller
     {
         $q = request('q');
         $jumuiyaId = request('jumuiya_id');
-        $wanajumuiya = Mwanajumuiya::with('jumuiya')
+        $wanajumuiya = Mwanajumuiya::with('jumuiya', 'performedBy')
             ->withCount('zakas')
             ->when($jumuiyaId, function ($query) use ($jumuiyaId) {
                 $query->where('jumuiya_id', $jumuiyaId);

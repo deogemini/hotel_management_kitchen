@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\TracksPerformer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Room extends Model
 {
+    use TracksPerformer;
+
     public const TYPES = ['Single', 'Executive', 'Deluxe', 'Suite'];
     public const STATUSES = ['Available', 'Occupied', 'Reserved', 'Maintenance'];
     public const FEATURES = ['AC', 'TV', 'WiFi', 'Hot shower', 'Fridge', 'Balcony', 'Feni', 'Kabati', 'Kiti', 'Kiti na Meza'];

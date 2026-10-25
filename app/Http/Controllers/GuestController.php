@@ -11,7 +11,7 @@ class GuestController extends Controller
 {
     public function index()
     {
-        $guests = Guest::withCount('bookings')
+        $guests = Guest::with('performedBy')->withCount('bookings')
             ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->latest()
             ->get();
@@ -38,11 +38,12 @@ class GuestController extends Controller
     public function show(Guest $guest)
     {
         $guest->load([
-            'bookings.room',
-            'restaurantOrders.items.menuItem',
-            'otherCharges.booking.room',
-            'payments',
-            'invoices',
+            'performedBy',
+            'bookings.room', 'bookings.performedBy',
+            'restaurantOrders.items.menuItem', 'restaurantOrders.performedBy',
+            'otherCharges.booking.room', 'otherCharges.performedBy',
+            'payments.performedBy',
+            'invoices.performedBy',
         ]);
 
         return view('guests.show', compact('guest'));

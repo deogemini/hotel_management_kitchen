@@ -95,6 +95,7 @@
                             <th>Hali ya Malipo</th>
                             <th>SMS</th>
                             <th>Muda wa Malipo</th>
+                            <th>Last action by</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -124,6 +125,7 @@
                                     @endif
                                 </td>
                                 <td data-sort="{{ optional($zaka->paid_at)->timestamp }}">{{ optional($zaka->paid_at)->format('Y-m-d H:i') }}</td>
+                                @include('partials.performed_by_cell', ['record' => $zaka])
                                 <td>
                                     <a href="{{ route('zakas.edit', $zaka->id) }}" class="btn btn-sm btn-info">Hariri</a>
                                     @if(auth()->user()->role === 'admin')

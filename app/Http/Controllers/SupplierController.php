@@ -11,7 +11,7 @@ class SupplierController extends Controller
 {
     public function index()
     {
-        $suppliers = $this->lodgeQuery(Supplier::query())->orderBy('name')->get();
+        $suppliers = $this->lodgeQuery(Supplier::with('performedBy'))->orderBy('name')->get();
         return view('suppliers.index', compact('suppliers'));
     }
 

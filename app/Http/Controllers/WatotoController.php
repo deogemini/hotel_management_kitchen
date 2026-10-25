@@ -14,7 +14,7 @@ class WatotoController extends Controller
      */
     public function index()
     {
-        $watotos = Watoto::with('jumuiya')->withCount('shukranis')->orderBy('jina_la_mtoto')->get();
+        $watotos = Watoto::with('jumuiya', 'performedBy')->withCount('shukranis')->orderBy('jina_la_mtoto')->get();
         return view('watotos.index', compact('watotos'));
     }
 

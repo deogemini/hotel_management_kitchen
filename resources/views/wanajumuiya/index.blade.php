@@ -87,6 +87,7 @@
                             <th>Namba ya Simu</th>
                             <th>Jumuiya</th>
                             <th>Zaka Count</th>
+                            <th>Last action by</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -99,6 +100,7 @@
                                 <td>{{ $mwana->namba_ya_simu }}</td>
                                 <td>{{ $mwana->jumuiya->jina_la_jumuiya }}</td>
                                 <td><a href="{{ route('zakas.index', ['mwanajumuiya_id' => $mwana->id]) }}"><span class="badge bg-primary">{{ $mwana->zakas_count }}</span></a></td>
+                                @include('partials.performed_by_cell', ['record' => $mwana])
                                 <td>
                                     <a href="{{ route('mwanajumuiya.edit', $mwana->id) }}" class="btn btn-sm btn-info">Hariri</a>
                                     <a href="{{ route('zakas.index', ['mwanajumuiya_id' => $mwana->id]) }}" class="btn btn-sm btn-success">Angalia Zaka</a>

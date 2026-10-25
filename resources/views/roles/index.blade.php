@@ -9,6 +9,7 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">{{ $role->display_name }}</h5>
+                <small class="text-muted">Last action by: {{ $role->performedBy?->name ?? 'Not recorded' }}</small>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ route('roles.update', $role) }}">

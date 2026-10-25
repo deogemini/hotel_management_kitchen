@@ -76,12 +76,12 @@
             </div>
             <div class="card-body">
                 <table class="table table-sm">
-                    <thead><tr><th>Guest</th><th>Room</th><th>Status</th></tr></thead>
+                    <thead><tr><th>Guest</th><th>Room</th><th>Status</th><th>Last action by</th></tr></thead>
                     <tbody>
                     @forelse($todayCheckIns as $booking)
-                        <tr><td>{{ $booking->guest->full_name }}</td><td>{{ $booking->room?->room_number }}</td><td>{{ $booking->status }}</td></tr>
+                        <tr><td>{{ $booking->guest->full_name }}</td><td>{{ $booking->room?->room_number }}</td><td>{{ $booking->status }}</td>@include('partials.performed_by_cell', ['record' => $booking])</tr>
                     @empty
-                        <tr><td colspan="3" class="text-muted">No check-ins today.</td></tr>
+                        <tr><td colspan="4" class="text-muted">No check-ins today.</td></tr>
                     @endforelse
                     </tbody>
                 </table>
@@ -96,12 +96,12 @@
             </div>
             <div class="card-body">
                 <table class="table table-sm">
-                    <thead><tr><th>Order</th><th>Room</th><th>Status</th></tr></thead>
+                    <thead><tr><th>Order</th><th>Room</th><th>Status</th><th>Last action by</th></tr></thead>
                     <tbody>
                     @forelse($pendingKitchenOrders as $order)
-                        <tr><td>{{ $order->order_number }}</td><td>{{ $order->room?->room_number ?? 'Walk-in' }}</td><td>{{ $order->status }}</td></tr>
+                        <tr><td>{{ $order->order_number }}</td><td>{{ $order->room?->room_number ?? 'Walk-in' }}</td><td>{{ $order->status }}</td>@include('partials.performed_by_cell', ['record' => $order])</tr>
                     @empty
-                        <tr><td colspan="3" class="text-muted">No pending kitchen orders.</td></tr>
+                        <tr><td colspan="4" class="text-muted">No pending kitchen orders.</td></tr>
                     @endforelse
                     </tbody>
                 </table>
@@ -119,12 +119,12 @@
             </div>
             <div class="card-body">
                 <table class="table table-sm">
-                    <thead><tr><th>Guest</th><th>Room</th><th>Balance</th></tr></thead>
+                    <thead><tr><th>Guest</th><th>Room</th><th>Balance</th><th>Last action by</th></tr></thead>
                     <tbody>
                     @forelse($todayCheckOuts as $booking)
-                        <tr><td>{{ $booking->guest->full_name }}</td><td>{{ $booking->room?->room_number }}</td><td>{{ number_format($booking->balance_amount, 2) }}</td></tr>
+                        <tr><td>{{ $booking->guest->full_name }}</td><td>{{ $booking->room?->room_number }}</td><td>{{ number_format($booking->balance_amount, 2) }}</td>@include('partials.performed_by_cell', ['record' => $booking])</tr>
                     @empty
-                        <tr><td colspan="3" class="text-muted">No check-outs today.</td></tr>
+                        <tr><td colspan="4" class="text-muted">No check-outs today.</td></tr>
                     @endforelse
                     </tbody>
                 </table>
@@ -139,12 +139,12 @@
             </div>
             <div class="card-body">
                 <table class="table table-sm">
-                    <thead><tr><th>Receipt</th><th>Guest</th><th>Amount</th></tr></thead>
+                    <thead><tr><th>Receipt</th><th>Guest</th><th>Amount</th><th>Last action by</th></tr></thead>
                     <tbody>
                     @forelse($recentPayments as $payment)
-                        <tr><td>{{ $payment->payment_number }}</td><td>{{ $payment->guest?->full_name ?? '-' }}</td><td>{{ number_format($payment->amount, 2) }}</td></tr>
+                        <tr><td>{{ $payment->payment_number }}</td><td>{{ $payment->guest?->full_name ?? '-' }}</td><td>{{ number_format($payment->amount, 2) }}</td>@include('partials.performed_by_cell', ['record' => $payment])</tr>
                     @empty
-                        <tr><td colspan="3" class="text-muted">No payments recorded.</td></tr>
+                        <tr><td colspan="4" class="text-muted">No payments recorded.</td></tr>
                     @endforelse
                     </tbody>
                 </table>

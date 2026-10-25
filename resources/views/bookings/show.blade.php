@@ -2,7 +2,7 @@
 @section('content')
 <h1 class="h3 mb-3">{{ $booking->booking_number }}</h1>
 <div class="card"><div class="card-body">
-<div class="row"><div class="col-md-6"><p><strong>Guest:</strong> {{ $booking->guest->full_name }}</p><p><strong>Room:</strong> {{ $booking->room?->room_number }} {{ $booking->room_type }}</p><p><strong>Dates:</strong> {{ $booking->check_in_date?->format('Y-m-d') }} to {{ $booking->check_out_date?->format('Y-m-d') }}</p></div><div class="col-md-6"><p><strong>Status:</strong> {{ $booking->status }}</p><p><strong>Total:</strong> {{ number_format($booking->room_total, 2) }}</p><p><strong>Balance:</strong> {{ number_format($booking->balance_amount, 2) }}</p></div></div>
+<div class="row"><div class="col-md-6"><p><strong>Guest:</strong> {{ $booking->guest->full_name }}</p><p><strong>Room:</strong> {{ $booking->room?->room_number }} {{ $booking->room_type }}</p><p><strong>Dates:</strong> {{ $booking->check_in_date?->format('Y-m-d') }} to {{ $booking->check_out_date?->format('Y-m-d') }}</p></div><div class="col-md-6"><p><strong>Status:</strong> {{ $booking->status }}</p><p><strong>Total:</strong> {{ number_format($booking->room_total, 2) }}</p><p><strong>Balance:</strong> {{ number_format($booking->balance_amount, 2) }}</p><p><strong>Last action by:</strong> {{ $booking->performedBy?->name ?? 'Not recorded' }}</p></div></div>
 <div class="d-flex gap-2">
     @if(auth()->user()?->hasPermission('checkin.manage') || auth()->user()?->hasPermission('bookings.manage'))
         @if(in_array($booking->status, ['Pending', 'Confirmed'], true) && ! $booking->check_in_date?->isFuture())<form method="POST" action="{{ route('bookings.check-in', $booking) }}">@csrf<button class="btn btn-success">Check In</button></form>@endif

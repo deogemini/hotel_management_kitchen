@@ -19,12 +19,12 @@
     <h1>{{ $drinksOnly ? 'Drinks Stock' : 'Restaurant Item Stock' }}</h1>
     <div class="muted">Generated on {{ now()->format('Y-m-d H:i') }}</div>
     <table>
-        <thead><tr><th>#</th><th>Item</th><th>Category</th><th>Current Stock</th><th>Low Alert</th><th>Status</th></tr></thead>
+        <thead><tr><th>#</th><th>Item</th><th>Category</th><th>Current Stock</th><th>Low Alert</th><th>Status</th><th>Last stock action by</th></tr></thead>
         <tbody>
         @forelse($menuItems as $item)
-            <tr><td>{{ $loop->iteration }}</td><td>{{ $item->name }}</td><td>{{ $item->category }}</td><td>{{ $item->stock_quantity }}</td><td>{{ $item->low_stock_quantity }}</td><td>{{ $item->stock_quantity <= 0 ? 'Out of stock' : ($item->stock_quantity <= $item->low_stock_quantity ? 'Low stock' : 'In stock') }}</td></tr>
+            <tr><td>{{ $loop->iteration }}</td><td>{{ $item->name }}</td><td>{{ $item->category }}</td><td>{{ $item->stock_quantity }}</td><td>{{ $item->low_stock_quantity }}</td><td>{{ $item->stock_quantity <= 0 ? 'Out of stock' : ($item->stock_quantity <= $item->low_stock_quantity ? 'Low stock' : 'In stock') }}</td><td>{{ $item->latestStockMovement?->performedBy?->name ?? $item->performedBy?->name ?? 'Not recorded' }}</td></tr>
         @empty
-            <tr><td colspan="6">No menu items found.</td></tr>
+            <tr><td colspan="7">No menu items found.</td></tr>
         @endforelse
         </tbody>
     </table>

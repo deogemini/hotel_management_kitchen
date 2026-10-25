@@ -28,7 +28,7 @@ class ReportController extends Controller
         $total = 0;
 
         if ($mwanajumuiyaId) {
-            $query = Zaka::with('mwanajumuiya.jumuiya')
+            $query = Zaka::with('mwanajumuiya.jumuiya', 'performedBy')
                 ->where('mwanajumuiya_id', $mwanajumuiyaId);
 
             if ($startDate && $endDate) {
@@ -58,7 +58,7 @@ class ReportController extends Controller
         $endDate = $request->input('end_date');
         $jumuiyaId = $request->input('jumuiya_id');
 
-        $query = Zaka::with('mwanajumuiya.jumuiya');
+        $query = Zaka::with('mwanajumuiya.jumuiya', 'performedBy');
 
         if ($jumuiyaId) {
             $query->whereHas('mwanajumuiya', function ($q) use ($jumuiyaId) {

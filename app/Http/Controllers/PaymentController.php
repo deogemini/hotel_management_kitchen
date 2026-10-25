@@ -15,13 +15,13 @@ class PaymentController extends Controller
     public function index(Request $request)
     {
         $roomPaymentsOnly = in_array($request->query('type'), ['room', 'booking'], true);
-        $payments = Payment::with('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice', 'payable')
+        $payments = Payment::with('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice', 'payable', 'performedBy')
             ->when($roomPaymentsOnly, fn ($query) => $query->forRoomCollection())
             ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->latest('paid_at')
             ->get();
 
-        $invoices = $roomPaymentsOnly ? collect() : $this->lodgeQuery(Invoice::with('guest'))->latest('id')->get();
+        $invoices = $roomPaymentsOnly ? collect() : $this->lodgeQuery(Invoice::with('guest', 'performedBy'))->latest('id')->get();
 
         return view('payments.index', compact('payments', 'invoices', 'roomPaymentsOnly'));
     }
@@ -110,7 +110,7 @@ class PaymentController extends Controller
 
     public function receipt(Payment $payment)
     {
-        $payment->load('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice', 'payable');
+        $payment->load('guest', 'booking.room', 'restaurantOrder.guest', 'restaurantOrder.room', 'invoice', 'payable', 'performedBy');
 
         return view('payments.receipt', compact('payment'));
     }

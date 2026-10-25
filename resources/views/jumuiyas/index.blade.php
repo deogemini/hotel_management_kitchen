@@ -79,6 +79,7 @@
                             <th>Jina la Jumuiya</th>
                             <th>Kanda</th>
                             <th>Wanajumuiya Count</th>
+                            <th>Last action by</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -89,6 +90,7 @@
                                 <td>{{ $jumuiya->jina_la_jumuiya }}</td>
                                 <td>{{ $jumuiya->kanda->jina_la_kanda }}</td>
                                 <td><span class="badge bg-primary">{{ $jumuiya->wanajumuiya_count }}</span></td>
+                                @include('partials.performed_by_cell', ['record' => $jumuiya])
                                 <td>
                                     <a href="{{ route('jumuiyas.edit', $jumuiya->id) }}" class="btn btn-sm btn-info">Hariri</a>
                                     <a href="{{ route('mwanajumuiya.create', ['jumuiya_id' => $jumuiya->id]) }}" class="btn btn-sm btn-primary">Ongeza Mwanajumuiya</a>

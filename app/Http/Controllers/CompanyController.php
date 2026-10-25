@@ -9,7 +9,7 @@ class CompanyController extends Controller
 {
     public function index()
     {
-        $companies = Company::visibleTo(auth()->user())->orderBy('name')->get();
+        $companies = Company::visibleTo(auth()->user())->with('performedBy')->orderBy('name')->get();
 
         return view('companies.index', compact('companies'));
     }

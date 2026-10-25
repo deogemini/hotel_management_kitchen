@@ -18,7 +18,7 @@ class RestaurantOrderController extends Controller
 {
     public function index(Request $request)
     {
-        $restaurantOrders = RestaurantOrder::with('guest', 'room', 'items.menuItem', 'createdBy')
+        $restaurantOrders = RestaurantOrder::with('guest', 'room', 'items.menuItem', 'performedBy')
             ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->when($request->status, fn ($query, $status) => $query->where('status', $status))
             ->latest()
@@ -173,7 +173,7 @@ class RestaurantOrderController extends Controller
 
     public function show(RestaurantOrder $restaurantOrder)
     {
-        $restaurantOrder->load('guest', 'booking.room', 'items.menuItem');
+        $restaurantOrder->load('guest', 'booking.room', 'items.menuItem', 'performedBy');
 
         return view('restaurant_orders.show', compact('restaurantOrder'));
     }

@@ -19,7 +19,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::with('roleRecord', 'lodge')->orderBy('name')->get();
+        $users = User::with('roleRecord', 'lodge', 'performedBy')->orderBy('name')->get();
         return view('users.index', compact('users'));
     }
 

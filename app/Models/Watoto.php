@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\TracksPerformer;
 use Illuminate\Database\Eloquent\Model;
 
 class Watoto extends Model
 {
+    use TracksPerformer;
+
     protected $fillable = [
         'jumuiya_id',
         'jina_la_mtoto',

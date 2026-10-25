@@ -2,6 +2,7 @@
 @section('content')
 <h1 class="h3 mb-3">Invoice Settings</h1>
 <p>These details appear on new invoices. Saved invoices retain their original details.</p>
+<p class="small text-muted">Last action by: {{ $setting?->performedBy?->name ?? 'Not recorded' }}</p>
 <div class="card"><div class="card-body"><form method="POST" enctype="multipart/form-data" action="{{ route('settings.invoice.update') }}">@csrf @method('PUT')
 <h4>Hotel logo</h4>
 @if($logoUrl = \App\Models\InvoiceSetting::logoUrl($details['logo_path'] ?? null))

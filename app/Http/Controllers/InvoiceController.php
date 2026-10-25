@@ -94,7 +94,7 @@ class InvoiceController extends Controller
     public function show(Invoice $invoice)
     {
         $this->authorizeLodge($invoice);
-        $invoice->load('guest', 'items', 'payments');
+        $invoice->load('guest', 'items', 'payments.performedBy', 'performedBy');
 
         return view('invoices.show', compact('invoice'));
     }

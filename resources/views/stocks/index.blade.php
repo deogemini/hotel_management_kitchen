@@ -48,6 +48,7 @@
                     <th>Low Alert</th>
                     <th>Status</th>
                     <th>Purchase Status</th>
+                    <th>Last stock action by</th>
                 </tr>
             </thead>
             <tbody>
@@ -68,10 +69,11 @@
                             @endif
                         </td>
                         <td>@if($item->purchases_exists)<span class="badge bg-info">Purchased</span>@else<span class="badge bg-secondary">Not purchased</span>@endif</td>
+                        <td>{{ $item->latestStockMovement?->performedBy?->name ?? $item->performedBy?->name ?? 'Not recorded' }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td></td><td class="text-muted">No menu items found.</td><td></td><td></td><td></td><td></td><td></td>
+                        <td></td><td class="text-muted">No menu items found.</td><td></td><td></td><td></td><td></td><td></td><td></td>
                     </tr>
                 @endforelse
             </tbody>

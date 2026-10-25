@@ -15,7 +15,7 @@ class ShukraniController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Shukrani::with('mtoto.jumuiya')->orderByDesc('paid_at');
+        $query = Shukrani::with('mtoto.jumuiya', 'performedBy')->orderByDesc('paid_at');
 
         if ($request->filled('jumuiya_id')) {
             $query->whereHas('mtoto', function($q) use ($request) {
