@@ -149,6 +149,104 @@ class HotelReportController extends Controller
         return $this->reportView($request, 'Food & Drinks Sales Report', $rows, 'food_sales', $startDate, $endDate);
     }
 
+    public function drinksSales(Request $request)
+    {
+        [$startDate, $endDate] = $this->dateRange($request);
+
+        $drinkPurchases = $this->purchaseRows($request, $startDate, $endDate)
+            ->whereHas('menuItem', fn ($query) => $query->where('category', 'Drinks'))
+            ->get();
+
+        $drinkSales = RestaurantOrderItem::with('menuItem', 'order')
+            ->whereHas('menuItem', fn ($query) => $query->where('category', 'Drinks'))
+            ->whereHas('order', function ($query) use ($request, $startDate, $endDate) {
+                $this->lodgeQuery($query, $request)
+                    ->whereBetween('order_date', [$startDate, $endDate])
+                    ->where('status', '!=', 'Cancelled');
+            })
+            ->get();
+
+        $dailyTotals = [];
+        foreach ($drinkPurchases as $purchase) {
+            $date = $purchase->purchased_at->format('Y-m-d');
+            $dailyTotals[$date] ??= ['date' => $date, 'purchase_cost' => 0, 'sales_total' => 0];
+            $dailyTotals[$date]['purchase_cost'] += (float) $purchase->total_cost;
+        }
+        foreach ($drinkSales as $sale) {
+            $date = $sale->order?->order_date?->format('Y-m-d');
+            if (! $date) {
+                continue;
+            }
+            $dailyTotals[$date] ??= ['date' => $date, 'purchase_cost' => 0, 'sales_total' => 0];
+            $dailyTotals[$date]['sales_total'] += (float) $sale->total_price;
+        }
+        $dailyTotals = collect($dailyTotals)->sortKeys()->values();
+
+        $averagePurchaseCosts = $this->lodgeQuery(Purchase::query(), $request)
+            ->whereDate('purchased_at', '<=', $endDate)
+            ->whereHas('menuItem', fn ($query) => $query->where('category', 'Drinks'))
+            ->selectRaw('menu_item_id, SUM(quantity) as purchased_quantity, SUM(quantity * unit_cost) as purchase_value')
+            ->groupBy('menu_item_id')
+            ->get()
+            ->mapWithKeys(function ($purchase) {
+                $quantity = (int) $purchase->purchased_quantity;
+
+                return [$purchase->menu_item_id => $quantity > 0
+                    ? (float) $purchase->purchase_value / $quantity
+                    : null];
+            });
+
+        $purchasesByItem = $drinkPurchases->groupBy('menu_item_id');
+        $salesByItem = $drinkSales->groupBy('menu_item_id');
+        $itemIds = $purchasesByItem->keys()->merge($salesByItem->keys())->unique();
+        $menuItems = $this->lodgeQuery(MenuItem::query(), $request)
+            ->whereIn('id', $itemIds)
+            ->orderBy('name')
+            ->get()
+            ->keyBy('id');
+
+        $drinkRows = $itemIds->map(function ($itemId) use ($menuItems, $purchasesByItem, $salesByItem, $averagePurchaseCosts) {
+            $item = $menuItems->get($itemId);
+            if (! $item) {
+                return null;
+            }
+
+            $purchases = $purchasesByItem->get($itemId, collect());
+            $sales = $salesByItem->get($itemId, collect());
+            $quantityPurchased = (int) $purchases->sum('quantity');
+            $purchaseCost = (float) $purchases->sum('total_cost');
+            $quantitySold = (int) $sales->sum('quantity');
+            $salesTotal = (float) $sales->sum('total_price');
+            $averageUnitCost = $averagePurchaseCosts->get($itemId);
+            $averageUnitCost = $averageUnitCost === null ? (float) $item->buying_price : (float) $averageUnitCost;
+            $costOfSales = $quantitySold * $averageUnitCost;
+
+            return [
+                'item' => $item,
+                'quantity_purchased' => $quantityPurchased,
+                'purchase_cost' => $purchaseCost,
+                'quantity_sold' => $quantitySold,
+                'sales_total' => $salesTotal,
+                'average_unit_cost' => $averageUnitCost,
+                'cost_of_sales' => $costOfSales,
+                'profit_loss' => $salesTotal - $costOfSales,
+            ];
+        })->filter()->sortBy(fn ($row) => $row['item']->name)->values();
+
+        $totalPurchaseCost = (float) $drinkPurchases->sum('total_cost');
+        $totalSales = (float) $drinkSales->sum('total_price');
+        $totalCostOfSales = (float) $drinkRows->sum('cost_of_sales');
+        $totalProfitLoss = $totalSales - $totalCostOfSales;
+
+        return view('reports.drinks_sales', compact(
+            'startDate', 'endDate', 'dailyTotals', 'drinkRows', 'totalPurchaseCost',
+            'totalSales', 'totalCostOfSales', 'totalProfitLoss'
+        ) + [
+            'lodges' => Lodge::orderBy('name')->get(),
+            'selectedLodgeId' => $request->input('lodge_id'),
+        ]);
+    }
+
     public function accounting(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request);

@@ -64,8 +64,8 @@
                             <td>{{ $booking->room?->room_number }}</td>
                             <td>{{ $booking->check_in_date?->format('Y-m-d') }} to {{ $booking->check_out_date?->format('Y-m-d') }}</td>
                             <td><span class="badge bg-secondary">{{ $booking->status }}</span></td>
-                            <td>{{ number_format($booking->room_total, 2) }}</td>
-                            <td>{{ number_format($booking->balance_amount, 2) }}</td>
+                            <td data-total="{{ $booking->room_total }}">{{ number_format($booking->room_total, 2) }}</td>
+                            <td data-balance="{{ $booking->balance_amount }}">{{ number_format($booking->balance_amount, 2) }}</td>
                             @include('partials.performed_by_cell', ['record' => $booking])
                             <td>
                                 <a class="btn btn-sm btn-secondary" href="{{ route('bookings.show', $booking) }}">View</a>
@@ -83,6 +83,14 @@
                         </tr>
                     @endforeach
                 </tbody>
+                <tfoot>
+                    <tr class="table-light fw-bold">
+                        <td colspan="7" class="text-end">TOTAL</td>
+                        <td id="bookingTotalAmount" class="text-end">0.00</td>
+                        <td id="bookingBalanceTotal" class="text-end">0.00</td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -122,6 +130,24 @@
             selectPage.indeterminate = selectedOnPage > 0 && selectedOnPage < currentPageCheckboxes.length;
         }
 
+        function updateTotals(api) {
+            let total = 0;
+            let balance = 0;
+
+            $(api.rows({ search: 'applied' }).nodes()).each(function () {
+                total += Number(this.cells[7]?.dataset.total || 0);
+                balance += Number(this.cells[8]?.dataset.balance || 0);
+            });
+
+            const formatAmount = (amount) => amount.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+            $('#bookingTotalAmount').text(formatAmount(total));
+            $('#bookingBalanceTotal').text(formatAmount(balance));
+        }
+
         const bookingsTable = $('#bookingsTable').DataTable({
             pageLength: 10,
             lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
@@ -146,6 +172,7 @@
                     cell.textContent = page.start + index + 1;
                 });
 
+                updateTotals(api);
                 refreshSelectionControls(api);
             }
         });

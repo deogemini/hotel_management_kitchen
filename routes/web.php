@@ -150,6 +150,7 @@ Route::middleware('auth')->group(function () {
         Route::get('reports/purchases/export/excel', [HotelReportController::class, 'purchasesExcel'])->name('reports.purchases.export.excel');
         Route::get('reports/purchases', [HotelReportController::class, 'purchases'])->name('reports.purchases');
         Route::get('reports/food-sales', [HotelReportController::class, 'foodSales'])->name('reports.food-sales');
+        Route::get('reports/drinks-sales', [HotelReportController::class, 'drinksSales'])->name('reports.drinks-sales');
         Route::get('reports/accounting', [HotelReportController::class, 'accounting'])->name('reports.accounting');
         Route::get('reports/payments', [HotelReportController::class, 'payments'])->name('reports.payments');
         Route::get('reports/unpaid-bills', [HotelReportController::class, 'unpaidBills'])->name('reports.unpaid-bills');

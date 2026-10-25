@@ -11,6 +11,7 @@ $reports = [
  ['route'=>'reports.guests','title'=>'Guests','icon'=>'users','description'=>'Review guest records and activity.'],
  ['route'=>'reports.restaurant-sales','title'=>'Restaurant Sales','icon'=>'shopping-bag','description'=>'Analyze restaurant sales and revenue.'],
  ['route'=>'reports.food-sales','title'=>'Food & Drinks Sales','icon'=>'coffee','description'=>'Review food and drinks sales.'],
+ ['route'=>'reports.drinks-sales','title'=>'Drinks Sales & Profit','icon'=>'coffee','description'=>'Compare drink purchases, sales, and profit by date and item.'],
  ['route'=>'reports.purchases','title'=>'Purchases','icon'=>'shopping-cart','description'=>'Review purchases and stock costs.'],
  ['route'=>'reports.stock-movements','title'=>'Stock Movements','icon'=>'repeat','description'=>'Track stock additions and deductions.'],
  ['route'=>'reports.accounting','title'=>'Accounting','icon'=>'bar-chart-2','description'=>'View financial summaries and results.'],
