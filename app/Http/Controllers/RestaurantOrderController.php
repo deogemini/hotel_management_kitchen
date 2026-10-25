@@ -206,11 +206,15 @@ class RestaurantOrderController extends Controller
 
     public function edit(RestaurantOrder $restaurantOrder)
     {
+        abort_unless(auth()->user()?->hasRole('hotel_manager'), 403);
+
         return view('restaurant_orders.edit', compact('restaurantOrder'));
     }
 
     public function update(Request $request, RestaurantOrder $restaurantOrder)
     {
+        abort_unless(auth()->user()?->hasRole('hotel_manager'), 403);
+
         $data = $request->validate([
             'status' => ['required', 'in:'.implode(',', RestaurantOrder::STATUSES)],
             'payment_status' => ['required', 'in:Unpaid,Partial,Paid'],
