@@ -6,6 +6,7 @@
         'bookings' => ['room_total' => $rows->sum('room_total'), 'balance_amount' => $rows->sum('balance_amount')],
         'rooms' => ['price_per_night' => $rows->sum('price_per_night')],
         'orders' => ['subtotal' => $rows->sum('subtotal')],
+        'purchases' => ['total_cost' => $rows->sum('total_cost')],
     ];
 @endphp
 @push('styles')
@@ -124,13 +125,21 @@
         </div>
         @endif
         <div class="col-md-3">
-            <button class="btn btn-primary">Pull Report</button>
-            <a href="{{ url()->current() }}" class="btn btn-secondary">Reset</a>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-primary">Pull Report</button>
+                <a href="{{ url()->current() }}" class="btn btn-secondary">Reset</a>
+                @if($type === 'purchases')
+                    <a href="{{ route('reports.purchases.export.excel', ['start_date' => $startDate, 'end_date' => $endDate, 'lodge_id' => $selectedLodgeId]) }}" class="btn btn-success">Export Excel</a>
+                @endif
+            </div>
         </div>
     </form>
 </div></div>
 <div class="card"><div class="card-body">
 <p class="text-muted report-screen-title">Period: {{ $startDate }} to {{ $endDate }}</p>
+@if($type === 'purchases')
+<div class="alert alert-primary d-inline-flex align-items-center gap-2 mb-3"><strong>Total purchase cost:</strong><span>{{ number_format($totalCost, 2) }}</span></div>
+@endif
 @if($type === 'cash_movement')
 <table class="table cash-movement-table">
     <tbody>
@@ -197,6 +206,7 @@
 @if($type === 'bookings')<td colspan="4">Total</td><td>{{ number_format($moneyTotals[$type]['room_total'], 2) }}</td><td>{{ number_format($moneyTotals[$type]['balance_amount'], 2) }}</td><td></td>@endif
 @if($type === 'rooms')<td colspan="3">Total</td><td>{{ number_format($moneyTotals[$type]['price_per_night'], 2) }}</td><td></td>@endif
 @if($type === 'orders')<td colspan="3">Total</td><td>{{ number_format($moneyTotals[$type]['subtotal'], 2) }}</td><td></td><td></td>@endif
+@if($type === 'purchases')<td colspan="4" class="text-end">Total purchase cost</td><td>{{ number_format($moneyTotals[$type]['total_cost'], 2) }}</td><td colspan="2"></td>@endif
 </tr>
 </tfoot>
 @endif

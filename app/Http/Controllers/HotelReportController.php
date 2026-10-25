@@ -13,8 +13,10 @@ use App\Models\OtherCharge;
 use App\Models\Purchase;
 use App\Models\MenuItem;
 use App\Models\Room;
+use App\Exports\PurchaseReportExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
 
 class HotelReportController extends Controller
 {
@@ -121,9 +123,19 @@ class HotelReportController extends Controller
     public function purchases(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request);
-        $rows = $this->lodgeQuery(Purchase::with('menuItem', 'performedBy'), $request)
-            ->whereBetween('purchased_at', [$startDate, $endDate])->latest('purchased_at')->get();
-        return $this->reportView($request, 'Purchase Report', $rows, 'purchases', $startDate, $endDate);
+        $rows = $this->purchaseRows($request, $startDate, $endDate)->get();
+        $totalCost = $rows->sum('total_cost');
+
+        return $this->reportView($request, 'Purchase Report', $rows, 'purchases', $startDate, $endDate, compact('totalCost'));
+    }
+
+    public function purchasesExcel(Request $request)
+    {
+        [$startDate, $endDate] = $this->dateRange($request);
+        $purchases = $this->purchaseRows($request, $startDate, $endDate)->get();
+        $filename = "purchase-report-{$startDate}-to-{$endDate}.xlsx";
+
+        return Excel::download(new PurchaseReportExport($purchases), $filename);
     }
 
     public function foodSales(Request $request)
@@ -201,6 +213,13 @@ class HotelReportController extends Controller
             'lodges' => Lodge::orderBy('name')->get(),
             'selectedLodgeId' => $request->input('lodge_id'),
         ], $extra));
+    }
+
+    private function purchaseRows(Request $request, string $startDate, string $endDate)
+    {
+        return $this->lodgeQuery(Purchase::with('menuItem', 'performedBy'), $request)
+            ->whereBetween('purchased_at', [$startDate, $endDate])
+            ->latest('purchased_at');
     }
 
     private function cashMovementRows($rooms, $payments, $balances): array
