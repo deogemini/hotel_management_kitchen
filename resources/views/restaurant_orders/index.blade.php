@@ -2,6 +2,12 @@
 @section('content')
 <h1 class="h3 mb-3"><strong>Restaurant</strong> Orders</h1>
 <div class="card"><div class="card-header"><h5 class="card-title mb-0">Orders</h5><a href="{{ route('restaurant-orders.create') }}" class="btn btn-primary float-end mt-n4">New Order</a></div><div class="card-body">
+<form method="GET" action="{{ route('restaurant-orders.index') }}" class="row g-2 align-items-end mb-3">
+    @if(request('status'))<input type="hidden" name="status" value="{{ request('status') }}">@endif
+    <div class="col-md-6"><label for="order-search" class="form-label">Search orders or items</label><input id="order-search" type="search" name="search" value="{{ $search }}" class="form-control" placeholder="Order number, customer, or item name"></div>
+    <div class="col-auto"><button type="submit" class="btn btn-primary">Search</button></div>
+    @if($search !== '')<div class="col-auto"><a href="{{ route('restaurant-orders.index', request()->only('status')) }}" class="btn btn-outline-secondary">Clear</a></div>@endif
+</form>
 @php
     $ordersTotal = $restaurantOrders->sum('subtotal');
     $ordersBalance = $restaurantOrders->sum('balance_amount');

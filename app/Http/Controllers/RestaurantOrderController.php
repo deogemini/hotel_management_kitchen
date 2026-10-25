@@ -18,13 +18,25 @@ class RestaurantOrderController extends Controller
 {
     public function index(Request $request)
     {
+        $search = trim((string) $request->input('search', ''));
         $restaurantOrders = RestaurantOrder::with('guest', 'room', 'items.menuItem', 'performedBy')
             ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->when($request->status, fn ($query, $status) => $query->where('status', $status))
+            ->when($search !== '', function ($query) use ($search) {
+                $like = '%' . $search . '%';
+                $query->where(function ($matches) use ($like) {
+                    $matches->where('order_number', 'like', $like)
+                        ->orWhere('walk_in_customer_name', 'like', $like)
+                        ->orWhere('status', 'like', $like)
+                        ->orWhere('payment_status', 'like', $like)
+                        ->orWhereHas('guest', fn ($guest) => $guest->where('full_name', 'like', $like))
+                        ->orWhereHas('items.menuItem', fn ($item) => $item->where('name', 'like', $like));
+                });
+            })
             ->latest('order_date')->latest()
             ->get();
 
-        return view('restaurant_orders.index', compact('restaurantOrders'));
+        return view('restaurant_orders.index', compact('restaurantOrders', 'search'));
     }
 
     public function create(Request $request)
