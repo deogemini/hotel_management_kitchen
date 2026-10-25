@@ -5,7 +5,7 @@
 @section('content')
 <h1 class="h3 mb-3">Purchase Management</h1>
 <div class="card"><div class="card-body">
-<form method="POST" action="{{ route('purchases.store') }}">@csrf
+<form id="purchase-form" method="POST" action="{{ route('purchases.store') }}">@csrf
     <div class="row">
         <div class="col-md-6 mb-3"><label class="form-label" for="menu_item_id">Existing Stock Item</label><select id="menu_item_id" name="menu_item_id" class="selectpicker" data-live-search="true" data-width="100%" data-size="10" title="Search or select an item" required>@foreach($menuItems as $item)<option value="{{ $item->id }}" data-buying-price="{{ $item->buying_price }}" data-stock="{{ $item->stock_quantity }}" @selected(old('menu_item_id') == $item->id)>{{ $item->name }} — Current stock: {{ $item->stock_quantity }}</option>@endforeach</select></div>
         <div class="col-md-3 mb-3"><label class="form-label">Quantity Purchased</label><input type="number" name="quantity" min="0" class="form-control" value="{{ old('quantity') }}" required></div>
@@ -15,8 +15,14 @@
         <div class="col-md-12 mb-3"><label class="form-label">Notes</label><textarea name="notes" class="form-control" rows="2"></textarea></div>
         <div class="col-md-12 mb-3"><div class="form-check"><input type="hidden" name="affects_stock" value="0"><input type="checkbox" name="affects_stock" value="1" id="affects_stock" class="form-check-input" checked><label class="form-check-label" for="affects_stock">Add quantity to current stock</label></div><small class="text-muted">Uncheck this to set the item’s current stock to the entered quantity and update its buying price without adding stock.</small></div>
     </div>
-    <button class="btn btn-primary">Record Purchase &amp; Update Stock</button>
+    <button id="record-purchase-button" type="submit" class="btn btn-primary">
+        <span id="record-purchase-spinner" class="spinner-border spinner-border-sm me-1 d-none" aria-hidden="true"></span>
+        <span id="record-purchase-label">Record Purchase &amp; Update Stock</span>
+    </button>
     <a href="{{ route('purchases.index') }}" class="btn btn-outline-secondary">Purchase History</a>
+    <div id="purchase-loading-message" class="alert alert-info mt-3 mb-0 d-none" role="status" aria-live="polite">
+        Recording purchase and updating stock. Please wait…
+    </div>
 </form>
 </div></div>
 @endsection
@@ -24,9 +30,31 @@
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
 <script>
-    $(function () {
-        $('.selectpicker').selectpicker();
+    if (window.jQuery && window.jQuery.fn.selectpicker) {
+        window.jQuery(function () {
+            window.jQuery('.selectpicker').selectpicker();
+        });
+    }
+    const purchaseForm = document.getElementById('purchase-form');
+    const recordPurchaseButton = document.getElementById('record-purchase-button');
+    const recordPurchaseSpinner = document.getElementById('record-purchase-spinner');
+    const recordPurchaseLabel = document.getElementById('record-purchase-label');
+    const purchaseLoadingMessage = document.getElementById('purchase-loading-message');
+
+    purchaseForm.addEventListener('submit', function (event) {
+        if (purchaseForm.dataset.submitting === 'true') {
+            event.preventDefault();
+            return;
+        }
+
+        purchaseForm.dataset.submitting = 'true';
+        purchaseForm.setAttribute('aria-busy', 'true');
+        recordPurchaseButton.disabled = true;
+        recordPurchaseSpinner.classList.remove('d-none');
+        recordPurchaseLabel.textContent = 'Recording purchase…';
+        purchaseLoadingMessage.classList.remove('d-none');
     });
+
     function updateTotal() {
         const quantity = Number(document.querySelector('[name="quantity"]').value || 0);
         const unitCost = Number(document.getElementById('unit_cost').value || 0);
