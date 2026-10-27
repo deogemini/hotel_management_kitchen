@@ -25,6 +25,7 @@ class RestaurantOrderStockTest extends TestCase
         ]);
 
         $response = $this->post(route('restaurant-orders.store'), [
+            'order_date' => now()->toDateString(),
             'customer_type' => 'Walk-in customer',
             'walk_in_customer_name' => 'Walk-in Guest',
             'payment_method' => 'Cash',
@@ -51,6 +52,7 @@ class RestaurantOrderStockTest extends TestCase
         ]);
 
         $response = $this->post(route('restaurant-orders.store'), [
+            'order_date' => now()->toDateString(),
             'customer_type' => 'Walk-in customer',
             'walk_in_customer_name' => 'Walk-in Guest',
             'payment_method' => 'Cash',

@@ -12,8 +12,8 @@
 <h1 class="h3 mb-3"><strong>Guest</strong> Registration</h1>
 <a href="{{ route('companies.index') }}" class="btn btn-outline-primary mb-3">Companies / Organizations</a>
 <div class="card"><div class="card-header"><h5 class="card-title mb-0">Guests</h5><a href="{{ route('guests.create') }}" class="btn btn-primary float-end mt-n4">Register Guest</a></div>
-<div class="card-body"><div class="table-responsive"><table id="guestsTable" class="table table-hover w-100"><thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Nationality</th><th>Bookings</th><th>Time Registered</th><th>Last action by</th><th>Actions</th></tr></thead><tbody>
-@foreach($guests as $guest)<tr><td>{{ $loop->iteration }}</td><td>{{ $guest->full_name }}</td><td>{{ $guest->phone_number }}</td><td>{{ $guest->email }}</td><td>{{ $guest->nationality }}</td><td>{{ $guest->bookings_count }}</td><td>{{ $guest->created_at?->format('Y-m-d H:i') }}</td>@include('partials.performed_by_cell', ['record' => $guest])<td><a class="btn btn-sm btn-secondary" href="{{ route('guests.show', $guest) }}">History</a> <a class="btn btn-sm btn-info" href="{{ route('guests.edit', $guest) }}">Edit</a> <form method="POST" action="{{ route('guests.destroy', $guest) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this guest?');">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-danger">Delete</button></form></td></tr>@endforeach
+<div class="card-body"><div class="table-responsive"><table id="guestsTable" class="table table-hover w-100"><thead><tr><th>#</th><th>Name</th><th>Source</th><th>Phone</th><th>Email</th><th>Nationality</th><th>Bookings</th><th>Time Registered</th><th>Last action by</th><th>Actions</th></tr></thead><tbody>
+@foreach($guests as $guest)<tr><td>{{ $loop->iteration }}</td><td>{{ $guest->full_name }}</td><td>@if($guest->registration_source === 'website')<span class="badge bg-primary">Website</span>@elseif($guest->website_bookings_count > 0)<span class="badge bg-info text-dark">Website booking</span>@else<span class="badge bg-light text-dark">Staff</span>@endif</td><td>{{ $guest->phone_number }}</td><td>{{ $guest->email }}</td><td>{{ $guest->nationality }}</td><td>{{ $guest->bookings_count }}</td><td>{{ $guest->created_at?->format('Y-m-d H:i') }}</td>@include('partials.performed_by_cell', ['record' => $guest])<td><a class="btn btn-sm btn-secondary" href="{{ route('guests.show', $guest) }}">History</a> <a class="btn btn-sm btn-info" href="{{ route('guests.edit', $guest) }}">Edit</a> <form method="POST" action="{{ route('guests.destroy', $guest) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this guest?');">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-danger">Delete</button></form></td></tr>@endforeach
 </tbody></table></div></div></div>
 @endsection
 @push('scripts')
@@ -25,8 +25,8 @@
         $('#guestsTable').DataTable({
             pageLength: 10,
             lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
-            order: [[6, 'desc']],
-            columnDefs: [{ orderable: false, targets: [0, 7] }],
+            order: [[7, 'desc']],
+            columnDefs: [{ orderable: false, targets: [0, 8, 9] }],
             language: {
                 search: 'Search guests:',
                 lengthMenu: 'Show _MENU_ entries',

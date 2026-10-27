@@ -21,6 +21,7 @@ class Guest extends Model
         'id_number',
         'nationality',
         'created_by',
+        'registration_source',
     ];
 
     public function bookings(): HasMany

@@ -49,6 +49,30 @@
         <label class="form-label">Description</label>
         <textarea name="description" class="form-control" rows="3">{{ old('description', $room->description) }}</textarea>
     </div>
+    <div class="col-md-4 mb-3">
+        <label class="form-label">Public bed type <span class="text-muted">(optional)</span></label>
+        <input name="public_bed_type" class="form-control" maxlength="120" value="{{ old('public_bed_type', $room->public_bed_type) }}" placeholder="Enter only confirmed details">
+    </div>
+    <div class="col-md-4 mb-3">
+        <label class="form-label">Public guest capacity <span class="text-muted">(optional)</span></label>
+        <input type="number" name="public_capacity" min="1" max="40" class="form-control" value="{{ old('public_capacity', $room->public_capacity) }}" placeholder="Not shown until supplied">
+    </div>
+    <div class="col-md-4 mb-3">
+        <label class="form-label">Tax included in rate?</label>
+        <select name="public_tax_included" class="form-select">
+            <option value="" @selected((string) old('public_tax_included', $room->public_tax_included === null ? '' : (int) $room->public_tax_included) === '')>Not specified</option>
+            <option value="1" @selected((string) old('public_tax_included', $room->public_tax_included === null ? '' : (int) $room->public_tax_included) === '1')>Yes</option>
+            <option value="0" @selected((string) old('public_tax_included', $room->public_tax_included === null ? '' : (int) $room->public_tax_included) === '0')>No</option>
+        </select>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label class="form-label">Breakfast included?</label>
+        <select name="public_breakfast_included" class="form-select">
+            <option value="" @selected((string) old('public_breakfast_included', $room->public_breakfast_included === null ? '' : (int) $room->public_breakfast_included) === '')>Not specified</option>
+            <option value="1" @selected((string) old('public_breakfast_included', $room->public_breakfast_included === null ? '' : (int) $room->public_breakfast_included) === '1')>Yes</option>
+            <option value="0" @selected((string) old('public_breakfast_included', $room->public_breakfast_included === null ? '' : (int) $room->public_breakfast_included) === '0')>No</option>
+        </select>
+    </div>
     <div class="col-12 mb-3">
         <label class="form-label">Room Images</label>
         <input type="file" name="images[]" class="form-control" multiple accept="image/*">

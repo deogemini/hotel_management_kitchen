@@ -64,3 +64,20 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 The hotel management system can be installed from a supported browser using the **Install app** button. On iPhone and iPad, use the browser's **Add to Home Screen** option.
 
 The service worker keeps the app icon, offline page, and static interface assets available and shows an offline message when a page cannot be reached. Hotel records, sign-in, and form submissions still require an internet connection; private pages and form data are not stored for offline use. Install and service worker features require HTTPS, except when running on localhost.
+
+## Public lodge website
+
+The public website uses the existing lodge, room, guest, and booking records. It adds these public routes: `/`, `/rooms-and-rates`, `/facilities`, `/gallery`, `/about`, `/contact`, `/book`, and `/sitemap.xml`. Public booking submissions are saved as **Pending** requests without assigning a room or taking payment. Staff confirm availability and final terms through the existing booking workflow.
+
+### Setup
+
+1. Apply the additive website migration with `php artisan migrate`.
+2. Run `php artisan storage:link` so uploaded room and website images can be displayed.
+3. Sign in as an Owner or Hotel Manager and open **Website Content**. Select the Lodge whose rooms should appear on the website. If there are multiple lodges and no property is selected, public room data stays empty until one is configured.
+4. In **Rooms**, publish accurate descriptions, bed type, capacity, tax and breakfast details, and approved room photos. Existing room rates and features supply public rates and amenities.
+5. In **Website Content**, add only approved services, offers, and gallery photos. Configure the contact phone, address, map link, check-in/out times, guest policies, and currency. Contact email defaults to `info@hardrockexecutivelodge.co.tz`; currency defaults to `TZS`.
+6. Booking, payment, cancellation, and privacy policies show a draft notice until an authorized staff member enters and approves them.
+7. Open **Website Content → Website settings** and configure SMTP host, port, encryption, username, password, and sender address for self-service booking emails. The SMTP password is encrypted in the database using `APP_KEY`; set a stable application key before saving credentials and keep it backed up. Booking requests use these settings to email the customer and lodge. When portal SMTP is disabled, Laravel uses the mailer configured in `.env` instead. Enquiries are saved for staff review even if mail delivery fails.
+8. Set `APP_URL` to the public site URL so generated sitemap links use the correct host. `WEBSITE_LODGE_ID` can also select the public Lodge through environment configuration.
+
+Public staff registration is disabled; authorized staff accounts continue to be managed through the existing user administration area. Guest accounts and online payments are not enabled.

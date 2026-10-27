@@ -80,6 +80,15 @@ class DashboardController extends Controller
 
         $todayCheckIns = $this->lodgeQuery(Booking::with('guest', 'room', 'performedBy'))->whereDate('check_in_date', today())->latest()->limit(8)->get();
         $todayCheckOuts = $this->lodgeQuery(Booking::with('guest', 'room', 'performedBy'))->whereDate('check_out_date', today())->latest()->limit(8)->get();
+        $websiteRequests = collect();
+        if ($user->hasPermission('bookings.manage') || $user->hasPermission('checkin.manage')) {
+            $websiteRequests = $this->lodgeQuery(Booking::with('guest', 'room', 'performedBy'))
+                ->whereNotNull('public_request_token')
+                ->where('status', 'Pending')
+                ->latest()
+                ->limit(8)
+                ->get();
+        }
         $recentPayments = $this->lodgeQuery(Payment::with('guest', 'performedBy'))->latest('paid_at')->limit(8)->get();
         $pendingKitchenOrders = $this->lodgeQuery(RestaurantOrder::with('items.menuItem', 'room', 'performedBy'))
             ->whereHas('items.menuItem', fn ($query) => $query->where('category', 'Food'))
@@ -88,7 +97,7 @@ class DashboardController extends Controller
             ->limit(8)
             ->get();
 
-        return view('dashboard', compact('stats', 'todayCheckIns', 'todayCheckOuts', 'recentPayments', 'pendingKitchenOrders'));
+        return view('dashboard', compact('stats', 'todayCheckIns', 'todayCheckOuts', 'websiteRequests', 'recentPayments', 'pendingKitchenOrders'));
     }
 
     private function lodgeQuery($query)

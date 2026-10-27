@@ -91,6 +91,10 @@ class RoomController extends Controller
             'features' => ['nullable', 'array'],
             'features.*' => ['in:'.implode(',', Room::FEATURES)],
             'description' => ['nullable', 'string'],
+            'public_bed_type' => ['nullable', 'string', 'max:120'],
+            'public_capacity' => ['nullable', 'integer', 'min:1', 'max:40'],
+            'public_tax_included' => ['nullable', 'boolean'],
+            'public_breakfast_included' => ['nullable', 'boolean'],
             'images.*' => ['nullable', 'image', 'max:4096'],
         ]);
     }

@@ -19,6 +19,8 @@ class BookingController extends Controller
             ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->when($this->canSeeAllLodges() && $request->lodge_id, fn ($query, $lodgeId) => $query->where('lodge_id', $lodgeId))
             ->when($request->status, fn ($query, $status) => $query->where('status', $status))
+            ->when($request->query('source') === 'website', fn ($query) => $query->whereNotNull('public_request_token'))
+            ->when($request->query('source') === 'staff', fn ($query) => $query->whereNull('public_request_token'))
             ->latest()
             ->get();
 
@@ -37,44 +39,58 @@ class BookingController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
-        $room = $this->lodgeQuery(Room::query())->find($data['room_id']);
         $nights = max(1, now()->parse($data['check_in_date'])->diffInDays(now()->parse($data['check_out_date'])));
-        $rate = $room?->price_per_night ?? 0;
-        $total = $nights * $rate;
         $deposit = (float) ($data['deposit_amount'] ?? 0);
 
-        $booking = Booking::create($data + [
-            'booking_number' => $this->number('BK'),
-            'lodge_id' => $room?->lodge_id ?: auth()->user()?->lodge_id,
-            'room_type' => $room?->room_type,
-            'number_of_nights' => $nights,
-            'room_rate' => $rate,
-            'room_total' => $total,
-            'balance_amount' => max(0, $total - $deposit),
-            'created_by' => auth()->id(),
-        ]);
+        $booking = DB::transaction(function () use ($data, $request, $nights, $deposit): Booking {
+            $room = isset($data['room_id'])
+                ? $this->lodgeQuery(Room::query())->whereKey($data['room_id'])->lockForUpdate()->first()
+                : null;
+            if (! empty($data['room_id']) && ! $room) {
+                throw ValidationException::withMessages(['room_id' => 'The selected room is no longer available.']);
+            }
+            $this->assertRoomAvailable($room, $data['check_in_date'], $data['check_out_date'], $data['status']);
+            $rate = (float) ($room?->price_per_night ?? 0);
+            $total = $nights * $rate;
+            if ($deposit > $total) {
+                throw ValidationException::withMessages(['deposit_amount' => 'Deposit cannot exceed the selected room total of '.number_format($total, 2).'.']);
+            }
 
-        if ($room && in_array($booking->status, ['Pending', 'Confirmed'], true)) {
-            $room->update(['status' => 'Reserved']);
-        }
-
-        if ($deposit > 0) {
-            Payment::create([
-                'payment_number' => $this->number('PAY'),
-                'payable_type' => Booking::class,
-                'payable_id' => $booking->id,
-                'guest_id' => $booking->guest_id,
-                'booking_id' => $booking->id,
-                'lodge_id' => $booking->lodge_id,
-                'amount' => $deposit,
-                'payment_method' => $request->input('payment_method', 'Cash'),
-                'status' => $deposit >= $total ? 'Paid' : 'Partial',
-                'received_by' => auth()->id(),
-                'paid_at' => now(),
+            $booking = Booking::create($data + [
+                'booking_number' => $this->number('BK'),
+                'lodge_id' => $room?->lodge_id ?: auth()->user()?->lodge_id,
+                'room_type' => $room?->room_type,
+                'number_of_nights' => $nights,
+                'room_rate' => $rate,
+                'room_total' => $total,
+                'balance_amount' => max(0, $total - $deposit),
+                'created_by' => auth()->id(),
             ]);
-        }
 
-        AuditService::log('booking.create', $booking, $booking->getAttributes());
+            if ($room && in_array($booking->status, ['Pending', 'Confirmed'], true)) {
+                $room->update(['status' => 'Reserved']);
+            }
+
+            if ($deposit > 0) {
+                Payment::create([
+                    'payment_number' => $this->number('PAY'),
+                    'payable_type' => Booking::class,
+                    'payable_id' => $booking->id,
+                    'guest_id' => $booking->guest_id,
+                    'booking_id' => $booking->id,
+                    'lodge_id' => $booking->lodge_id,
+                    'amount' => $deposit,
+                    'payment_method' => $request->input('payment_method', 'Cash'),
+                    'status' => $deposit >= $total ? 'Paid' : 'Partial',
+                    'received_by' => auth()->id(),
+                    'paid_at' => now(),
+                ]);
+            }
+
+            AuditService::log('booking.create', $booking, $booking->getAttributes());
+
+            return $booking;
+        });
 
         return redirect()->route('bookings.show', $booking)->with('success', 'Booking created successfully.');
     }
@@ -98,22 +114,32 @@ class BookingController extends Controller
     public function update(Request $request, Booking $booking)
     {
         $data = $this->validated($request);
-        $room = $this->lodgeQuery(Room::query())->find($data['room_id']);
         $nights = max(1, now()->parse($data['check_in_date'])->diffInDays(now()->parse($data['check_out_date'])));
-        $rate = $room?->price_per_night ?? 0;
-        $total = $nights * $rate;
         $deposit = (float) ($data['deposit_amount'] ?? 0);
-        $original = $booking->getOriginal();
-
-        $booking->update($data + [
-            'room_type' => $room?->room_type,
-            'number_of_nights' => $nights,
-            'room_rate' => $rate,
-            'room_total' => $total,
-            'balance_amount' => max(0, $total - $deposit - $booking->payments()->whereIn('status', ['Paid', 'Partial'])->sum('amount')),
-        ]);
-
-        AuditService::log('booking.update', $booking, ['from' => $original, 'to' => $booking->getAttributes()]);
+        DB::transaction(function () use ($data, $booking, $nights, $deposit): void {
+            $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            $room = isset($data['room_id'])
+                ? $this->lodgeQuery(Room::query())->whereKey($data['room_id'])->lockForUpdate()->first()
+                : null;
+            if (! empty($data['room_id']) && ! $room) {
+                throw ValidationException::withMessages(['room_id' => 'The selected room is no longer available.']);
+            }
+            $this->assertRoomAvailable($room, $data['check_in_date'], $data['check_out_date'], $data['status'], $booking->id);
+            $rate = (float) ($room?->price_per_night ?? 0);
+            $total = $nights * $rate;
+            if ($deposit > $total) {
+                throw ValidationException::withMessages(['deposit_amount' => 'Deposit cannot exceed the selected room total of '.number_format($total, 2).'.']);
+            }
+            $original = $booking->getOriginal();
+            $booking->update($data + [
+                'room_type' => $room?->room_type,
+                'number_of_nights' => $nights,
+                'room_rate' => $rate,
+                'room_total' => $total,
+                'balance_amount' => max(0, $total - $deposit - $booking->payments()->whereIn('status', ['Paid', 'Partial'])->sum('amount')),
+            ]);
+            AuditService::log('booking.update', $booking, ['from' => $original, 'to' => $booking->getAttributes()]);
+        });
 
         return redirect()->route('bookings.show', $booking)->with('success', 'Booking updated successfully.');
     }
@@ -210,6 +236,28 @@ class BookingController extends Controller
         $nights = max(1, now()->parse($data['check_in_date'])->diffInDays(now()->parse($data['check_out_date'])));
 
         return $nights * (float) ($room?->price_per_night ?? 0);
+    }
+
+    private function assertRoomAvailable(?Room $room, string $checkIn, string $checkOut, string $status, ?int $exceptBookingId = null): void
+    {
+        if (! $room || ! in_array($status, ['Pending', 'Confirmed', 'Checked In'], true)) {
+            return;
+        }
+
+        if ($room->status === 'Maintenance') {
+            throw ValidationException::withMessages(['room_id' => 'The selected room is under maintenance.']);
+        }
+
+        $conflict = Booking::where('room_id', $room->id)
+            ->whereIn('status', ['Pending', 'Confirmed', 'Checked In'])
+            ->when($exceptBookingId, fn ($query, $id) => $query->where('id', '!=', $id))
+            ->whereDate('check_in_date', '<', $checkOut)
+            ->whereDate('check_out_date', '>', $checkIn)
+            ->exists();
+
+        if ($conflict) {
+            throw ValidationException::withMessages(['room_id' => 'That room already has a booking during the selected dates.']);
+        }
     }
 
     private function number(string $prefix): string

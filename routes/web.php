@@ -11,6 +11,7 @@ use App\Http\Controllers\KitchenOrderController;
 use App\Http\Controllers\LodgeController;
 use App\Http\Controllers\MenuItemController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PublicWebsiteController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\RestaurantOrderController;
@@ -21,19 +22,39 @@ use App\Http\Controllers\SmsSettingController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WebsiteAdminController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect()->route('dashboard');
-    }
-
-    return view('auth.login');
-});
+Route::get('/', [PublicWebsiteController::class, 'home'])->name('public.home');
+Route::get('/sitemap.xml', [PublicWebsiteController::class, 'sitemap'])->name('public.sitemap');
+Route::get('/rooms-and-rates', [PublicWebsiteController::class, 'rooms'])->name('public.rooms');
+Route::get('/rooms-and-rates/{roomType}', [PublicWebsiteController::class, 'room'])->name('public.room');
+Route::get('/facilities', [PublicWebsiteController::class, 'facilities'])->name('public.facilities');
+Route::get('/gallery', [PublicWebsiteController::class, 'gallery'])->name('public.gallery');
+Route::get('/about', [PublicWebsiteController::class, 'about'])->name('public.about');
+Route::get('/contact', [PublicWebsiteController::class, 'contact'])->name('public.contact');
+Route::post('/contact', [PublicWebsiteController::class, 'submitEnquiry'])->middleware('throttle:5,1')->name('public.contact.submit');
+Route::get('/policies/{policy}', [PublicWebsiteController::class, 'policies'])->name('public.policy');
+Route::get('/book', [PublicWebsiteController::class, 'booking'])->name('public.booking');
+Route::post('/booking-request', [PublicWebsiteController::class, 'storeBooking'])->middleware('throttle:5,1')->name('public.booking.submit');
+Route::get('/reservation/{bookingNumber}/{token}', [PublicWebsiteController::class, 'confirmation'])->name('public.confirmation');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::middleware('permission:website.manage')->prefix('admin/website')->name('website.admin.')->group(function () {
+        Route::get('/', [WebsiteAdminController::class, 'index'])->name('index');
+        Route::get('/settings', [WebsiteAdminController::class, 'editSettings'])->name('settings');
+        Route::put('/settings', [WebsiteAdminController::class, 'updateSettings'])->name('settings.update');
+        Route::get('/items/create', [WebsiteAdminController::class, 'createEntry'])->name('entries.create');
+        Route::post('/items', [WebsiteAdminController::class, 'storeEntry'])->name('entries.store');
+        Route::get('/items/{entry}/edit', [WebsiteAdminController::class, 'editEntry'])->name('entries.edit');
+        Route::put('/items/{entry}', [WebsiteAdminController::class, 'updateEntry'])->name('entries.update');
+        Route::delete('/items/{entry}', [WebsiteAdminController::class, 'destroyEntry'])->name('entries.destroy');
+        Route::get('/enquiries', [WebsiteAdminController::class, 'enquiries'])->name('enquiries');
+        Route::patch('/enquiries/{enquiry}', [WebsiteAdminController::class, 'updateEnquiryStatus'])->name('enquiries.status');
+    });
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

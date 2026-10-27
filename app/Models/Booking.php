@@ -16,6 +16,8 @@ class Booking extends Model
 
     protected $fillable = [
         'booking_number',
+        'public_request_token',
+        'public_confirmation_token',
         'lodge_id',
         'guest_id',
         'room_id',
@@ -24,6 +26,9 @@ class Booking extends Model
         'check_out_date',
         'number_of_nights',
         'number_of_guests',
+        'number_of_adults',
+        'number_of_children',
+        'special_requests',
         'status',
         'room_rate',
         'room_total',

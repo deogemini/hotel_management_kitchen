@@ -23,6 +23,10 @@ class Room extends Model
         'status',
         'features',
         'description',
+        'public_bed_type',
+        'public_capacity',
+        'public_tax_included',
+        'public_breakfast_included',
         'created_by',
     ];
 
@@ -31,6 +35,9 @@ class Room extends Model
         return [
             'features' => 'array',
             'price_per_night' => 'decimal:2',
+            'public_capacity' => 'integer',
+            'public_tax_included' => 'boolean',
+            'public_breakfast_included' => 'boolean',
         ];
     }
 

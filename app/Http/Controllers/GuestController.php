@@ -11,7 +11,10 @@ class GuestController extends Controller
 {
     public function index()
     {
-        $guests = Guest::with('performedBy')->withCount('bookings')
+        $guests = Guest::with('performedBy')->withCount([
+            'bookings',
+            'bookings as website_bookings_count' => fn ($query) => $query->whereNotNull('public_request_token'),
+        ])
             ->when(! $this->canSeeAllLodges(), fn ($query) => $query->where('lodge_id', auth()->user()?->lodge_id))
             ->latest()
             ->get();
@@ -29,6 +32,7 @@ class GuestController extends Controller
         $data = $this->validated($request);
         $data['lodge_id'] = auth()->user()?->lodge_id;
         $data['created_by'] = auth()->id();
+        $data['registration_source'] = 'staff';
         $guest = Guest::create($data);
         AuditService::log('guest.create', $guest, $guest->getAttributes());
 

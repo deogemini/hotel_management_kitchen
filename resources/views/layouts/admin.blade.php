@@ -149,8 +149,16 @@
                     </li>
                     @endif
 
-                    @if($can('lodges.manage') || $can('users.manage') || $can('settings.invoice.manage') || $can('settings.sms.manage') || $can('audit_trails.view'))
+                    @if($can('lodges.manage') || $can('users.manage') || $can('settings.invoice.manage') || $can('settings.sms.manage') || $can('audit_trails.view') || $can('website.manage'))
                     <li class="sidebar-header">Administration</li>
+
+                    @if($can('website.manage'))
+                    <li class="sidebar-item {{ request()->routeIs('website.admin.*') ? 'active' : '' }}">
+                        <a class="sidebar-link" href="{{ route('website.admin.index') }}">
+                            <i class="align-middle" data-feather="globe"></i> <span class="align-middle">Website Content</span>
+                        </a>
+                    </li>
+                    @endif
 
                     @if($can('lodges.manage'))
                     <li class="sidebar-item {{ request()->routeIs('lodges.*') ? 'active' : '' }}">

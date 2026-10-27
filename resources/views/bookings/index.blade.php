@@ -19,6 +19,11 @@
         @endif
     </div>
     <div class="card-body">
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <a class="btn btn-sm {{ request('source') ? 'btn-outline-secondary' : 'btn-secondary' }}" href="{{ route('bookings.index') }}">All bookings</a>
+            <a class="btn btn-sm {{ request('source') === 'website' ? 'btn-primary' : 'btn-outline-primary' }}" href="{{ route('bookings.index', ['source' => 'website']) }}">Website requests</a>
+            <a class="btn btn-sm {{ request('source') === 'staff' ? 'btn-primary' : 'btn-outline-primary' }}" href="{{ route('bookings.index', ['source' => 'staff']) }}">Staff bookings</a>
+        </div>
         <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
             <button id="bulkCheckInButton" type="button" class="btn btn-success" disabled>
                 Check In Selected (<span id="checkInSelectionCount">0</span>)
@@ -43,7 +48,7 @@
                 <thead>
                     <tr>
                         <th><input id="selectBookingsPage" class="booking-select-control" type="checkbox" aria-label="Select eligible bookings on this page" title="Select eligible bookings on this page"></th>
-                        <th>#</th><th>Booking</th><th>Guest</th><th>Room</th><th>Dates</th><th>Status</th><th>Total</th><th>Balance</th><th>Last action by</th><th>Actions</th>
+                        <th>#</th><th>Booking</th><th>Source</th><th>Guest</th><th>Room</th><th>Dates</th><th>Status</th><th>Total</th><th>Balance</th><th>Last action by</th><th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,8 +65,9 @@
                             </td>
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $booking->booking_number }}</td>
+                            <td>@if($booking->public_request_token)<span class="badge bg-primary">Website</span>@else<span class="badge bg-light text-dark">Staff</span>@endif</td>
                             <td>{{ $booking->guest->full_name }}</td>
-                            <td>{{ $booking->room?->room_number }}</td>
+                            <td>{{ $booking->room?->room_number ?? ($booking->public_request_token ? 'Requested: '.$booking->room_type : '—') }}</td>
                             <td>{{ $booking->check_in_date?->format('Y-m-d') }} to {{ $booking->check_out_date?->format('Y-m-d') }}</td>
                             <td><span class="badge bg-secondary">{{ $booking->status }}</span></td>
                             <td data-total="{{ $booking->room_total }}">{{ number_format($booking->room_total, 2) }}</td>
@@ -85,7 +91,7 @@
                 </tbody>
                 <tfoot>
                     <tr class="table-light fw-bold">
-                        <td colspan="7" class="text-end">TOTAL</td>
+                        <td colspan="8" class="text-end">TOTAL</td>
                         <td id="bookingTotalAmount" class="text-end">0.00</td>
                         <td id="bookingBalanceTotal" class="text-end">0.00</td>
                         <td colspan="2"></td>
@@ -135,8 +141,8 @@
             let balance = 0;
 
             $(api.rows({ search: 'applied' }).nodes()).each(function () {
-                total += Number(this.cells[7]?.dataset.total || 0);
-                balance += Number(this.cells[8]?.dataset.balance || 0);
+                total += Number(this.cells[8]?.dataset.total || 0);
+                balance += Number(this.cells[9]?.dataset.balance || 0);
             });
 
             const formatAmount = (amount) => amount.toLocaleString(undefined, {
@@ -152,7 +158,7 @@
             pageLength: 10,
             lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
             order: [],
-            columnDefs: [{ orderable: false, targets: [0, 1, 9] }],
+            columnDefs: [{ orderable: false, targets: [0, 1, 10, 11] }],
             language: {
                 search: 'Search bookings:',
                 lengthMenu: 'Show _MENU_ entries',

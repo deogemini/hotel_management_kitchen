@@ -79,7 +79,7 @@
                     <thead><tr><th>Guest</th><th>Room</th><th>Status</th><th>Last action by</th></tr></thead>
                     <tbody>
                     @forelse($todayCheckIns as $booking)
-                        <tr><td>{{ $booking->guest->full_name }}</td><td>{{ $booking->room?->room_number }}</td><td>{{ $booking->status }}</td>@include('partials.performed_by_cell', ['record' => $booking])</tr>
+                        <tr><td>{{ $booking->guest->full_name }} @if($booking->public_request_token)<span class="badge bg-primary">Website</span>@endif</td><td>{{ $booking->room?->room_number ?? ($booking->public_request_token ? 'Requested: '.$booking->room_type : '—') }}</td><td>{{ $booking->status }}</td>@include('partials.performed_by_cell', ['record' => $booking])</tr>
                     @empty
                         <tr><td colspan="4" class="text-muted">No check-ins today.</td></tr>
                     @endforelse
@@ -109,6 +109,38 @@
         </div>
     </div>
 </div>
+
+@if($canViewBookings)
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div><h5 class="card-title mb-0">Pending website booking requests</h5><small class="text-muted">New requests submitted from the public website</small></div>
+                <a href="{{ route('bookings.index', ['source' => 'website']) }}" class="small">View all website bookings</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead><tr><th>Reference</th><th>Guest</th><th>Requested room</th><th>Stay dates</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                    @forelse($websiteRequests as $booking)
+                        <tr>
+                            <td><a href="{{ route('bookings.show', $booking) }}">{{ $booking->booking_number }}</a></td>
+                            <td>{{ $booking->guest->full_name }}<br><small class="text-muted">{{ $booking->guest->email }} · {{ $booking->guest->phone_number }}</small></td>
+                            <td>{{ $booking->room_type }}<br><small class="text-muted">Not assigned</small></td>
+                            <td>{{ $booking->check_in_date?->format('Y-m-d') }} to {{ $booking->check_out_date?->format('Y-m-d') }}</td>
+                            <td><span class="badge bg-warning text-dark">{{ $booking->status }}</span></td>
+                            <td><a class="btn btn-sm btn-outline-primary" href="{{ route('bookings.show', $booking) }}">Review</a></td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="6" class="text-muted">No pending website booking requests.</td></tr>
+                    @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <div class="row">
     <div class="col-lg-6">
