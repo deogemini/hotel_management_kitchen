@@ -15,6 +15,7 @@ use App\Models\Purchase;
 use App\Models\MenuItem;
 use App\Models\Room;
 use App\Exports\DrinksSalesReportExport;
+use App\Exports\HotelReportExport;
 use App\Exports\PurchaseReportExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -138,6 +139,33 @@ class HotelReportController extends Controller
         $filename = "purchase-report-{$startDate}-to-{$endDate}.xlsx";
 
         return Excel::download(new PurchaseReportExport($purchases), $filename);
+    }
+
+    public function reportExcel(Request $request, string $report)
+    {
+        $view = match ($report) {
+            'daily-collections' => $this->dailyCollections($request),
+            'room-bookings' => $this->roomBookings($request),
+            'occupied-rooms' => $this->occupiedRooms($request),
+            'available-rooms' => $this->availableRooms($request),
+            'guests' => $this->guests($request),
+            'restaurant-sales' => $this->restaurantSales($request),
+            'food-sales' => $this->foodSales($request),
+            'stock-movements' => $this->stockMovements($request),
+            'accounting' => $this->accounting($request),
+            'payments' => $this->payments($request),
+            'unpaid-bills' => $this->unpaidBills($request),
+            default => abort(404),
+        };
+
+        $data = $view->getData();
+        [$startDate, $endDate] = [$data['startDate'], $data['endDate']];
+        $filename = "{$report}-report-{$startDate}-to-{$endDate}.xlsx";
+
+        return Excel::download(
+            new HotelReportExport($data['title'] ?? 'Accounting & Financial Statement', $startDate, $endDate, $this->reportExcelSections($report, $data)),
+            $filename
+        );
     }
 
     public function foodSales(Request $request)
@@ -356,15 +384,181 @@ class HotelReportController extends Controller
 
     private function reportView(Request $request, string $title, $rows, string $type, string $startDate, string $endDate, array $extra = [])
     {
+        $routeName = $request->route()?->getName() ?? '';
+
         return view('reports.hotel', array_merge([
             'title' => $title,
             'rows' => $rows,
             'type' => $type,
+            'exportReport' => str_starts_with($routeName, 'reports.') ? substr($routeName, strlen('reports.')) : '',
             'startDate' => $startDate,
             'endDate' => $endDate,
             'lodges' => Lodge::orderBy('name')->get(),
             'selectedLodgeId' => $request->input('lodge_id'),
         ], $extra));
+    }
+
+    private function reportExcelSections(string $report, array $data): array
+    {
+        $rows = $data['rows'] ?? collect();
+
+        return match ($report) {
+            'daily-collections' => [
+                [
+                    'title' => 'Collections',
+                    'headings' => ['S/N', 'Room', 'Debtor', 'Cash', 'Lipa Namba', 'Amount', 'Collected By'],
+                    'rows' => collect($data['cashMovement']['collectionRows'])->values()->map(fn ($row, $index) => [
+                        $index + 1, $row['room_label'] ?? 'Room No. '.$row['room_number'],
+                        (float) $row['debtor'], (float) $row['cash'], (float) $row['lipa_namba'],
+                        (float) $row['amount'], $row['performed_by'],
+                    ])->all(),
+                    'total' => ['TOTAL COLLECTIONS', null, null, null, null, (float) $data['cashMovement']['totalCollections'], null],
+                    'money_columns' => [3, 4, 5, 6],
+                    'integer_columns' => [1],
+                ],
+                [
+                    'title' => 'Outstanding Collections',
+                    'headings' => ['S/N', 'Room', 'Outstanding Amount', 'Collected By'],
+                    'rows' => collect($data['cashMovement']['outstandingRows'])->values()->map(fn ($row, $index) => [
+                        count($data['cashMovement']['collectionRows']) + $index + 1,
+                        'Room No. '.$row['room_number'], (float) $row['amount'], $row['performed_by'],
+                    ])->all(),
+                    'total' => ['TOTAL OUTSTANDING', null, (float) $data['cashMovement']['totalOutstanding'], null],
+                    'money_columns' => [3],
+                    'integer_columns' => [1],
+                ],
+                [
+                    'title' => 'Income Summary',
+                    'headings' => ['Metric', 'Amount'],
+                    'rows' => [],
+                    'total' => ['TOTAL INCOME COLLECTIONS', (float) $data['cashMovement']['totalIncome']],
+                    'money_columns' => [2],
+                    'integer_columns' => [],
+                    'empty_message' => null,
+                ],
+            ],
+            'room-bookings', 'unpaid-bills' => [[
+                'title' => $report === 'unpaid-bills' ? 'Unpaid Bills' : 'Room Bookings',
+                'headings' => ['Booking', 'Guest', 'Room', 'Status', 'Total', 'Balance', 'Last action by'],
+                'rows' => $rows->map(fn ($row) => [
+                    $row->booking_number, $row->guest?->full_name, $row->room?->room_number,
+                    $row->status, (float) $row->room_total, (float) $row->balance_amount,
+                    $row->performedBy?->name ?? 'Not recorded',
+                ])->all(),
+                'total' => [
+                    'TOTAL', null, null, null, (float) $rows->sum('room_total'),
+                    (float) $rows->sum('balance_amount'), null,
+                ],
+                'money_columns' => [5, 6],
+                'integer_columns' => [],
+            ]],
+            'occupied-rooms', 'available-rooms' => [[
+                'title' => $report === 'occupied-rooms' ? 'Occupied Rooms' : 'Available Rooms',
+                'headings' => ['Room', 'Type', 'Status', 'Price', 'Last action by'],
+                'rows' => $rows->map(fn ($row) => [
+                    $row->room_number, $row->room_type, $row->status,
+                    (float) $row->price_per_night, $row->performedBy?->name ?? 'Not recorded',
+                ])->all(),
+                'total' => ['TOTAL', null, null, (float) $rows->sum('price_per_night'), null],
+                'money_columns' => [4],
+                'integer_columns' => [],
+            ]],
+            'guests' => [[
+                'title' => 'Guests',
+                'headings' => ['Name', 'Phone', 'Email', 'Bookings', 'Last action by'],
+                'rows' => $rows->map(fn ($row) => [
+                    $row->full_name, $row->phone_number, $row->email,
+                    (int) $row->bookings_count, $row->performedBy?->name ?? 'Not recorded',
+                ])->all(),
+                'money_columns' => [],
+                'integer_columns' => [4],
+            ]],
+            'restaurant-sales' => [[
+                'title' => 'Restaurant Sales',
+                'headings' => ['Order', 'Customer', 'Status', 'Total', 'Payment', 'Last action by'],
+                'rows' => $rows->map(fn ($row) => [
+                    $row->order_number, $row->guest?->full_name ?? $row->walk_in_customer_name,
+                    $row->status, (float) $row->subtotal, $row->payment_status,
+                    $row->performedBy?->name ?? 'Not recorded',
+                ])->all(),
+                'total' => ['TOTAL', null, null, (float) $rows->sum('subtotal'), null, null],
+                'money_columns' => [4],
+                'integer_columns' => [],
+            ]],
+            'food-sales' => [[
+                'title' => 'Food & Drinks Sales',
+                'headings' => ['Date', 'Item', 'Category', 'Quantity Sold', 'Unit Price', 'Total Sales', 'Last action by'],
+                'rows' => $rows->map(fn ($row) => [
+                    $row->movement_date?->format('Y-m-d'), $row->menuItem?->name,
+                    $row->menuItem?->category, (int) $row->quantity, (float) $row->unit_price,
+                    (float) ($row->quantity * $row->unit_price), $row->performedBy?->name ?? 'Not recorded',
+                ])->all(),
+                'money_columns' => [5, 6],
+                'integer_columns' => [4],
+            ]],
+            'stock-movements' => [[
+                'title' => 'Stock Movements',
+                'headings' => ['Date', 'Item', 'Type', 'Quantity', 'Before', 'After', 'Unit Price', 'Last action by'],
+                'rows' => $rows->map(fn ($row) => [
+                    $row->movement_date?->format('Y-m-d'), $row->menuItem?->name, ucfirst($row->type),
+                    (int) $row->quantity, (int) $row->stock_before, (int) $row->stock_after,
+                    $row->unit_price !== null ? (float) $row->unit_price : null,
+                    $row->performedBy?->name ?? 'Not recorded',
+                ])->all(),
+                'money_columns' => [7],
+                'integer_columns' => [4, 5, 6],
+            ]],
+            'payments' => [[
+                'title' => 'Payments',
+                'headings' => ['Receipt', 'Guest', 'Method', 'Amount', 'Date', 'Received by'],
+                'rows' => $rows->map(fn ($row) => [
+                    $row->payment_number, $row->guest?->full_name, $row->payment_method,
+                    (float) $row->amount, $row->paid_at?->format('Y-m-d'),
+                    $row->performedBy?->name ?? 'Not recorded',
+                ])->all(),
+                'total' => ['TOTAL', null, null, (float) $rows->sum('amount'), null, null],
+                'money_columns' => [4],
+                'integer_columns' => [],
+            ]],
+            'accounting' => $this->accountingExcelSections($data),
+            default => abort(404),
+        };
+    }
+
+    private function accountingExcelSections(array $data): array
+    {
+        return [
+            [
+                'title' => 'Profit & Loss',
+                'headings' => ['Metric', 'Amount'],
+                'rows' => [
+                    ['Room Revenue', (float) $data['rooms']],
+                    ['Food Revenue', (float) $data['foodRevenue']],
+                    ['Drinks Revenue', (float) $data['drinksRevenue']],
+                    ['Other Services', (float) $data['services']],
+                    ['Standalone Invoice Payments', (float) $data['standaloneInvoicePayments']],
+                    ['Total Revenue', (float) $data['revenue']],
+                    ['Purchases / Cost of Stock', (float) $data['purchases']],
+                    ['Other Expenses', (float) $data['expenses']],
+                ],
+                'total' => ['NET PROFIT / (LOSS)', (float) ($data['revenue'] - $data['purchases'] - $data['expenses'])],
+                'money_columns' => [2],
+                'integer_columns' => [],
+            ],
+            [
+                'title' => 'Financial Statement Summary',
+                'headings' => ['Metric', 'Amount'],
+                'rows' => [
+                    ['Total Income', (float) $data['revenue']],
+                    ['Invoice Payments Received', (float) $data['invoicePaymentsReceived']],
+                    ['Total Outflows', (float) ($data['purchases'] + $data['expenses'])],
+                    ['Current Stock Value', (float) $data['currentStockValue']],
+                ],
+                'total' => ['Closing Operating Result', (float) ($data['revenue'] - $data['purchases'] - $data['expenses'])],
+                'money_columns' => [2],
+                'integer_columns' => [],
+            ],
+        ];
     }
 
     private function purchaseRows(Request $request, string $startDate, string $endDate)

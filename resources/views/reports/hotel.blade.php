@@ -129,7 +129,9 @@
                 <button class="btn btn-primary">Pull Report</button>
                 <a href="{{ url()->current() }}" class="btn btn-secondary">Reset</a>
                 @if($type === 'purchases')
-                    <a href="{{ route('reports.purchases.export.excel', ['start_date' => $startDate, 'end_date' => $endDate, 'lodge_id' => $selectedLodgeId]) }}" class="btn btn-success">Export Excel</a>
+                    <button type="submit" formaction="{{ route('reports.purchases.export.excel') }}" class="btn btn-success">Export Excel</button>
+                @else
+                    <button type="submit" formaction="{{ route('reports.export.excel', ['report' => $exportReport]) }}" class="btn btn-success">Export Excel</button>
                 @endif
             </div>
         </div>

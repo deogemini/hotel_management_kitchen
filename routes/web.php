@@ -176,6 +176,7 @@ Route::middleware('auth')->group(function () {
         Route::get('reports/accounting', [HotelReportController::class, 'accounting'])->name('reports.accounting');
         Route::get('reports/payments', [HotelReportController::class, 'payments'])->name('reports.payments');
         Route::get('reports/unpaid-bills', [HotelReportController::class, 'unpaidBills'])->name('reports.unpaid-bills');
+        Route::get('reports/{report}/export/excel', [HotelReportController::class, 'reportExcel'])->name('reports.export.excel');
     });
 
     Route::middleware('permission:kitchen_orders.view,kitchen_orders.update_status')->group(function () {
