@@ -14,6 +14,7 @@ use App\Models\OtherCharge;
 use App\Models\Purchase;
 use App\Models\MenuItem;
 use App\Models\Room;
+use App\Exports\DrinksSalesReportExport;
 use App\Exports\PurchaseReportExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -152,7 +153,28 @@ class HotelReportController extends Controller
     public function drinksSales(Request $request)
     {
         [$startDate, $endDate] = $this->dateRange($request);
+        $report = $this->drinksSalesData($request, $startDate, $endDate);
 
+        return view('reports.drinks_sales', array_merge($report, compact('startDate', 'endDate'), [
+            'lodges' => Lodge::orderBy('name')->get(),
+            'selectedLodgeId' => $request->input('lodge_id'),
+        ]));
+    }
+
+    public function drinksSalesExcel(Request $request)
+    {
+        [$startDate, $endDate] = $this->dateRange($request);
+        $report = $this->drinksSalesData($request, $startDate, $endDate);
+        $filename = "drinks-sales-report-{$startDate}-to-{$endDate}.xlsx";
+
+        return Excel::download(
+            new DrinksSalesReportExport($startDate, $endDate, $this->drinksSalesLodgeLabel($request), $report),
+            $filename
+        );
+    }
+
+    private function drinksSalesData(Request $request, string $startDate, string $endDate): array
+    {
         $drinkPurchases = $this->purchaseRows($request, $startDate, $endDate)
             ->whereHas('menuItem', fn ($query) => $query->where('category', 'Drinks'))
             ->get();
@@ -238,13 +260,23 @@ class HotelReportController extends Controller
         $totalCostOfSales = (float) $drinkRows->sum('cost_of_sales');
         $totalProfitLoss = $totalSales - $totalCostOfSales;
 
-        return view('reports.drinks_sales', compact(
-            'startDate', 'endDate', 'dailyTotals', 'drinkRows', 'totalPurchaseCost',
-            'totalSales', 'totalCostOfSales', 'totalProfitLoss'
-        ) + [
-            'lodges' => Lodge::orderBy('name')->get(),
-            'selectedLodgeId' => $request->input('lodge_id'),
-        ]);
+        return compact(
+            'dailyTotals', 'drinkRows', 'totalPurchaseCost', 'totalSales',
+            'totalCostOfSales', 'totalProfitLoss'
+        );
+    }
+
+    private function drinksSalesLodgeLabel(Request $request): string
+    {
+        $user = auth()->user();
+
+        if ($user?->hasRole('hotel_manager')) {
+            return $request->filled('lodge_id')
+                ? (Lodge::find($request->input('lodge_id'))?->name ?? 'All Lodges')
+                : 'All Lodges';
+        }
+
+        return Lodge::find($user?->lodge_id)?->name ?? 'Assigned Lodge';
     }
 
     public function accounting(Request $request)

@@ -27,6 +27,7 @@
             <div class="col-md-auto d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Pull Report</button>
                 <a href="{{ route('reports.drinks-sales') }}" class="btn btn-secondary">Reset</a>
+                <button type="submit" formaction="{{ route('reports.drinks-sales.export.excel') }}" class="btn btn-success">Export Excel</button>
             </div>
         </form>
     </div>
